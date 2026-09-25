@@ -396,6 +396,42 @@ def reprint(db, user_id, copy_id):
     return new_copy
 
 
+def charge_physical_print(db, user_id, items, request_key):
+    need(8 <= len(request_key) <= 128, "An idempotency key is required")
+    need(isinstance(items, list) and items, "Choose at least one card")
+    quantities = {}
+    for item in items:
+        need(isinstance(item, dict) and isinstance(item.get("copy_id"), str) and
+             isinstance(item.get("quantity"), int) and not isinstance(item["quantity"], bool) and
+             1 <= item["quantity"] <= 90, "Invalid print quantity")
+        quantities[item["copy_id"]] = quantities.get(item["copy_id"], 0) + item["quantity"]
+    count = sum(quantities.values())
+    need(count <= 90, "Choose at most 90 cards per export")
+    signature = json.dumps(sorted(quantities.items()), separators=(",", ":"))
+    existing = db.execute("SELECT payload FROM jobs WHERE id=? AND user_id=? AND kind='physical-export'", (request_key, user_id)).fetchone()
+    if existing:
+        result = json.loads(existing["payload"])
+        need(result["signature"] == signature, "Print request key was used for different cards")
+        return {"cards": result["cards"], "sheets": result["sheets"]}
+    sheets = math.ceil(count / 9)
+    rows = {}
+    for copy_id, quantity in quantities.items():
+        row = db.execute("SELECT * FROM copies WHERE id=? AND owner_id=?", (copy_id, user_id)).fetchone()
+        need(row is not None, "Copy not found", 404)
+        row = age_copy(db, row)
+        need(row["sleeved"] or row["slab_grade"] is not None or row["condition"] >= quantity,
+             "A selected copy does not have enough condition")
+        rows[copy_id] = row
+    adjust_resources(db, user_id, {"paper": -sheets})
+    for copy_id, quantity in quantities.items():
+        row = rows[copy_id]
+        if not row["sleeved"] and row["slab_grade"] is None:
+            db.execute("UPDATE copies SET condition=condition-? WHERE id=?", (quantity, copy_id))
+    db.execute("INSERT INTO jobs(id,user_id,kind,payload,status,created_at) VALUES(?,?,?,?,?,?)",
+               (request_key, user_id, "physical-export", json.dumps({"signature": signature, "cards": count, "sheets": sheets}), "complete", stamp()))
+    return {"cards": count, "sheets": sheets}
+
+
 def age_copy(db, row):
     row = obj(row)
     elapsed = max(0, (now().date() - datetime.fromisoformat(row["aged_at"]).date()).days)

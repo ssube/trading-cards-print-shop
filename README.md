@@ -34,6 +34,8 @@ The CLI supports `--help` on every command. Admin mutations share the same servi
 
 The server owns inventory, learning, grading, condition, and trades. A design is immutable once printed; copies have their own print defects and wear. All daily boundaries use UTC. Seed cards include bundled painted art; demo generated designs use local SVG art, while configured image providers store raster art. The UI waits for the complete design and loaded artwork before showing the CMYK and foil printing sequence. Foil, border, and card back are visual parts and do not influence image or text generation. The card battle and resource minigames are extension points for later releases.
 
+The Print Sheets tab lays out one or more owned copies on 4×6 photo, sticker, or card paper. It exports a 4×6 PDF or 1200×1800 PNG; multiple PNG sheets are bundled in a ZIP. Optional mirrored back sheets support two-sided printing. The preview and files can include or hide simulated foil and copy quality effects. Generating a file uses one paper per front sheet and one condition per card placement, with sleeve and slab protection preventing condition wear. Failed rendering does not charge the player, and the finished file can be downloaded again without another charge. Print at actual size; physical foil requires separate materials or finishing.
+
 The Finish Gallery previews every known finish on blank stock or any standard copy in your library. You can inspect and rotate the specimen, compare finishes, and send a learned finish to the press without changing or spending a card.
 Foil highlights follow pointer and card rotation, with only a faint ambient reflection while the card is still.
 

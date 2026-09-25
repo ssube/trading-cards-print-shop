@@ -15,3 +15,4 @@ import './card-library.css'
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>)
 import './mobile-card.css'
 import './demo-nav.css'
+import './physical-print.css'

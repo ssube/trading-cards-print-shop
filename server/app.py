@@ -205,6 +205,22 @@ async def print_design(payload: PrintPayload, request: Request, user=Depends(mut
     return job
 
 
+class PhysicalPrintItem(BaseModel):
+    copy_id: str
+    quantity: int = Field(ge=1, le=90)
+
+
+class PhysicalPrintPayload(BaseModel):
+    items: list[PhysicalPrintItem]
+
+
+@app.post("/api/physical-prints")
+async def physical_print(payload: PhysicalPrintPayload, request: Request, user=Depends(mutation)):
+    key = request.headers.get("Idempotency-Key", "")
+    with transaction() as db:
+        return game.charge_physical_print(db, user["id"], [item.model_dump() for item in payload.items], key)
+
+
 @app.get("/api/jobs/{job_id}")
 async def job_status(job_id: str, user=Depends(auth)):
     with connect() as db:

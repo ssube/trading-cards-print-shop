@@ -1,0 +1,35 @@
+.print-no-foil .foil-shine{display:none!important}
+.card-back .wear-overlay{z-index:2;mix-blend-mode:multiply}
+.physical-print-grid{display:grid;grid-template-columns:minmax(320px,440px) minmax(420px,1fr);gap:24px;margin-top:30px;align-items:start}
+.physical-print-grid .builder-panel{padding:24px}
+.physical-print-grid h2{margin:0 0 10px;font-size:1.35rem}
+.physical-print-grid .builder-panel>p,.physical-preview>p{color:#b3bfb4;font-size:.78rem;line-height:1.5}
+.physical-card-list{max-height:360px;overflow:auto;border-block:1px solid #aa966555;margin:16px 0 24px}
+.physical-card-choice{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;border-bottom:1px solid #aa96652c}
+.physical-card-choice strong,.physical-card-choice small{display:block}
+.physical-card-choice strong{font-size:.77rem}.physical-card-choice small{font-size:.6rem;color:#a7b6aa;margin-top:3px}
+.physical-quantity{display:flex;align-items:center;gap:6px}.physical-quantity span{min-width:20px;text-align:center;font-size:.78rem}
+.physical-quantity button{width:29px;height:29px;border:1px solid #bda97888;border-radius:4px;background:#233535;color:#ecd6a5}
+.physical-option{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:.76rem;color:#e9e0ce}
+.physical-option input{accent-color:#d0ad73;width:17px;height:17px}
+.physical-format{display:block;margin:18px 0 10px;color:#e9e0ce;font-size:.78rem}.physical-format select{display:block;width:100%;margin-top:6px}
+.physical-cost{padding:13px 0;color:#d8bf8a;font-size:.72rem}.physical-print-grid .full{margin-top:8px}.physical-message{margin:12px 0 0!important}
+.physical-preview{border:1px solid #998c654b;border-radius:10px;background:#1e2a2b;padding:20px;min-width:0}
+.physical-preview h2{margin-bottom:7px}.physical-sheets{display:flex;gap:22px;overflow:auto;padding:8px 0 16px;align-items:start}
+.physical-sheet-wrap{flex:none}.physical-sheet-wrap>span{display:block;color:#cbb181;font-size:.6rem;letter-spacing:.13em;margin-bottom:6px}
+.physical-sheet{position:relative;width:400px;height:600px;background:white;overflow:hidden;box-shadow:0 10px 24px #0007;flex:none}
+.physical-placement{position:absolute;overflow:hidden}.physical-placement .card-frame{width:100%;height:100%;aspect-ratio:auto}
+.physical-placement .card-perspective{transform:none!important;pointer-events:none}
+.physical-placement .card-flipper{transition:none}
+.physical-placement .card-frame.slabbed{padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+.physical-placement .slab-label,.physical-placement .sleeve-badge{display:none}
+.physical-placement .trading-card,.physical-placement .card-back{box-shadow:none!important}
+.physical-placement .finish-shimmer .foil-shine{opacity:.17!important;mix-blend-mode:soft-light}
+.physical-placement .finish-holo .foil-shine{opacity:.24!important;mix-blend-mode:soft-light}
+.physical-sheet-front .card-flipper>.card-back{display:none}
+.physical-sheet-front .card-flipper>.trading-card{backface-visibility:visible;-webkit-backface-visibility:visible}
+.physical-sheet-back .card-flipper.is-flipped{transform:none}
+.physical-sheet-back .card-flipper>.trading-card{display:none}
+.physical-sheet-back .card-flipper>.card-back{transform:none;backface-visibility:visible;-webkit-backface-visibility:visible}
+.physical-empty{height:260px;min-width:280px;display:grid;place-items:center;text-align:center;color:#acb8ae;border:1px dashed #a68c5a88;padding:20px}
+@media(max-width:950px){.physical-print-grid{grid-template-columns:1fr}.physical-preview{overflow:hidden}}

@@ -37,6 +37,16 @@ assert.equal(user.username, 'Demo Collector')
 let state = await call('/state')
 assert.equal(state.library.length, 3)
 assert.equal(state.resources.ink, 8)
+const source = state.library[0]
+const initialCondition = source.condition
+const initialPaper = state.resources.paper
+const charged = await call('/physical-prints', 'POST', { items: [{ copy_id: source.id, quantity: 2 }] }, { 'Idempotency-Key': 'physical-smoke-one' })
+assert.deepEqual(charged, { cards: 2, sheets: 1 })
+assert.deepEqual(await call('/physical-prints', 'POST', { items: [{ copy_id: source.id, quantity: 2 }] }, { 'Idempotency-Key': 'physical-smoke-one' }), charged)
+state = await call('/state')
+assert.equal(state.resources.paper, initialPaper - 1)
+assert.equal(state.library.find(card => card.id === source.id).condition, initialCondition - 2)
+await assert.rejects(call('/physical-prints', 'POST', { items: [{ copy_id: source.id, quantity: 1 }] }, { 'Idempotency-Key': 'physical-smoke-one' }), /different cards/)
 assert.equal((await call('/market')).length, 0)
 assert.equal(state.catalog.find(part => part.id === 'starlit').learned, 0)
 await call('/allowance/claim', 'POST')

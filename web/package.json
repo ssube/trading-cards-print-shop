@@ -11,6 +11,9 @@
     "test:offline": "node scripts/offline-smoke.mjs"
   },
   "dependencies": {
+    "html-to-image": "^1.11.13",
+    "jszip": "^3.10.2",
+    "pdf-lib": "^1.17.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

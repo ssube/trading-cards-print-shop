@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict'
 import { build } from 'esbuild'
 import { mkdirSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -8,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 const output = resolve('node_modules/.cache/cards-render')
 mkdirSync(output, { recursive: true })
 await build({
-  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/CardLibrary.tsx', 'src/FinishGallery.tsx', 'src/CollectionProgress.tsx', 'src/ProgressPage.tsx', 'src/StarterWelcome.tsx'],
+  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/CardLibrary.tsx', 'src/FinishGallery.tsx', 'src/CollectionProgress.tsx', 'src/ProgressPage.tsx', 'src/StarterWelcome.tsx', 'src/PhysicalPrint.tsx'],
   outdir: output,
   bundle: true,
   platform: 'node',
@@ -24,6 +25,7 @@ const { FinishGallery } = require(resolve(output, 'FinishGallery.js'))
 const { CollectionProgress } = require(resolve(output, 'CollectionProgress.js'))
 const { ProgressPage } = require(resolve(output, 'ProgressPage.js'))
 const { StarterWelcome } = require(resolve(output, 'StarterWelcome.js'))
+const { PhysicalPrint, layoutSheet } = require(resolve(output, 'PhysicalPrint.js'))
 const sample = {
   id: 'test-copy-12345678', design_id: 'starter-press-cat', owner_id: 1, creator: null,
   origin_id: null, type_id: 'monster', rule_ids: ['arrival', 'draw'],
@@ -35,6 +37,15 @@ const sample = {
   grade: 9, grade_name: 'Mint', estimated_grade: 'Mint', exact_grade_visible: true,
 }
 const appMarkup = renderToStaticMarkup(createElement(App))
+const printMarkup = renderToStaticMarkup(createElement(PhysicalPrint, { cards: [sample], paper: 8, onCharged: async () => {} }))
+for (const count of [1, 5, 7, 8, 9]) {
+  const placements = layoutSheet(Array.from({ length: count }, (_, index) => ({ ...sample, id: `copy-${index}` })))
+  assert.equal(placements.length, count)
+  assert.equal(new Set(placements.map(place => place.width)).size, 1)
+  assert.equal(new Set(placements.map(place => place.height)).size, 1)
+  assert.ok(placements.every(place => place.x >= 0 && place.y >= 0 && place.x + place.width <= 400 && place.y + place.height <= 600))
+}
+assert.deepEqual([...new Set(layoutSheet(Array.from({ length: 7 }, (_, index) => ({ ...sample, id: `copy-${index}` }))).map(place => Math.round(place.y)))].map(y => layoutSheet(Array.from({ length: 7 }, (_, index) => ({ ...sample, id: `copy-${index}` }))).filter(place => Math.round(place.y) === y).length), [2, 3, 2])
 const cardMarkup = renderToStaticMarkup(createElement(Card, { card: sample }))
 const mixedCards = [sample, { ...sample, id: 'spell-copy', type_id: 'spell', name: 'Paper Sprite' }]
 const libraryMarkup = renderToStaticMarkup(createElement(CardLibrary, {
@@ -81,7 +92,7 @@ const welcomeMarkup = renderToStaticMarkup(createElement(StarterWelcome, {
   selectedDeck: 'pressroom', setSelectedDeck: () => {}, username: '', setUsername: () => {}, password: '', setPassword: () => {},
   message: '', busy: false, onSubmit: () => {},
 }))
-if (!appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window') || !cardMarkup.includes('TC') || !cardMarkup.includes('PRINT SHOP') ||
+if (!printMarkup.includes('Show simulated foil finish') || !printMarkup.includes('Show print defects and paper wear') || !appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window') || !cardMarkup.includes('TC') || !cardMarkup.includes('PRINT SHOP') ||
     filterLibraryCards(mixedCards, 'spell').map(card => card.id).join() !== 'spell-copy' ||
     filterLibraryCards(mixedCards, 'land').length !== 0 || filterLibraryCards(mixedCards, 'all').length !== 2 ||
     !libraryMarkup.includes('Filter cards by type') || !libraryMarkup.includes('LAND <b>0</b>') || !libraryMarkup.includes('SPELL <b>1</b>') ||

@@ -1,11 +1,12 @@
 import { useRef, useState, type PointerEvent } from 'react'
 import { aimFoil, aimFoilFromTilt, resetFoil } from './foil'
 import type { CardCopy } from './types'
+import { wearOpacity, wearTexture } from './wear'
 
-export function Card({ card, interactive = false, onClick, large = false, blank = false }: { card: CardCopy; interactive?: boolean; onClick?: () => void; large?: boolean; blank?: boolean }) {
+export function Card({ card, interactive = false, onClick, large = false, blank = false, showFoil = true, showQuality = true, side = 'front', physical = false }: { card: CardCopy; interactive?: boolean; onClick?: () => void; large?: boolean; blank?: boolean; showFoil?: boolean; showQuality?: boolean; side?: 'front' | 'back'; physical?: boolean }) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
-  const [flipped, setFlipped] = useState(false)
+  const [flipped, setFlipped] = useState(side === 'back')
   const perspective = useRef<HTMLDivElement>(null)
   function move(event: PointerEvent<HTMLDivElement>) {
     aimFoil(event.currentTarget, event.clientX, event.clientY)
@@ -24,19 +25,19 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
     aimFoilFromTilt(perspective.current, next.x, next.y)
   }
   const artStyle = {
-    '--cx': `${card.centering_x * 2.3}px`, '--cy': `${card.centering_y * 2.3}px`,
-    '--sc': `${card.shift_c * 2}px`, '--sm': `${card.shift_m * 2}px`,
-    '--sy': `${card.shift_y * 2}px`, '--sk': `${card.shift_k * 2}px`,
-    '--surface': String(card.surface), '--edge': String(card.edge),
+    '--cx': `${(showQuality ? card.centering_x : 0) * 2.3}px`, '--cy': `${(showQuality ? card.centering_y : 0) * 2.3}px`,
+    '--sc': `${(showQuality ? card.shift_c : 0) * 2}px`, '--sm': `${(showQuality ? card.shift_m : 0) * 2}px`,
+    '--sy': `${(showQuality ? card.shift_y : 0) * 2}px`, '--sk': `${(showQuality ? card.shift_k : 0) * 2}px`,
+    '--surface': String(showQuality ? card.surface : 0), '--edge': String(showQuality ? card.edge : 0),
   } as React.CSSProperties
-  return <div className={`card-frame ${large ? 'card-large' : ''} ${card.slab_grade !== null ? 'slabbed' : ''}`}>
+  return <div className={`card-frame ${large ? 'card-large' : ''} ${card.slab_grade !== null ? 'slabbed' : ''} ${physical ? 'physical-card' : ''}`}>
     {card.slab_grade !== null && <div className="slab-label"><strong>THE ARCHIVIST</strong><span>{card.slab_grade} · {card.grade_name}</span></div>}
     <div ref={perspective} className="card-perspective" style={{ transform: `scale(${zoom}) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)` }}
       onPointerDown={beginTouch} onPointerMove={move} onPointerLeave={event => { setTilt({ x: 0, y: 0 }); resetFoil(event.currentTarget) }} onPointerUp={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId) }} onClick={onClick}
       role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={e => { if (onClick && (e.key === 'Enter' || e.key === ' ')) onClick() }}
       aria-label={onClick ? `Inspect ${card.name}` : undefined}>
       <div className={`card-flipper ${flipped ? 'is-flipped' : ''}`}>
-      <article className={`trading-card finish-${card.finish_id} border-${card.border_id || 'classic'} effect-${card.color_effect} ${blank ? 'blank-finish-card' : ''}`} style={artStyle} aria-hidden={flipped}>
+      <article className={`trading-card finish-${card.finish_id} border-${card.border_id || 'classic'} effect-${showQuality ? card.color_effect : 'none'} ${showFoil ? '' : 'print-no-foil'} ${blank ? 'blank-finish-card' : ''}`} style={artStyle} aria-hidden={flipped}>
           {blank ? <div className="blank-card-stock"><span className="blank-card-corner">TC<span>:</span>PS</span><span className="blank-card-emblem">✧</span><span className="blank-card-rule" /><span className="blank-card-caption">AWAITING IMPRESSION</span></div> : <>
           <div className="card-heading"><span className="card-type">{card.type_id}</span><span className="card-finish">{card.finish_id === 'standard' ? 'FIRST PRINT' : card.finish_id.toUpperCase()}</span></div>
           <h3>{card.name}</h3>
@@ -53,9 +54,9 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
           <p className="card-flavor">“{card.flavor}”</p>
           <div className="card-foot"><span>№ {card.id.slice(0, 8).toUpperCase()}</span><span>{card.creator ? `by ${card.creator}` : 'Archive edition'}</span></div>
           </>}
-          <div className="foil-shine" /><div className="wear-overlay" style={{ opacity: Math.max(0, (100 - card.condition) / 190) }} />
+          <div className="foil-shine" />{showQuality && <div className="wear-overlay" style={{ opacity: wearOpacity(card.condition), backgroundImage: wearTexture(card.id, card.condition) }} />}
       </article>
-      <div className={`card-back back-${card.back_id || 'archive'}`} aria-hidden={!flipped}><div className="back-mark">{card.back_id === 'atlas' ? '✧' : card.back_id === 'mischief' ? '♢' : <>TC<span>:</span>PS</>}</div><p>{card.back_id === 'atlas' ? <>THE STARLIT<br />ATLAS</> : card.back_id === 'mischief' ? <>THE VELVET<br />MISCHIEF</> : <>TRADING CARDS<br />PRINT SHOP</>}</p><small>{card.back_id === 'atlas' ? 'EVERY STAR HAS A PLACE' : card.back_id === 'mischief' ? 'A TRICK IN EVERY PRINT' : 'AN EDITION OF ONE, AGAIN AND AGAIN'}</small></div>
+      <div className={`card-back back-${card.back_id || 'archive'}`} aria-hidden={!flipped}><div className="back-mark">{card.back_id === 'atlas' ? '✧' : card.back_id === 'mischief' ? '♢' : <>TC<span>:</span>PS</>}</div><p>{card.back_id === 'atlas' ? <>THE STARLIT<br />ATLAS</> : card.back_id === 'mischief' ? <>THE VELVET<br />MISCHIEF</> : <>TRADING CARDS<br />PRINT SHOP</>}</p><small>{card.back_id === 'atlas' ? 'EVERY STAR HAS A PLACE' : card.back_id === 'mischief' ? 'A TRICK IN EVERY PRINT' : 'AN EDITION OF ONE, AGAIN AND AGAIN'}</small>{showQuality && <div className="wear-overlay" style={{ opacity: wearOpacity(card.condition), backgroundImage: wearTexture(card.id, card.condition) }} />}</div>
       </div>
     </div>
     {card.sleeved === 1 && <span className="sleeve-badge">SLEEVED</span>}

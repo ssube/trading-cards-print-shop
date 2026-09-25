@@ -265,3 +265,25 @@ def test_new_premade_cards_have_bundled_art_and_teach_playable_rules(world):
                 "type_id": card["type_id"], "rule_ids": card["rule_ids"],
                 "theme_id": theme, "finish_id": card["finish_id"],
                 "border_id": card["border_id"], "back_id": card["back_id"]})
+
+
+def test_physical_print_charge_is_atomic_and_protection_applies(world):
+    alice, bob = world
+    with db.transaction() as conn:
+        copy_id = conn.execute("SELECT id FROM copies WHERE owner_id=? LIMIT 1", (alice,)).fetchone()[0]
+        original = game.copy_detail(conn, copy_id, alice)["condition"]
+        paper = game.resource_balance(conn, alice)["paper"]
+        items = [{"copy_id": copy_id, "quantity": 2}]
+        assert game.charge_physical_print(conn, alice, items, "physical-print-123") == {"cards": 2, "sheets": 1}
+        assert game.charge_physical_print(conn, alice, items, "physical-print-123") == {"cards": 2, "sheets": 1}
+        assert game.copy_detail(conn, copy_id, alice)["condition"] == original - 2
+        assert game.resource_balance(conn, alice)["paper"] == paper - 1
+        with pytest.raises(game.GameError):
+            game.charge_physical_print(conn, bob, items, "physical-print-bob")
+        game.sleeve(conn, alice, copy_id)
+        game.charge_physical_print(conn, alice, [{"copy_id": copy_id, "quantity": 9}], "physical-print-sleeved")
+        assert game.copy_detail(conn, copy_id, alice)["condition"] == original - 2
+        with pytest.raises(game.GameError):
+            game.charge_physical_print(conn, alice, [{"copy_id": copy_id, "quantity": 91}], "physical-print-too-many")
+        with pytest.raises(game.GameError):
+            game.charge_physical_print(conn, alice, [{"copy_id": copy_id, "quantity": 1}], "physical-print-123")

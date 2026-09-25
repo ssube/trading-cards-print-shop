@@ -19,6 +19,7 @@ type Save = {
   version: 1; starter_deck_id: string; resources: Record<string, number>; learned: string[]
   library: OfflineCard[]; generation_day: string; generation_count: number; allowance_day: string | null
   jobs: Record<string, string>
+  exports?: Record<string, { signature: string; cards: number; sheets: number }>
 }
 
 function today() { return new Date().toISOString().slice(0, 10) }
@@ -231,6 +232,39 @@ export async function offlineApi<T>(path: string, method = 'GET', body?: unknown
     return { id: jobId, status: 'complete', copy_id: save.jobs[jobId] } as T
   }
   if (path === '/prints' && method === 'POST') return mutate(current => print(current, body, extra?.['Idempotency-Key'] || '')) as T
+  if (path === '/physical-prints' && method === 'POST') return mutate(current => {
+    const key = extra?.['Idempotency-Key'] || ''
+    if (key.length < 8 || key.length > 128) fail('An idempotency key is required')
+    const items = (body as { items?: { copy_id: string; quantity: number }[] })?.items
+    if (!Array.isArray(items) || !items.length) fail('Choose at least one card')
+    const quantities = new Map<string, number>()
+    for (const item of items) {
+      if (typeof item?.copy_id !== 'string' || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 90) fail('Invalid print quantity')
+      quantities.set(item.copy_id, (quantities.get(item.copy_id) || 0) + item.quantity)
+    }
+    const count = [...quantities.values()].reduce((total, quantity) => total + quantity, 0)
+    if (count > 90) fail('Choose at most 90 cards per export')
+    const signature = JSON.stringify([...quantities].sort(([a], [b]) => a.localeCompare(b)))
+    const previous = current.exports?.[key]
+    if (previous) {
+      if (previous.signature !== signature) fail('Print request key was used for different cards')
+      return { cards: previous.cards, sheets: previous.sheets }
+    }
+    const sheets = Math.ceil(count / 9)
+    for (const [copyId, quantity] of quantities) {
+      const item = card(current, copyId)
+      if (!item.sleeved && item.slab_grade === null && item.condition < quantity) fail('A selected copy does not have enough condition')
+    }
+    balance(current, { paper: -sheets })
+    for (const [copyId, quantity] of quantities) {
+      const item = card(current, copyId)
+      if (!item.sleeved && item.slab_grade === null) item.condition -= quantity
+      updateGrade(item)
+    }
+    current.exports ||= {}
+    current.exports[key] = { signature, cards: count, sheets }
+    return { cards: count, sheets }
+  }) as T
   if (path === '/allowance/claim' && method === 'POST') return mutate(current => {
     if (current.allowance_day === today()) fail('Daily supplies already collected')
     current.allowance_day = today()
