@@ -4,8 +4,8 @@ import { FishingGame } from './FishingGame'
 
 type GameId = 'fishing' | 'papermill' | 'tabletop' | 'shooter'
 const games: { id: GameId; icon: string; title: string; description: string; ready: boolean }[] = [
-  { id: 'fishing', icon: '♧', title: 'Fishing', description: 'Every gacha game needs a fishing minigame. The fish have finally signed.', ready: true },
-  { id: 'papermill', icon: '◉', title: 'Feline Papermill', description: 'Hire cats to make paper. Spend the paper hiring cats. The mill has no questions.', ready: true },
+  { id: 'fishing', icon: '♧', title: 'Fishing', description: 'Every gacha game needs a fishing minigame. This pond pays in ink, paper, and occasionally fish.', ready: true },
+  { id: 'papermill', icon: '◉', title: 'Feline Papermill', description: 'Hire cats, make paper, and somehow end up reporting to the cats.', ready: true },
   { id: 'tabletop', icon: '▤', title: 'The Trading Card Game', description: 'Wait, you can play with these cards?', ready: false },
   { id: 'shooter', icon: '✧', title: 'Pressroom Inferno', description: 'It does run doom. The printing press just needs a few more upgrades.', ready: false },
 ]
