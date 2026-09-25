@@ -1,0 +1,17 @@
+.card-flipper{
+  position:relative;width:100%;height:100%;
+  transform-style:preserve-3d;
+  transition:transform .55s cubic-bezier(.2,.75,.2,1);
+}
+.card-flipper.is-flipped{transform:rotateY(180deg)}
+.card-flipper>.trading-card,.card-flipper>.card-back{
+  position:absolute;inset:0;width:100%;height:100%;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
+.card-flipper>.card-back{
+  box-sizing:border-box;border:6px solid #bd9f70;border-radius:5.5% / 3.9%;
+  box-shadow:0 2px 3px #0007,0 13px 23px #0008,inset 0 0 0 2px #e5d3a5;
+  transform:rotateY(180deg);
+}
+.card-flipper .back-mark{display:flex;align-items:center;justify-content:center;white-space:nowrap;font-size:2.4rem}
+@media(prefers-reduced-motion:reduce){.card-flipper{transition:none}}

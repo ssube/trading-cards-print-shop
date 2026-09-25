@@ -26,12 +26,12 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
   } as React.CSSProperties
   return <div className={`card-frame ${large ? 'card-large' : ''} ${card.slab_grade !== null ? 'slabbed' : ''}`}>
     {card.slab_grade !== null && <div className="slab-label"><strong>THE ARCHIVIST</strong><span>{card.slab_grade} · {card.grade_name}</span></div>}
-    <div ref={perspective} className="card-perspective" style={{ transform: `scale(${zoom}) rotateY(${flipped ? 180 + tilt.x : tilt.x}deg) rotateX(${tilt.y}deg)` }}
+    <div ref={perspective} className="card-perspective" style={{ transform: `scale(${zoom}) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)` }}
       onPointerMove={move} onPointerLeave={event => { setTilt({ x: 0, y: 0 }); resetFoil(event.currentTarget) }} onClick={onClick}
       role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={e => { if (onClick && (e.key === 'Enter' || e.key === ' ')) onClick() }}
       aria-label={onClick ? `Inspect ${card.name}` : undefined}>
-      <article className={`trading-card finish-${card.finish_id} effect-${card.color_effect} ${flipped ? 'is-flipped' : ''} ${blank ? 'blank-finish-card' : ''}`} style={artStyle}>
-        {flipped ? <div className="card-back"><div className="back-mark">C<span>:</span>P</div><p>CARDS<br />THE PRINTING</p><small>AN EDITION OF ONE, AGAIN AND AGAIN</small></div> : <>
+      <div className={`card-flipper ${flipped ? 'is-flipped' : ''}`}>
+      <article className={`trading-card finish-${card.finish_id} effect-${card.color_effect} ${blank ? 'blank-finish-card' : ''}`} style={artStyle} aria-hidden={flipped}>
           {blank ? <div className="blank-card-stock"><span className="blank-card-corner">C<span>:</span>P</span><span className="blank-card-emblem">✧</span><span className="blank-card-rule" /><span className="blank-card-caption">AWAITING IMPRESSION</span></div> : <>
           <div className="card-heading"><span className="card-type">{card.type_id}</span><span className="card-finish">{card.finish_id === 'standard' ? 'FIRST PRINT' : card.finish_id.toUpperCase()}</span></div>
           <h3>{card.name}</h3>
@@ -49,8 +49,9 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
           <div className="card-foot"><span>№ {card.id.slice(0, 8).toUpperCase()}</span><span>{card.creator ? `by ${card.creator}` : 'Archive edition'}</span></div>
           </>}
           <div className="foil-shine" /><div className="wear-overlay" style={{ opacity: Math.max(0, (100 - card.condition) / 190) }} />
-        </>}
       </article>
+      <div className="card-back" aria-hidden={!flipped}><div className="back-mark">C<span>:</span>P</div><p>CARDS<br />THE PRINTING</p><small>AN EDITION OF ONE, AGAIN AND AGAIN</small></div>
+      </div>
     </div>
     {card.sleeved === 1 && <span className="sleeve-badge">SLEEVED</span>}
     {interactive && <div className="card-controls"><button onClick={() => setFlipped(!flipped)}>{flipped ? 'Show front' : 'Flip card'}</button><label>Zoom <input type="range" min="1" max="1.6" step="0.05" value={zoom} onChange={e => setZoom(Number(e.target.value))} /></label><button onClick={() => rotate(-10)} aria-label="Rotate left">↶</button><button onClick={() => rotate(10)} aria-label="Rotate right">↷</button></div>}

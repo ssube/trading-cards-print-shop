@@ -7,5 +7,6 @@ import './finish-gallery.css'
 import './collection-progress.css'
 import './starter-welcome.css'
 import './foil.css'
+import './card-flip.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>)
