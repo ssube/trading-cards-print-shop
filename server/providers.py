@@ -28,7 +28,38 @@ def bundled_art(design_id):
     return f"/assets/{dest.name}"
 
 
+def minigame_art(design_id, name):
+    """Create recognizable code-native art for the four minigame card sets."""
+    if design_id.startswith("fish-"):
+        color = {"fish-inkscale": "#687bd3", "fish-moonkoi": "#e6bca0"}.get(design_id, "#b7dca3")
+        backdrop = "#123a4c"
+        figure = f'<path d="M90 280q105-130 230 0-125 130-230 0l-55-85v170z" fill="{color}" stroke="#ecedd8" stroke-width="7"/><circle cx="242" cy="258" r="12" fill="#183b43"/><path d="M165 280h-45m55 28h-42" stroke="#fff" stroke-width="6" opacity=".5"/>'
+    elif design_id.startswith("mill-"):
+        color = {"mill-roller": "#85b7c5", "mill-master": "#f0b988"}.get(design_id, "#dcc27e")
+        backdrop = "#213a36"
+        figure = f'<path d="M100 420V200l45-70 50 40 60-40 45 70v220Z" fill="{color}" stroke="#f8eac5" stroke-width="7"/><circle cx="165" cy="245" r="9" fill="#25342f"/><circle cx="235" cy="245" r="9" fill="#25342f"/><path d="M185 286q15 20 30 0" fill="none" stroke="#25342f" stroke-width="9"/><path d="M75 445h250v55H75z" fill="#efe5c8"/>'
+    elif design_id.startswith("demon-"):
+        color = {"demon-ashwarden": "#c88a72", "demon-pressfiend": "#aa72a2"}.get(design_id, "#eaa45d")
+        backdrop = "#251821"
+        figure = f'<path d="M105 432Q77 240 138 173L90 90l98 65 48 0 78-65-50 99q63 78 31 243Z" fill="{color}" stroke="#f3c68b" stroke-width="8"/><path d="M146 248l42 20m68-20-42 20" stroke="#361923" stroke-width="16"/><path d="M142 355q58 40 116 0" fill="none" stroke="#361923" stroke-width="10"/>'
+    elif design_id.startswith("tabletop-"):
+        color = {"tabletop-counter-keeper": "#c5a1db", "tabletop-playmaker": "#9ac7ba"}.get(design_id, "#dfc38d")
+        backdrop = "#24333e"
+        figure = f'<path d="M52 360l148-100 148 100-148 100z" fill="#815e4a" stroke="#ecd2a0" stroke-width="9"/><path d="M109 168l88-43 90 43v135l-90 42-88-42z" fill="{color}" stroke="#f5e7ce" stroke-width="7"/><circle cx="197" cy="220" r="31" fill="#324454"/><path d="M130 289l65 32 67-32" fill="none" stroke="#324454" stroke-width="7"/>'
+    else:
+        return None
+    label = html.escape(name[:28])
+    svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560"><rect width="400" height="560" fill="{backdrop}"/><circle cx="200" cy="260" r="155" fill="{color}" opacity=".18"/>{figure}<path d="M28 30h344v500H28z" fill="none" stroke="{color}" stroke-width="3"/><text x="200" y="535" fill="#fff2d6" text-anchor="middle" font-family="serif" font-size="16">{label}</text></svg>'
+    ASSETS.mkdir(parents=True, exist_ok=True)
+    path = ASSETS / f"{design_id}.svg"
+    path.write_text(svg)
+    return f"/assets/{path.name}"
+
+
 def demo_art(design_id, theme, name):
+    special = minigame_art(design_id, name)
+    if special:
+        return special
     ASSETS.mkdir(parents=True, exist_ok=True)
     rng = random.Random(design_id)
     palettes = {

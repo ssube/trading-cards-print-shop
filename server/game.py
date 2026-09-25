@@ -183,6 +183,9 @@ def seed():
                 db.execute("UPDATE designs SET border_id=?,back_id=? WHERE id=?", (border, back, did))
                 if bundled:
                     db.execute("UPDATE designs SET art_path=? WHERE id=?", (bundled, did))
+            if did.startswith(("fish-", "mill-", "demon-", "tabletop-")):
+                # Replace older generic demo art when a world is upgraded.
+                db.execute("UPDATE designs SET art_path=? WHERE id=?", (demo_art(did, theme, name), did))
             if did in variants:
                 variant_id, variant_finish = variants[did]
                 if not db.execute("SELECT 1 FROM designs WHERE id=?", (variant_id,)).fetchone():
