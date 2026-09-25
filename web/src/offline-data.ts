@@ -33,6 +33,12 @@ const others = [
   ['standard', 'finish', 'Standard', 'Soft matte print.'],
   ['shimmer', 'finish', 'Shimmer', 'A narrow, shifting foil gleam.'],
   ['holo', 'finish', 'Full Holo', 'An extravagant prismatic surface.'],
+  ['etched', 'finish', 'Etched Silver', 'Fine metallic lines catch the light.'],
+  ['starfield', 'finish', 'Starfield', 'Tiny points of light glint across the card.'],
+  ['confetti', 'finish', 'Confetti', 'Scattered metallic color catches the light.'],
+  ['glitter', 'finish', 'Glitter', 'Dense, scattered foil flecks sparkle as the card moves.'],
+  ['aurora', 'finish', 'Aurora', 'Soft waves of green and violet light.'],
+  ['spooky', 'finish', 'Spooky', 'Ghostly shapes drift through a cold, violet haze.'],
   ['classic', 'border', 'Classic Gilt', 'Warm paper and a gilt frame.'],
   ['starlit', 'border', 'Starlit Filigree', 'A midnight frame traced with stars.'],
   ['velvet', 'border', 'Velvet Scrollwork', 'A rose and ink ornamental frame.'],
@@ -42,7 +48,7 @@ const others = [
 ] as const
 
 export const offlineCatalog: Part[] = [
-  ...others.map(([id, kind, name, description]) => ({ id, kind, name, description, power: 0, slot: '', cost_json: kind === 'finish' ? JSON.stringify({ foil: id === 'holo' ? 3 : id === 'shimmer' ? 1 : 0 }) : '{}', learned: 0 })),
+  ...others.map(([id, kind, name, description]) => ({ id, kind, name, description, power: 0, slot: '', cost_json: kind === 'finish' ? JSON.stringify({ foil: ({ standard: 0, shimmer: 1, etched: 1, starfield: 2, glitter: 2, aurora: 2, spooky: 2, confetti: 3, holo: 3 } as Record<string, number>)[id] }) : '{}', learned: 0 })),
   ...rules.map(([id, name, description, power, slot]) => ({ id, kind: 'rule', name, description, power, slot, cost_json: '{}', learned: 0 })),
 ]
 
@@ -105,6 +111,12 @@ export function offlineDesigns(): Design[] {
     { ...cat, id: 'reward-press-cat-holo', finish_id: 'holo' },
     { ...map, id: 'reward-starlit-map-holo', finish_id: 'holo' },
     { ...fox, id: 'reward-foil-fox-holo', finish_id: 'holo' },
+    { ...cat, id: 'starter-press-cat-etched', finish_id: 'etched' },
+    { ...map, id: 'npc-starlit-map-starfield', finish_id: 'starfield' },
+    { ...fox, id: 'npc-foil-fox-glitter', finish_id: 'glitter' },
+    { ...design('npc-sunlit-note', 'A Note from the Sun', 'Please return the moon by Thursday.', 'spell', ['arrival', 'draw'], 'celestial', 'holo', 'starlit', 'atlas'), id: 'npc-sunlit-note-confetti', finish_id: 'confetti' },
+    { ...design('npc-tideglass-portal', 'The Tideglass Portal', 'Every shore has a door that the tide remembers.', 'spell', ['arrival', 'if_spell', 'return'], 'maritime', 'standard', 'starlit', 'atlas'), id: 'npc-tideglass-portal-aurora', finish_id: 'aurora' },
+    { ...design('demon-ashwarden', "Ashwarden's Gate", "Its hinges were cast from yesterday's excuses.", 'land', ['dusk', 'mend'], 'infernal', 'shimmer'), id: 'demon-ashwarden-spooky', finish_id: 'spooky' },
     { ...design('npc-borrowed-dawn', 'The Orchard of Borrowed Dawn', 'The fruit ripens only when someone needs another morning.', 'land', ['dawn', 'if_land', 'mend'], 'botanical'), id: 'reward-borrowed-dawn-holo', finish_id: 'holo' },
     { ...design('npc-clockwork-heron', 'The Clockwork Heron', "It remembers tomorrow's stars better than yesterday's roads.", 'monster', ['on_draw', 'if_monster', 'glimpse'], 'clockwork', 'shimmer', 'starlit', 'atlas'), id: 'reward-clockwork-heron-holo', finish_id: 'holo' },
     { ...design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['sleeved', 'echo'], 'storybook'), id: 'reward-mill-master-holo', finish_id: 'holo' },
@@ -124,4 +136,4 @@ export function offlineStarterDecks(): StarterDeck[] {
   ]
 }
 
-export const discoveryIds = ['npc-starlit-map', 'npc-foil-fox', 'npc-sunlit-note', 'npc-borrowed-dawn', 'npc-clockwork-heron', 'npc-tideglass-portal', 'starter-press-cat-foil', 'npc-starlit-map-foil', 'npc-foil-fox-standard']
+export const discoveryIds = ['npc-starlit-map', 'npc-foil-fox', 'npc-sunlit-note', 'npc-borrowed-dawn', 'npc-clockwork-heron', 'npc-tideglass-portal', 'starter-press-cat-foil', 'npc-starlit-map-foil', 'npc-foil-fox-standard', 'starter-press-cat-etched', 'npc-starlit-map-starfield', 'npc-foil-fox-glitter', 'npc-sunlit-note-confetti', 'npc-tideglass-portal-aurora', 'demon-ashwarden-spooky']

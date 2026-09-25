@@ -69,6 +69,12 @@ PARTS = [
     ("standard", "finish", "Standard", "Soft matte print.", 0),
     ("shimmer", "finish", "Shimmer", "A narrow, shifting foil gleam.", 0),
     ("holo", "finish", "Full Holo", "An extravagant prismatic surface.", 0),
+    ("etched", "finish", "Etched Silver", "Fine metallic lines catch the light.", 0),
+    ("starfield", "finish", "Starfield", "Tiny points of light glint across the card.", 0),
+    ("confetti", "finish", "Confetti", "Scattered metallic color catches the light.", 0),
+    ("glitter", "finish", "Glitter", "Dense, scattered foil flecks sparkle as the card moves.", 0),
+    ("aurora", "finish", "Aurora", "Soft waves of green and violet light.", 0),
+    ("spooky", "finish", "Spooky", "Ghostly shapes drift through a cold, violet haze.", 0),
     ("classic", "border", "Classic Gilt", "Warm paper and a gilt frame.", 0),
     ("starlit", "border", "Starlit Filigree", "A midnight frame traced with stars.", 0),
     ("velvet", "border", "Velvet Scrollwork", "A rose and ink ornamental frame.", 0),
@@ -94,7 +100,8 @@ STARTER_DECKS = {
     },
 }
 RESOURCE_KINDS = {"paper", "ink", "sleeve", "foil"}
-FINISH_COST = {"standard": 0, "shimmer": 1, "holo": 3}
+FINISH_COST = {"standard": 0, "shimmer": 1, "etched": 1, "starfield": 2,
+               "glitter": 2, "aurora": 2, "spooky": 2, "confetti": 3, "holo": 3}
 DESIGN_STYLES = {"npc-starlit-map": ("starlit", "atlas"),
                  "npc-foil-fox": ("velvet", "mischief"),
                  "npc-sunlit-note": ("starlit", "atlas"),
@@ -197,6 +204,15 @@ def seed():
                     db.execute("UPDATE designs SET border_id=?,back_id=? WHERE id=?", (border, back, variant_id))
                     if bundled:
                         db.execute("UPDATE designs SET art_path=? WHERE id=?", (bundled, variant_id))
+        # Specimen editions let collectors study each finish without requiring an admin grant.
+        for base_id, finish in (("starter-press-cat", "etched"), ("npc-starlit-map", "starfield"),
+                                ("npc-foil-fox", "glitter"), ("npc-sunlit-note", "confetti"),
+                                ("npc-tideglass-portal", "aurora"), ("demon-ashwarden", "spooky")):
+            base = db.execute("SELECT * FROM designs WHERE id=?", (base_id,)).fetchone()
+            db.execute("INSERT OR IGNORE INTO designs(id,creator_id,type_id,rule_ids,theme_id,finish_id,name,flavor,art_path,created_at,border_id,back_id) "
+                       "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                       (f"{base_id}-{finish}", None, base["type_id"], base["rule_ids"], base["theme_id"],
+                        finish, base["name"], base["flavor"], base["art_path"], stamp(), base["border_id"], base["back_id"]))
         from .decks import seed_rewards
         seed_rewards(db)
         briefs = [
@@ -215,6 +231,12 @@ def seed():
             ("celestial-lesson", "Astrid the Binder", "A celestial lesson", {"resources": {"ink": 2}}, {"learn": "celestial"}),
             ("shimmer-lesson", "The Foil Fox", "The secret of shimmer", {"resources": {"paper": 3, "ink": 2}}, {"learn": "shimmer"}),
             ("holo-lesson", "The Foil Fox", "The full spectrum", {"resources": {"foil": 3}}, {"learn": "holo"}),
+            ("etched-lesson", "Pip the Inker", "An etched impression", {"resources": {"foil": 1, "ink": 2}}, {"design_id": "starter-press-cat-etched"}),
+            ("starfield-lesson", "Astrid the Binder", "A pocketful of stars", {"resources": {"foil": 2, "ink": 2}}, {"design_id": "npc-starlit-map-starfield"}),
+            ("glitter-lesson", "The Foil Fox", "A little sparkle", {"resources": {"foil": 2, "paper": 2}}, {"design_id": "npc-foil-fox-glitter"}),
+            ("confetti-lesson", "Madam Moth", "A celebration in color", {"resources": {"foil": 3, "ink": 2}}, {"design_id": "npc-sunlit-note-confetti"}),
+            ("aurora-lesson", "Madam Moth", "The northern press", {"resources": {"foil": 2, "ink": 3}}, {"design_id": "npc-tideglass-portal-aurora"}),
+            ("spooky-lesson", "The Archivist", "The haunted proof", {"resources": {"foil": 2, "paper": 2}}, {"design_id": "demon-ashwarden-spooky"}),
             ("starlit-map", "Astrid the Binder", "Trade for a celestial map", {"type": "land", "min_grade": 6}, {"design_id": "npc-starlit-map"}),
             ("fox-copy", "The Foil Fox", "A shining example", {"type": "monster", "min_grade": 7}, {"design_id": "npc-foil-fox"}),
             ("sunlit-note", "Madam Moth", "The rarest letter", {"resources": {"foil": 3, "ink": 1}}, {"design_id": "npc-sunlit-note"}),

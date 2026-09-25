@@ -196,7 +196,7 @@ def test_collection_progress_counts_designs_once(world):
     with db.connect() as conn:
         initial = game.collection_progress(conn, alice)
         assert initial["cards"]["collected"] == 3
-        assert initial["cards"]["total"] == 32
+        assert initial["cards"]["total"] == 38
         assert initial["foils"]["collected"] == 2
         assert initial["borders"] == {"collected": 1, "total": 3, "percent": 33}
         assert initial["backs"] == {"collected": 1, "total": 3, "percent": 33}
@@ -206,10 +206,24 @@ def test_collection_progress_counts_designs_once(world):
     with db.transaction() as conn:
         game.reprint(conn, alice, printed)
         after = game.collection_progress(conn, alice)
-        assert after["cards"] == {"collected": 4, "total": 33, "percent": 12}
+        assert after["cards"] == {"collected": 4, "total": 39, "percent": 10}
         assert game.collection_progress(conn, bob)["cards"]["collected"] == 3
         conn.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (alice, "holo"))
         assert game.collection_progress(conn, alice)["foils"]["collected"] == 3
+
+
+def test_new_foil_finishes_can_be_collected_and_studied(world):
+    alice, _ = world
+    finishes = {"shimmer", "holo", "etched", "starfield", "glitter", "confetti", "aurora", "spooky"}
+    with db.transaction() as conn:
+        catalog = {part["id"]: part for part in game.catalogue(conn, alice) if part["kind"] == "finish"}
+        assert set(catalog) == finishes | {"standard"}
+        assert all(json.loads(catalog[finish]["cost_json"])["foil"] > 0 for finish in finishes)
+        game.adjust_resources(conn, alice, {"foil": 2})
+        reward = game.npc_trade(conn, alice, "glitter-lesson")
+        assert game.copy_detail(conn, reward["copy_id"], alice)["finish_id"] == "glitter"
+        assert "glitter" in game.study(conn, alice, reward["copy_id"])
+        assert next(part for part in game.catalogue(conn, alice) if part["id"] == "glitter")["learned"] == 1
 
 
 def test_starter_decks_are_pre_generated_and_unlock_their_parts(world, monkeypatch):

@@ -7,7 +7,7 @@ import type { CardCopy, CollectionProgress, Part, State, User } from './types'
 const STORAGE_KEY = 'cards-the-printing.offline-demo.v1'
 const PROFILE: User = { id: 0, username: 'Demo Collector', is_admin: 0, csrf: '', starter_deck_id: null }
 const gradeNames = ['Poor', 'Fair', 'Very Good', 'Very Good+', 'Excellent', 'Excellent+', 'Near Mint', 'Near Mint-Mint', 'Mint', 'Gem Mint']
-const foilCost: Record<string, number> = { standard: 0, shimmer: 1, holo: 3 }
+const foilCost: Record<string, number> = { standard: 0, shimmer: 1, etched: 1, starfield: 2, glitter: 2, aurora: 2, spooky: 2, confetti: 3, holo: 3 }
 const names: Record<string, Record<string, string[]>> = {
   storybook: { land: ['The Library Between Moons', 'The Kittens’ Paper Mill'], monster: ['Sir Pounce of the Press', 'Moth of a Thousand Margins'], spell: ['An Unexpected Footnote', 'The Last Drop of Ink'] },
   celestial: { land: ['The Observatory of Small Stars', 'An Orchard of Forgotten Maps'], monster: ['The Starbound Typesetter', 'A Moth Among Moons'], spell: ['A Note to the Night', 'The Missing Constellation'] },
