@@ -156,6 +156,7 @@ async def state(user=Depends(auth)):
                                               (user["id"], item["id"], game.day())).fetchone())
             npcs.append(item)
         return {"resources": resources, "library": library, "catalog": game.catalogue(db, user["id"]),
+                "collection_progress": game.collection_progress(db, user["id"]),
                 "commissions": commissions, "npcs": npcs, "generation_count": game.generation_count(db, user["id"]),
                 "generation_limit": int(os.getenv("NEW_DESIGNS_PER_DAY", "5")),
                 "allowance_claimed": game.daily_allowance_claimed(db, user["id"])}
@@ -321,7 +322,8 @@ class AdminPayload(BaseModel):
 async def admin_overview(request: Request):
     user = session_user(request, admin=True)
     with connect() as db:
-        return {"users": [dict(r) for r in db.execute("SELECT id,username,is_admin,created_at FROM users ORDER BY id DESC")],
+        return {"users": [{**dict(r), "collection_progress": game.collection_progress(db, r["id"])}
+                          for r in db.execute("SELECT id,username,is_admin,created_at FROM users ORDER BY id DESC")],
                 "designs": [dict(r) for r in db.execute("SELECT id,name,type_id,finish_id FROM designs ORDER BY created_at DESC LIMIT 100")],
                 "audit": [dict(r) for r in db.execute("SELECT * FROM audit ORDER BY id DESC LIMIT 50")]}
 

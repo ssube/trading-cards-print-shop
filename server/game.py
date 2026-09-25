@@ -175,6 +175,23 @@ def catalogue(db, user_id):
     return [obj(r) for r in rows]
 
 
+def collection_progress(db, user_id):
+    def progress(collected, total):
+        return {"collected": collected, "total": total,
+                "percent": round(100 * collected / total) if total else 0}
+
+    result = {}
+    for label, kind in (("rules", "rule"), ("foils", "finish")):
+        total = db.execute("SELECT COUNT(*) FROM parts WHERE kind=? AND active=1", (kind,)).fetchone()[0]
+        collected = db.execute("SELECT COUNT(*) FROM learned l JOIN parts p ON p.id=l.part_id "
+                               "WHERE l.user_id=? AND p.kind=? AND p.active=1", (user_id, kind)).fetchone()[0]
+        result[label] = progress(collected, total)
+    total = db.execute("SELECT COUNT(*) FROM designs").fetchone()[0]
+    collected = db.execute("SELECT COUNT(DISTINCT design_id) FROM copies WHERE owner_id=?", (user_id,)).fetchone()[0]
+    result["cards"] = progress(collected, total)
+    return result
+
+
 def print_cost(db, rule_ids, finish_id):
     row = db.execute("SELECT cost_json FROM parts WHERE id=? AND kind='finish'", (finish_id,)).fetchone()
     need(row is not None, "Unknown finish")

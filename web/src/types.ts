@@ -10,6 +10,8 @@ export type CardCopy = {
 }
 export type Commission = { id: string; title: string; description: string; requirement: Record<string, unknown>; reward: Record<string, number>; repeatable: number; claimed: number }
 export type NpcOffer = { id: string; npc_name: string; title: string; requirement: Record<string, unknown>; reward: Record<string, unknown>; claimed: boolean }
-export type State = { resources: Record<string, number>; library: CardCopy[]; catalog: Part[]; commissions: Commission[]; npcs: NpcOffer[]; generation_count: number; generation_limit: number; allowance_claimed: boolean }
+export type ProgressCount = { collected: number; total: number; percent: number }
+export type CollectionProgress = { rules: ProgressCount; foils: ProgressCount; cards: ProgressCount }
+export type State = { resources: Record<string, number>; library: CardCopy[]; catalog: Part[]; commissions: Commission[]; npcs: NpcOffer[]; collection_progress: CollectionProgress; generation_count: number; generation_limit: number; allowance_claimed: boolean }
 export type Listing = { id: string; seller_id: number; seller: string; copy_id: string; wish: string; card: CardCopy; offers: { id: string; status: string; cards: CardCopy[] }[] }
 export type User = { id: number; username: string; is_admin: number; csrf: string }

@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 const output = resolve('node_modules/.cache/cards-render')
 mkdirSync(output, { recursive: true })
 await build({
-  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/FinishGallery.tsx'],
+  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/FinishGallery.tsx', 'src/CollectionProgress.tsx'],
   outdir: output,
   bundle: true,
   platform: 'node',
@@ -20,6 +20,7 @@ const require = createRequire(import.meta.url)
 const { default: App } = require(resolve(output, 'App.js'))
 const { Card } = require(resolve(output, 'Card.js'))
 const { FinishGallery } = require(resolve(output, 'FinishGallery.js'))
+const { CollectionProgress } = require(resolve(output, 'CollectionProgress.js'))
 const sample = {
   id: 'test-copy-12345678', design_id: 'starter-press-cat', owner_id: 1, creator: null,
   origin_id: null, type_id: 'monster', rule_ids: ['arrival', 'draw'],
@@ -40,8 +41,14 @@ const galleryMarkup = renderToStaticMarkup(createElement(FinishGallery, {
   library: [{ ...sample, finish_id: 'standard' }],
   onUseFinish: () => {},
 }))
+const progressMarkup = renderToStaticMarkup(createElement(CollectionProgress, { progress: {
+  rules: { collected: 2, total: 8, percent: 25 },
+  foils: { collected: 1, total: 3, percent: 33 },
+  cards: { collected: 1, total: 4, percent: 25 },
+} }))
 if (!appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window') ||
-    !galleryMarkup.includes('Blank print stock') || !galleryMarkup.includes('Apprentice Press Cat') || !galleryMarkup.includes('Holo')) {
+    !galleryMarkup.includes('Blank print stock') || !galleryMarkup.includes('Apprentice Press Cat') || !galleryMarkup.includes('Holo') ||
+    !progressMarkup.includes('Unique cards') || !progressMarkup.includes('33%') || !progressMarkup.includes('1 / 4 in your box')) {
   throw new Error('Render smoke test failed')
 }
-console.log('App shell, card, and finish gallery render successfully')
+console.log('App shell, card, finish gallery, and collection progress render successfully')

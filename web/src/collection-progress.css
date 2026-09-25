@@ -1,0 +1,23 @@
+.collection-progress{margin:24px auto 0;width:calc(100% - 98px);max-width:1332px;display:grid;grid-template-columns:minmax(155px,.8fr) minmax(0,3fr);gap:25px;align-items:center;padding:17px 21px;border:1px solid #9c8c6555;border-radius:9px;background:linear-gradient(110deg,#2b3733,#1b292b 75%);box-shadow:inset 0 1px #fff1,0 12px 27px #0002}
+.collection-progress-title{display:grid;gap:5px}
+.collection-progress-title span{color:#d2b782;font-size:.58rem;font-weight:700;letter-spacing:.16em}
+.collection-progress-title strong{color:#e8dfcb;font:italic 1rem 'Fraunces',serif}
+.collection-progress-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.collection-progress-item{display:flex;gap:10px;align-items:center;min-width:0}
+.collection-progress-icon{color:#d9bd87;font-size:1.35rem;width:26px;text-align:center}
+.collection-progress-copy{min-width:0;flex:1}
+.collection-progress-line{display:flex;justify-content:space-between;gap:7px;align-items:baseline}
+.collection-progress-line strong{color:#ddd8c7;font-size:.7rem;white-space:nowrap}
+.collection-progress-line b{color:#f2d89e;font:1.1rem 'Fraunces',serif}
+.collection-progress-item progress{display:block;width:100%;height:5px;margin:7px 0 4px;border:0;border-radius:6px;overflow:hidden;background:#5c655b}
+.collection-progress-item progress::-webkit-progress-bar{background:#5c655b;border-radius:6px}
+.collection-progress-item progress::-webkit-progress-value{background:linear-gradient(90deg,#967c59,#eccf8e);border-radius:6px}
+.collection-progress-item progress::-moz-progress-bar{background:linear-gradient(90deg,#967c59,#eccf8e);border-radius:6px}
+.collection-progress-copy small{color:#aeb9aa;font-size:.56rem;letter-spacing:.08em;text-transform:uppercase}
+.admin-player-progress{display:flex;gap:9px;flex-wrap:wrap;grid-column:1/-1;padding:2px 0 0 23px}
+.player-ledger-row{display:grid;grid-template-columns:45px 1fr;gap:4px 12px}
+.player-ledger-row>span{min-width:0}
+.admin-player-progress span{color:#c3b68e;font-size:.57rem;letter-spacing:.04em}
+@media(max-width:1050px){.collection-progress{width:calc(100% - 52px);grid-template-columns:1fr;gap:12px}.collection-progress-title{display:flex;gap:12px;align-items:baseline}.collection-progress-grid{gap:15px}}
+@media(max-width:750px){.collection-progress{width:calc(100% - 32px);margin-top:16px;padding:15px}.collection-progress-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.collection-progress-item{gap:3px}.collection-progress-icon{display:none}.collection-progress-line{display:block}.collection-progress-line strong{font-size:.62rem}.collection-progress-line b{display:block;margin-top:3px}.collection-progress-copy small{font-size:.48rem}}
+@media(max-width:420px){.collection-progress-title strong{display:none}.collection-progress-grid{gap:7px}.collection-progress-line strong{white-space:normal}}

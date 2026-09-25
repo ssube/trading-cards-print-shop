@@ -156,3 +156,22 @@ def test_generation_uses_theme_and_rules_but_excludes_finish(world, monkeypatch)
         assert context["theme_description"]
         assert context["rules"][0]["description"]
         assert not any(key.startswith("finish") for key in context)
+
+
+def test_collection_progress_counts_designs_once(world):
+    alice, bob = world
+    with db.connect() as conn:
+        initial = game.collection_progress(conn, alice)
+        assert initial["cards"]["collected"] == 1
+        assert initial["cards"]["total"] == 4
+        assert initial["foils"]["collected"] == 1
+        assert initial["rules"]["collected"] == 2
+
+    printed = new_card(alice, "progress-print-123")
+    with db.transaction() as conn:
+        game.reprint(conn, alice, printed)
+        after = game.collection_progress(conn, alice)
+        assert after["cards"] == {"collected": 2, "total": 5, "percent": 40}
+        assert game.collection_progress(conn, bob)["cards"]["collected"] == 1
+        conn.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (alice, "shimmer"))
+        assert game.collection_progress(conn, alice)["foils"]["collected"] == 2

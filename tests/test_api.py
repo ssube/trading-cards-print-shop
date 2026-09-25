@@ -36,5 +36,7 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
             library = (await client.get("/api/state")).json()["library"]
             assert len(library) == 2
             assert all(card["art_path"].startswith("/assets/") for card in library)
+            progress = (await client.get("/api/state")).json()["collection_progress"]
+            assert progress["cards"] == {"collected": 2, "total": 5, "percent": 40}
 
     asyncio.run(scenario())
