@@ -3,3 +3,8 @@
 .topbar-allowance{flex:0 0 auto;border:1px solid #dfc48a;border-radius:30px;background:linear-gradient(#e9d09a,#b9955c);color:#1c2928;padding:8px 12px;font-size:.68rem;font-weight:800;white-space:nowrap}
 .topbar-allowance:hover{filter:brightness(1.09)}
 .topbar-allowance:focus-visible{outline:2px solid #fff2c6;outline-offset:2px}
+.offline-sidebar-label{margin:14px 11px 0;padding:7px 9px;border:1px solid #d8bc8270;border-radius:5px;color:#f0d9a8;background:#685b3538;font-size:.55rem;font-weight:800;letter-spacing:.13em;text-align:center}
+.offline-banner{display:flex;gap:13px;align-items:center;padding:10px 46px;border-bottom:1px solid #ccaa6e55;background:#5b4b3066;color:#e2d7be;font-size:.72rem;line-height:1.45}
+.offline-banner strong{color:#ffe0a5;font-size:.6rem;letter-spacing:.13em;white-space:nowrap}
+@media(max-width:1050px){.offline-banner{padding:10px 25px}}
+@media(max-width:750px){.offline-sidebar-label{white-space:nowrap;margin:0 10px 0 0}.offline-banner{padding:10px 17px;align-items:start;flex-direction:column;gap:3px}}

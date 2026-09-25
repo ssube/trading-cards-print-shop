@@ -63,6 +63,7 @@
 .starter-auth-form label input{width:100%;margin-top:6px}
 .starter-submit{grid-column:1/-1;width:100%;margin-top:2px}
 .starter-auth-error{grid-column:1/-1;color:#f4ad94;font-size:.7rem;margin:0}
+.starter-demo-entry{display:block;width:min(715px,100%);margin:12px auto 0;text-align:center}
 .starter-auth-footer{text-align:center;color:#aaaf9e;font-size:.56rem;letter-spacing:.18em;margin-top:28px}
 .starter-login-page .starter-auth-intro{padding-top:8vh}
 .starter-login-page .starter-auth-form{max-width:520px;grid-template-columns:1fr;margin-top:32px}

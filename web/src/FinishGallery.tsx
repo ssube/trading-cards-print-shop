@@ -16,10 +16,11 @@ function foilCost(finish: Part) {
   catch { return 0 }
 }
 
-export function FinishGallery({ catalog, library, onUseFinish }: {
+export function FinishGallery({ catalog, library, onUseFinish, offline = false }: {
   catalog: Part[]
   library: CardCopy[]
   onUseFinish: (finishId: string) => void
+  offline?: boolean
 }) {
   const finishes = catalog.filter(part => part.kind === 'finish')
   const standardCards = library.filter(card => card.finish_id === 'standard')
@@ -64,7 +65,7 @@ export function FinishGallery({ catalog, library, onUseFinish }: {
             </button>)}
           </div>
         </div>
-        {selectedFinish && <div className="finish-gallery-action"><p><strong>{selectedFinish.name}</strong> · {selectedFinish.description}</p><button className="primary" type="button" disabled={!selectedFinish.learned} onClick={() => onUseFinish(selectedFinish.id)}>{selectedFinish.learned ? 'Use at the press ↗' : 'Learn through trading'}</button></div>}
+        {selectedFinish && <div className="finish-gallery-action"><p><strong>{selectedFinish.name}</strong> · {selectedFinish.description}</p><button className="primary" type="button" disabled={!selectedFinish.learned} onClick={() => onUseFinish(selectedFinish.id)}>{selectedFinish.learned ? 'Use at the press ↗' : offline ? 'Learn from a discovery card' : 'Learn through trading'}</button></div>}
       </div>
     </div>
   </section>

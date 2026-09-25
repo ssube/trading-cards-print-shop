@@ -2,7 +2,7 @@ import { useRef, type FormEvent } from 'react'
 import { aimFoil, resetFoil } from './foil'
 import type { StarterDeck } from './types'
 
-export function StarterWelcome({ mode, setMode, decks, selectedDeck, setSelectedDeck, username, setUsername, password, setPassword, message, busy, onSubmit }: {
+export function StarterWelcome({ mode, setMode, decks, selectedDeck, setSelectedDeck, username, setUsername, password, setPassword, message, busy, onSubmit, offline, onTryDemo, onResetDemo }: {
   mode: 'login' | 'register'
   setMode: (mode: 'login' | 'register') => void
   decks: StarterDeck[]
@@ -15,8 +15,11 @@ export function StarterWelcome({ mode, setMode, decks, selectedDeck, setSelected
   message: string
   busy: boolean
   onSubmit: () => void
+  offline?: boolean
+  onTryDemo?: () => void
+  onResetDemo?: () => void
 }) {
-  const registering = mode === 'register'
+  const registering = offline || mode === 'register'
   const fanRef = useRef<HTMLDivElement>(null)
   const chosen = decks.find(deck => deck.id === selectedDeck)
   const fanCards = chosen?.cards.flatMap(card => Array.from({ length: card.copies }, (_, copy) => ({ ...card, copy }))) || []
@@ -25,8 +28,8 @@ export function StarterWelcome({ mode, setMode, decks, selectedDeck, setSelected
     <div className="starter-auth-glow" aria-hidden="true" />
     <header className="starter-auth-header"><div className="brand-seal">C<span>:</span>P</div><div><strong>Cards:</strong><span>the Printing</span></div></header>
     <div className="starter-auth-body">
-      <div className="starter-auth-intro"><p className="eyebrow">A NEW COLLECTOR ARRIVES</p><h1>{registering ? <>Choose your first <em>story.</em></> : <>Welcome back to <em>the press.</em></>}</h1><p>{registering ? 'Every great collection begins with a deck. Pick a theme and meet the cards that will start your printing journey.' : 'Your collection is waiting where you left it.'}</p></div>
-      <div className="starter-auth-switch" role="group" aria-label="Account access"><button type="button" className={registering ? 'active' : ''} onClick={() => setMode('register')}>Begin collecting</button><button type="button" className={!registering ? 'active' : ''} onClick={() => setMode('login')}>Sign in</button></div>
+      <div className="starter-auth-intro"><p className="eyebrow">{offline ? 'OFFLINE DEMO · SAVED IN THIS BROWSER' : 'A NEW COLLECTOR ARRIVES'}</p><h1>{registering ? <>Choose your first <em>story.</em></> : <>Welcome back to <em>the press.</em></>}</h1><p>{offline ? 'Choose a starter deck and play without an account. Your collection stays in this browser and will not be shared.' : registering ? 'Every great collection begins with a deck. Pick a theme and meet the cards that will start your printing journey.' : 'Your collection is waiting where you left it.'}</p></div>
+      {!offline && <div className="starter-auth-switch" role="group" aria-label="Account access"><button type="button" className={registering ? 'active' : ''} onClick={() => setMode('register')}>Begin collecting</button><button type="button" className={!registering ? 'active' : ''} onClick={() => setMode('login')}>Sign in</button></div>}
       {registering && <section className="starter-deck-section" aria-labelledby="starter-deck-heading"><div className="starter-section-heading"><div><span>01 / THE STARTER FOLIOS</span><h2 id="starter-deck-heading">Which deck calls to you?</h2></div><small>PRE-GENERATED CARDS · YOUR CHOICE IS PERMANENT</small></div>
         {decks.length ? <div className="starter-deck-grid">{decks.map(deck => {
           const featured = deck.cards.find(card => card.id === deck.featured) || deck.cards[0]
@@ -41,7 +44,9 @@ export function StarterWelcome({ mode, setMode, decks, selectedDeck, setSelected
             onPointerMove={event => aimFoil(event.currentTarget, event.clientX, event.clientY)} onPointerLeave={event => resetFoil(event.currentTarget)}><div className="starter-fan-card-heading"><span>{card.type_id.toUpperCase()}</span><span>{card.finish_id.toUpperCase()}</span></div><strong>{card.name}</strong><div className="starter-fan-art"><img src={card.art_path} alt="" /></div><p>{card.flavor}</p><small>COPY {index + 1} OF 3</small><div className="foil-shine" /></div>)}
         </div></div>}
       </section>}
-      <form className="starter-auth-form" onSubmit={submit}><div className="starter-form-heading"><span>{registering ? '02 / YOUR COLLECTOR NAME' : 'YOUR WORKSHOP KEY'}</span><h2>{registering ? 'Open your workshop' : 'Sign in'}</h2></div><label>Collector name<input value={username} onChange={event => setUsername(event.target.value)} autoComplete="username" required minLength={3} maxLength={24} /></label><label>Password<input type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete={registering ? 'new-password' : 'current-password'} required minLength={10} /></label><button className="primary starter-submit" type="submit" disabled={busy || (registering && !selectedDeck)}>{busy ? 'Opening the archive…' : registering ? selectedDeck ? 'Begin with this deck ↗' : 'Choose a deck to begin' : 'Enter the workshop ↗'}</button>{message && <p className="starter-auth-error" role="alert">{message}</p>}</form>
+      <form className="starter-auth-form" onSubmit={submit}><div className="starter-form-heading"><span>{offline ? '02 / LOCAL COLLECTION' : registering ? '02 / YOUR COLLECTOR NAME' : 'YOUR WORKSHOP KEY'}</span><h2>{offline ? 'Open your offline workshop' : registering ? 'Open your workshop' : 'Sign in'}</h2></div>{!offline && <><label>Collector name<input value={username} onChange={event => setUsername(event.target.value)} autoComplete="username" required minLength={3} maxLength={24} /></label><label>Password<input type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete={registering ? 'new-password' : 'current-password'} required minLength={10} /></label></>}<button className="primary starter-submit" type="submit" disabled={busy || (registering && !selectedDeck)}>{busy ? 'Opening the archive…' : offline ? selectedDeck ? 'Begin offline demo ↗' : 'Choose a deck to begin' : registering ? selectedDeck ? 'Begin with this deck ↗' : 'Choose a deck to begin' : 'Enter the workshop ↗'}</button>{message && <p className="starter-auth-error" role="alert">{message}</p>}</form>
+      {!offline && mode === 'register' && onTryDemo && <button className="secondary starter-demo-entry" type="button" onClick={onTryDemo}>Try offline demo · no account needed ↗</button>}
+      {offline && message.includes('could not be loaded') && onResetDemo && <button className="secondary starter-demo-entry" type="button" onClick={onResetDemo}>Reset damaged offline collection</button>}
     </div>
     <footer className="starter-auth-footer">✦ &nbsp; EVERY EDITION STARTS SOMEWHERE &nbsp; ✦</footer>
   </main>

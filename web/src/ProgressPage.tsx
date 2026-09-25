@@ -10,10 +10,11 @@ function percent(found: number, total: number) {
   return total ? Math.round(found * 100 / total) : 0
 }
 
-export function ProgressPage({ state, onOpenCard, onNavigate }: {
+export function ProgressPage({ state, onOpenCard, onNavigate, offline = false }: {
   state: State
   onOpenCard: (card: CardCopy) => void
   onNavigate: (destination: 'workshop' | 'library' | 'trading') => void
+  offline?: boolean
 }) {
   const groups = [
     group('Card types', 'The foundations of a design', state.catalog, 'type'),
@@ -50,11 +51,10 @@ export function ProgressPage({ state, onOpenCard, onNavigate }: {
 
     <div className="progress-activity" aria-label="Today's activity">
       <div><span>✦</span><div><strong>{state.allowance_claimed ? 'Collected' : 'Ready to collect'}</strong><small>Daily supplies</small></div></div>
-      <div><span>▤</span><div><strong>{completedCommissions} / {state.commissions.length}</strong><small>Commissions started today</small></div></div>
-      <div><span>⇄</span><div><strong>{completedTrades} / {state.npcs.length}</strong><small>Available NPC trades made today</small></div></div>
+      {offline ? <><div><span>▤</span><div><strong>{state.library.filter(card => card.design_id.startsWith('offline-')).length}</strong><small>Locally printed editions</small></div></div><div><span>✧</span><div><strong>{state.library.filter(card => card.creator === null && !card.design_id.startsWith('starter-')).length}</strong><small>Archive and discovery copies</small></div></div></> : <><div><span>▤</span><div><strong>{completedCommissions} / {state.commissions.length}</strong><small>Commissions started today</small></div></div><div><span>⇄</span><div><strong>{completedTrades} / {state.npcs.length}</strong><small>Available NPC trades made today</small></div></div></>}
     </div>
 
-    <div className="progress-section-heading"><div><p className="eyebrow">THE PARTS YOU KNOW</p><h2>Learned and still to find</h2></div><button className="secondary" onClick={() => onNavigate('trading')}>Explore trades ↗</button></div>
+    <div className="progress-section-heading"><div><p className="eyebrow">THE PARTS YOU KNOW</p><h2>Learned and still to find</h2></div><button className="secondary" onClick={() => onNavigate(offline ? 'library' : 'trading')}>{offline ? 'Study discovery cards ↗' : 'Explore trades ↗'}</button></div>
     <div className="progress-groups">{groups.map(section => {
       const found = section.parts.filter(part => part.learned).length
       return <section className="progress-group" key={section.title} aria-label={section.title}>
@@ -70,6 +70,6 @@ export function ProgressPage({ state, onOpenCard, onNavigate }: {
     {cards.length ? <div className="progress-card-grid">{cards.map(({ card, copies }) => <button className="progress-card" key={card.design_id} onClick={() => onOpenCard(card)}>
       <img src={card.art_path} alt="" loading="lazy" /><span><strong>{card.name}</strong><small>{card.type_id} · {card.finish_id} · {copies} {copies === 1 ? 'copy' : 'copies'}</small></span>
     </button>)}</div> : <div className="progress-empty">Your first printed card will appear here. <button className="secondary" onClick={() => onNavigate('workshop')}>Visit the Press ↗</button></div>}
-    <p className="progress-footnote">Card progress counts distinct designs currently in your box. Trading away the last copy of a design changes this count.</p>
+    <p className="progress-footnote">{offline ? 'Card progress counts distinct local and premade designs in this browser. Print new cards to discover archive samples, then study them to learn new parts.' : 'Card progress counts distinct designs currently in your box. Trading away the last copy of a design changes this count.'}</p>
   </section>
 }

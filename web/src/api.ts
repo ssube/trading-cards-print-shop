@@ -1,6 +1,9 @@
+import { isOfflineDemo, offlineApi } from './offline-game'
+
 let csrf = ''
 export function setCsrf(value: string) { csrf = value }
 export async function api<T>(path: string, method = 'GET', body?: unknown, extra?: Record<string, string>): Promise<T> {
+  if (isOfflineDemo()) return offlineApi<T>(path, method, body, extra)
   const response = await fetch(`/api${path}`, {
     method,
     credentials: 'same-origin',

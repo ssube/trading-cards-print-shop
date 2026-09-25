@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
-    "test:render": "node scripts/render-smoke.mjs"
+    "build:demo": "VITE_OFFLINE_DEMO=1 npm run build",
+    "test:render": "node scripts/render-smoke.mjs",
+    "test:offline": "node scripts/offline-smoke.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",

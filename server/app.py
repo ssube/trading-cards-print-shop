@@ -189,6 +189,8 @@ class PrintPayload(BaseModel):
     rule_ids: list[str]
     theme_id: str
     finish_id: str = "standard"
+    border_id: str = "classic"
+    back_id: str = "archive"
 
 
 @app.post("/api/prints")

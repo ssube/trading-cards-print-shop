@@ -24,6 +24,10 @@ jobs:
         working-directory: web
       - run: npm run test:render
         working-directory: web
+      - run: npm run test:offline
+        working-directory: web
+      - run: npm run build:demo
+        working-directory: web
   docker:
     runs-on: ubuntu-latest
     steps:

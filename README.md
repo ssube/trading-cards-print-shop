@@ -20,6 +20,12 @@ For a local container deployment, run `nerdctl compose up --build` after creatin
 
 Run tests with `uv run python -m pytest -q`. If `uv sync` cannot reach a package index, the lock file is still valid but the local virtual environment cannot be populated until packages are available.
 
+## Offline demo
+
+The welcome screen offers **Try offline demo**. It uses a fixed Demo Collector profile and a starter deck of your choice. Cards, resources, and learned parts are saved in this browser's localStorage. The Press, Card Library, Progress page, and Finish Gallery work without a server. Each newly printed design awards a premade discovery card to study, two ink, and one foil. Daily supplies and the five-new-design limit reset at 00:00 UTC. Commissions, NPCs, player trades, and admin actions are unavailable. Offline progress is never shared with an online account or another device.
+
+To build the static GitHub Pages site, run `npm --prefix web run build:demo` and publish `web/dist`. The Pages workflow builds and deploys this artifact from `main`; select **GitHub Actions** as the Pages source in repository settings. The static build uses relative asset paths, so it works at the repository's Pages URL. It needs no Python server or API. The regular build still serves the online app and also offers the demo from its welcome screen.
+
 The demo providers need no keys. Set `TEXT_PROVIDER` to `openai` or `openrouter`, and `IMAGE_PROVIDER` to `openai`, `openrouter`, or `comfyui` to generate live content. See `.env.example`; the server reads environment variables, so load the file before starting. Exact reprints reuse the original art and text. ComfyUI requires an API-format workflow with a prompt node and a Save Image node.
 
 The CLI supports `--help` on every command. Admin mutations share the same service functions as the admin API and write an audit record. The first admin is created locally; no default password is supplied.

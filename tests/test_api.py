@@ -29,7 +29,8 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
             assert registration.status_code == 200
             assert registration.json()["starter_deck_id"] == "starlit"
             csrf = registration.json()["csrf"]
-            recipe = {"type_id": "land", "rule_ids": ["dusk", "grow"], "theme_id": "celestial", "finish_id": "standard"}
+            recipe = {"type_id": "land", "rule_ids": ["dusk", "grow"], "theme_id": "celestial", "finish_id": "standard",
+                      "border_id": "starlit", "back_id": "atlas"}
             assert (await client.post("/api/prints", json=recipe, headers={"Idempotency-Key": "http-print-123"})).status_code == 403
             assert (await client.post("/api/admin/actions", json={"action": "grant-resource", "payload": {"user_id": 1, "kind": "paper", "amount": 5}, "reason": "test"},
                                       headers={"X-CSRF-Token": csrf})).status_code == 403
@@ -42,6 +43,8 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
                     break
                 await asyncio.sleep(.02)
             assert job["status"] == "complete", job
+            printed = (await client.get(f"/api/copies/{job['copy_id']}")).json()
+            assert (printed["border_id"], printed["back_id"]) == ("starlit", "atlas")
             library = (await client.get("/api/state")).json()["library"]
             assert len(library) == 4
             assert {card["design_id"] for card in library} >= {"npc-starlit-map", "starter-paper-sprite"}
