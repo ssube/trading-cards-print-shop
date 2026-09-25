@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 const output = resolve('node_modules/.cache/cards-render')
 mkdirSync(output, { recursive: true })
 await build({
-  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/CardLibrary.tsx', 'src/FinishGallery.tsx', 'src/CollectionProgress.tsx', 'src/ProgressPage.tsx', 'src/StarterWelcome.tsx', 'src/PhysicalPrint.tsx', 'src/GamesHub.tsx'],
+  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/CardLibrary.tsx', 'src/FinishGallery.tsx', 'src/CollectionProgress.tsx', 'src/ProgressPage.tsx', 'src/StarterWelcome.tsx', 'src/PhysicalPrint.tsx', 'src/GamesHub.tsx', 'src/id.ts'],
   outdir: output,
   bundle: true,
   platform: 'node',
@@ -27,6 +27,10 @@ const { ProgressPage } = require(resolve(output, 'ProgressPage.js'))
 const { StarterWelcome } = require(resolve(output, 'StarterWelcome.js'))
 const { PhysicalPrint, layoutSheet, presetQuantities } = require(resolve(output, 'PhysicalPrint.js'))
 const { GamesHub } = require(resolve(output, 'GamesHub.js'))
+const { uniqueId } = require(resolve(output, 'id.js'))
+const fallbackId = uniqueId({ getRandomValues: bytes => bytes.fill(42) })
+assert.match(fallbackId, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+assert.notEqual(uniqueId({}), uniqueId({}))
 const sample = {
   id: 'test-copy-12345678', design_id: 'starter-press-cat', owner_id: 1, creator: null,
   origin_id: null, type_id: 'monster', rule_ids: ['arrival', 'draw'],

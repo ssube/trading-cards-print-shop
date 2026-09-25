@@ -1,3 +1,4 @@
+import { uniqueId } from './id'
 import { discoveryIds, offlineCatalog, offlineDesigns, offlineStarterDecks } from './offline-data'
 import { curatedDecks, offlineDeckList, validateCustomDeck } from './offline-decks'
 import type { SavedCustomDeck } from './offline-decks'
@@ -30,7 +31,7 @@ type Save = {
 }
 
 function today() { return new Date().toISOString().slice(0, 10) }
-function id() { return crypto.randomUUID() }
+function id() { return uniqueId() }
 function fail(message: string): never { throw new Error(message) }
 function storage() {
   try { return window.localStorage }

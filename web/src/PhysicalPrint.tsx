@@ -1,3 +1,4 @@
+import { uniqueId } from './id'
 import { useRef, useState } from 'react'
 import { api } from './api'
 import { Card } from './Card'
@@ -125,7 +126,7 @@ export function PhysicalPrint({ cards, paper, onCharged, preset }: { cards: Card
       }
       const items = cards.filter(card => quantities[card.id]).map(card => ({ copy_id: card.id, quantity: quantities[card.id] }))
       const signature = JSON.stringify(items)
-      if (!pending.current || pending.current.signature !== signature) pending.current = { signature, key: crypto.randomUUID() }
+      if (!pending.current || pending.current.signature !== signature) pending.current = { signature, key: uniqueId() }
       setMessage('Charging paper and handling wear…')
       await api('/physical-prints', 'POST', { items }, { 'Idempotency-Key': pending.current.key })
       await onCharged()
