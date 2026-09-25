@@ -16,7 +16,7 @@ from . import game
 from .db import connect, init, transaction
 from .providers import ASSETS, process_job
 
-app = FastAPI(title="Cards: the Printing", version="0.1.0")
+app = FastAPI(title="Trading Cards: Print Shop", version="0.1.0")
 HITS = defaultdict(deque)
 
 

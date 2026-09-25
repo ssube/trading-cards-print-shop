@@ -2,7 +2,7 @@
 .starter-auth-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 12% 15%,#f6c88316,transparent 21%),radial-gradient(circle at 88% 50%,#9dbdc21a,transparent 29%),radial-gradient(#cdb88950 .7px,transparent .8px);background-size:auto,auto,62px 62px;opacity:.72}
 .starter-auth-header,.starter-auth-body,.starter-auth-footer{position:relative;z-index:1}
 .starter-auth-header{display:flex;align-items:center;gap:10px;max-width:1280px;margin:0 auto;padding-bottom:20px;border-bottom:1px solid #a7976b4d}
-.starter-auth-header .brand-seal{width:38px;height:38px;padding:0;display:grid;place-items:center}
+.starter-auth-header .brand-seal{width:38px;height:38px;padding:0;display:grid;place-items:center;font-size:.68rem}
 .starter-auth-header>div:last-child{display:grid;gap:1px;font:1rem 'Fraunces',serif}
 .starter-auth-header>div:last-child span{color:#d8bc83}
 .starter-auth-body{max-width:1280px;margin:0 auto}

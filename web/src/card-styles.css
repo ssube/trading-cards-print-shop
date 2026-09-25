@@ -39,3 +39,4 @@
   box-shadow:0 2px 3px #0007,0 13px 23px #0008,inset 0 0 0 2px #e6ba86;
 }
 .card-back.back-mischief .back-mark{border-radius:28%;font-size:4rem;transform:rotate(12deg);background:#49263b99}
+.card-back.back-archive .back-mark{font-size:1.5rem;letter-spacing:-.06em}

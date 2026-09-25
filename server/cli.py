@@ -8,7 +8,7 @@ from .db import connect, init, transaction
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Cards: the Printing administration")
+    parser = argparse.ArgumentParser(description="Trading Cards: Print Shop administration")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("init", help="Initialize and seed the database")
     admin = sub.add_parser("create-admin", help="Create the first admin locally")

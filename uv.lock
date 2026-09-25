@@ -35,7 +35,7 @@ wheels = [
 ]
 
 [[package]]
-name = "cards-the-printing"
+name = "trading-cards-print-shop"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

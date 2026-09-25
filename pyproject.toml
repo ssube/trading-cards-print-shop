@@ -1,5 +1,5 @@
 [project]
-name = "cards-the-printing"
+name = "trading-cards-print-shop"
 version = "0.1.0"
 description = "A self-hosted card printing game"
 requires-python = ">=3.10"

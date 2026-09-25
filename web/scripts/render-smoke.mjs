@@ -81,14 +81,14 @@ const welcomeMarkup = renderToStaticMarkup(createElement(StarterWelcome, {
   selectedDeck: 'pressroom', setSelectedDeck: () => {}, username: '', setUsername: () => {}, password: '', setPassword: () => {},
   message: '', busy: false, onSubmit: () => {},
 }))
-if (!appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window') ||
+if (!appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window') || !cardMarkup.includes('TC') || !cardMarkup.includes('PRINT SHOP') ||
     filterLibraryCards(mixedCards, 'spell').map(card => card.id).join() !== 'spell-copy' ||
     filterLibraryCards(mixedCards, 'land').length !== 0 || filterLibraryCards(mixedCards, 'all').length !== 2 ||
     !libraryMarkup.includes('Filter cards by type') || !libraryMarkup.includes('LAND <b>0</b>') || !libraryMarkup.includes('SPELL <b>1</b>') ||
     !galleryMarkup.includes('Blank print stock') || !galleryMarkup.includes('Apprentice Press Cat') || !galleryMarkup.includes('Holo') ||
     !progressMarkup.includes('Unique cards') || !progressMarkup.includes('33%') || !progressMarkup.includes('1 / 4 in your box') ||
     !pageMarkup.includes('Learned and still to find') || !pageMarkup.includes('TO FIND') || !pageMarkup.includes('2 copies') ||
-    !welcomeMarkup.includes('The Pressroom Parade') || !welcomeMarkup.includes('Three cards to begin with') || !welcomeMarkup.includes('COPY 3 OF 3')) {
+    !welcomeMarkup.includes('Trading Cards:') || !welcomeMarkup.includes('Print Shop') || !welcomeMarkup.includes('The Pressroom Parade') || !welcomeMarkup.includes('Three cards to begin with') || !welcomeMarkup.includes('COPY 3 OF 3')) {
   throw new Error('Render smoke test failed')
 }
 console.log('App shell, card library filters, finish gallery, progress page, and starter selection render successfully')

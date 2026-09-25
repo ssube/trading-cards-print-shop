@@ -8,3 +8,4 @@
 .offline-banner strong{color:#ffe0a5;font-size:.6rem;letter-spacing:.13em;white-space:nowrap}
 @media(max-width:1050px){.offline-banner{padding:10px 25px}}
 @media(max-width:750px){.offline-sidebar-label{white-space:nowrap;margin:0 10px 0 0}.offline-banner{padding:10px 17px;align-items:start;flex-direction:column;gap:3px}}
+.brand-seal{font-size:.76rem;letter-spacing:-.08em;white-space:nowrap}

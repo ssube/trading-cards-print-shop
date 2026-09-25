@@ -32,7 +32,7 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
       aria-label={onClick ? `Inspect ${card.name}` : undefined}>
       <div className={`card-flipper ${flipped ? 'is-flipped' : ''}`}>
       <article className={`trading-card finish-${card.finish_id} border-${card.border_id || 'classic'} effect-${card.color_effect} ${blank ? 'blank-finish-card' : ''}`} style={artStyle} aria-hidden={flipped}>
-          {blank ? <div className="blank-card-stock"><span className="blank-card-corner">C<span>:</span>P</span><span className="blank-card-emblem">✧</span><span className="blank-card-rule" /><span className="blank-card-caption">AWAITING IMPRESSION</span></div> : <>
+          {blank ? <div className="blank-card-stock"><span className="blank-card-corner">TC<span>:</span>PS</span><span className="blank-card-emblem">✧</span><span className="blank-card-rule" /><span className="blank-card-caption">AWAITING IMPRESSION</span></div> : <>
           <div className="card-heading"><span className="card-type">{card.type_id}</span><span className="card-finish">{card.finish_id === 'standard' ? 'FIRST PRINT' : card.finish_id.toUpperCase()}</span></div>
           <h3>{card.name}</h3>
           <div className="art-window">
@@ -50,7 +50,7 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
           </>}
           <div className="foil-shine" /><div className="wear-overlay" style={{ opacity: Math.max(0, (100 - card.condition) / 190) }} />
       </article>
-      <div className={`card-back back-${card.back_id || 'archive'}`} aria-hidden={!flipped}><div className="back-mark">{card.back_id === 'atlas' ? '✧' : card.back_id === 'mischief' ? '♢' : <>C<span>:</span>P</>}</div><p>{card.back_id === 'atlas' ? <>THE STARLIT<br />ATLAS</> : card.back_id === 'mischief' ? <>THE VELVET<br />MISCHIEF</> : <>CARDS<br />THE PRINTING</>}</p><small>{card.back_id === 'atlas' ? 'EVERY STAR HAS A PLACE' : card.back_id === 'mischief' ? 'A TRICK IN EVERY PRINT' : 'AN EDITION OF ONE, AGAIN AND AGAIN'}</small></div>
+      <div className={`card-back back-${card.back_id || 'archive'}`} aria-hidden={!flipped}><div className="back-mark">{card.back_id === 'atlas' ? '✧' : card.back_id === 'mischief' ? '♢' : <>TC<span>:</span>PS</>}</div><p>{card.back_id === 'atlas' ? <>THE STARLIT<br />ATLAS</> : card.back_id === 'mischief' ? <>THE VELVET<br />MISCHIEF</> : <>TRADING CARDS<br />PRINT SHOP</>}</p><small>{card.back_id === 'atlas' ? 'EVERY STAR HAS A PLACE' : card.back_id === 'mischief' ? 'A TRICK IN EVERY PRINT' : 'AN EDITION OF ONE, AGAIN AND AGAIN'}</small></div>
       </div>
     </div>
     {card.sleeved === 1 && <span className="sleeve-badge">SLEEVED</span>}

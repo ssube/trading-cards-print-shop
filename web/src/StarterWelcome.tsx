@@ -26,7 +26,7 @@ export function StarterWelcome({ mode, setMode, decks, selectedDeck, setSelected
   function submit(event: FormEvent) { event.preventDefault(); onSubmit() }
   return <main className={`starter-auth-page ${registering ? '' : 'starter-login-page'}`}>
     <div className="starter-auth-glow" aria-hidden="true" />
-    <header className="starter-auth-header"><div className="brand-seal">C<span>:</span>P</div><div><strong>Cards:</strong><span>the Printing</span></div></header>
+    <header className="starter-auth-header"><div className="brand-seal">TC<span>:</span>PS</div><div><strong>Trading Cards:</strong><span>Print Shop</span></div></header>
     <div className="starter-auth-body">
       <div className="starter-auth-intro"><p className="eyebrow">{offline ? 'OFFLINE DEMO · SAVED IN THIS BROWSER' : 'A NEW COLLECTOR ARRIVES'}</p><h1>{registering ? <>Choose your first <em>story.</em></> : <>Welcome back to <em>the press.</em></>}</h1><p>{offline ? 'Choose a starter deck and play without an account. Your collection stays in this browser and will not be shared.' : registering ? 'Every great collection begins with a deck. Pick a theme and meet the cards that will start your printing journey.' : 'Your collection is waiting where you left it.'}</p></div>
       {!offline && <div className="starter-auth-switch" role="group" aria-label="Account access"><button type="button" className={registering ? 'active' : ''} onClick={() => setMode('register')}>Begin collecting</button><button type="button" className={!registering ? 'active' : ''} onClick={() => setMode('login')}>Sign in</button></div>}

@@ -1,4 +1,4 @@
-"""Cards: the Printing server package."""
+"""Trading Cards: Print Shop server package."""
 
 import os
 from pathlib import Path

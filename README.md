@@ -1,4 +1,4 @@
-# Cards: the Printing
+# Trading Cards: Print Shop
 
 A small, self-hosted card-printing game. The cards are the product; the battle game can wait.
 
