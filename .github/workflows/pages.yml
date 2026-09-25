@@ -30,6 +30,10 @@ jobs:
         working-directory: web
       - run: npm run build:demo
         working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - run: npm run test:pages
+        working-directory: web
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
