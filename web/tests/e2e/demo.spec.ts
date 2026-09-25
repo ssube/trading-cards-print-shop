@@ -42,6 +42,12 @@ test('card links can be copied when the Clipboard API is unavailable', async ({ 
   await expect(page.getByRole('textbox', { name: 'Public card link' })).toHaveValue(copied)
 })
 
+test('a stale card API shows a useful error instead of a JSON parse exception', async ({ page }) => {
+  await page.route('**/api/public/cards/**', route => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Old server</title>' }))
+  await page.goto('/#/card/copy/example')
+  await expect(page.getByRole('alert')).toContainText('The card service is unavailable')
+})
+
 async function startDemo(page: Page) {
   await page.goto('/?demo=1')
   await expect(page.getByRole('button', { name: 'Choose a deck to begin' })).toBeVisible()

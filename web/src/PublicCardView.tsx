@@ -13,6 +13,7 @@ export function PublicCardView({ kind, id }: { kind?: string; id?: string }) {
     const request = kind === 'snapshot' ? readPublicSnapshot(id) : fetch(`/api/public/cards/${encodeURIComponent(id)}`)
       .then(async response => {
         if (!response.ok) throw new Error(response.status === 404 ? 'This card could not be found.' : 'This card could not be loaded.')
+        if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('The card service is unavailable. Please try again shortly.')
         return response.json() as Promise<CardCopy>
       })
     request.then(result => { if (active) setCard(result) }).catch(reason => { if (active) setError((reason as Error).message) })
