@@ -32,5 +32,6 @@ The Finish Gallery previews every known finish on blank stock or any standard co
 Foil highlights follow pointer and card rotation, with only a faint ambient reflection while the card is still.
 
 Collection completion shows each player's learned rules, learned foils, and distinct card designs currently in their box. Its card count uses designs rather than physical copies, and the world total includes every existing design.
+The Progress page expands that summary into learned and missing parts across every category, daily print usage, and the distinct designs currently in the player's box.
 
 New players choose a named, themed starter deck during registration. Each deck contains three pre-generated cards: one standard and one foil version of its featured card, plus a shared Paper Sprite practice card. The selection unlocks the parts on those cards and is saved on the player account. The signup screen shows the deck art and a scrollable fan of all three cards; signup never calls a generation provider.

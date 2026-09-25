@@ -8,5 +8,6 @@ import './collection-progress.css'
 import './starter-welcome.css'
 import './foil.css'
 import './card-flip.css'
+import './progress-page.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>)
