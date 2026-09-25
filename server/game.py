@@ -169,6 +169,8 @@ def seed():
                     db.execute("UPDATE designs SET border_id=?,back_id=? WHERE id=?", (border, back, variant_id))
                     if bundled:
                         db.execute("UPDATE designs SET art_path=? WHERE id=?", (bundled, variant_id))
+        from .decks import seed_rewards
+        seed_rewards(db)
         briefs = [
             ("first-edition", "First Edition", "Turn in any freshly printed card.", {"min_grade": 1}, {"paper": 3, "ink": 3}, 1, 1),
             ("land-survey", "The Cartographer", "A Land for the library's wandering map.", {"type": "land", "min_grade": 5}, {"paper": 4, "ink": 3}, 0, 1),
@@ -191,6 +193,9 @@ def seed():
             ("borrowed-dawn", "Pip the Inker", "A borrowed morning", {"resources": {"paper": 4, "ink": 3}}, {"design_id": "npc-borrowed-dawn"}),
             ("clockwork-heron", "Astrid the Binder", "A mechanical omen", {"resources": {"ink": 5, "sleeve": 1}}, {"design_id": "npc-clockwork-heron"}),
             ("tideglass-portal", "Madam Moth", "A door beneath the waves", {"resources": {"foil": 2, "ink": 3}}, {"design_id": "npc-tideglass-portal"}),
+            ("press-cat-foil", "Pip the Inker", "A shining apprentice", {"resources": {"foil": 1, "ink": 2}}, {"design_id": "starter-press-cat-foil"}),
+            ("starlit-map-foil", "Astrid the Binder", "A foil atlas", {"resources": {"foil": 1, "ink": 2}}, {"design_id": "npc-starlit-map-foil"}),
+            ("foil-fox-standard", "The Foil Fox", "A quieter fox", {"resources": {"paper": 2, "ink": 2}}, {"design_id": "npc-foil-fox-standard"}),
         ]
         for oid, npc, title, req, reward in offers:
             db.execute("INSERT OR IGNORE INTO npc_offers VALUES(?,?,?,?,?,1)",

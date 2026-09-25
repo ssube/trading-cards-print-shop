@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import game
+from . import game, decks
 from .db import connect, init, transaction
 from .providers import ASSETS, process_job
 
@@ -170,6 +170,44 @@ async def state(user=Depends(auth)):
                 "commissions": commissions, "npcs": npcs, "generation_count": game.generation_count(db, user["id"]),
                 "generation_limit": int(os.getenv("NEW_DESIGNS_PER_DAY", "5")),
                 "allowance_claimed": game.daily_allowance_claimed(db, user["id"])}
+
+
+class DeckPayload(BaseModel):
+    title: str = Field(min_length=1, max_length=64)
+    theme: str
+
+
+@app.get("/api/decks")
+async def deck_list(user=Depends(auth)):
+    with transaction() as db:
+        return decks.list_decks(db, user["id"])
+
+
+@app.post("/api/decks")
+async def create_deck(payload: DeckPayload, user=Depends(mutation)):
+    with transaction() as db:
+        deck_id = decks.create_custom(db, user["id"], payload.title, payload.theme)
+        return {"id": deck_id}
+
+
+@app.put("/api/decks/{deck_id}")
+async def update_deck(deck_id: str, payload: DeckPayload, user=Depends(mutation)):
+    with transaction() as db:
+        decks.update_custom(db, user["id"], deck_id, payload.title, payload.theme)
+        return {"ok": True}
+
+
+@app.delete("/api/decks/{deck_id}")
+async def delete_deck(deck_id: str, user=Depends(mutation)):
+    with transaction() as db:
+        decks.delete_custom(db, user["id"], deck_id)
+        return {"ok": True}
+
+
+@app.post("/api/decks/{deck_id}/claim")
+async def claim_deck(deck_id: str, user=Depends(mutation)):
+    with transaction() as db:
+        return decks.claim_reward(db, user["id"], deck_id)
 
 
 @app.post("/api/allowance/claim")

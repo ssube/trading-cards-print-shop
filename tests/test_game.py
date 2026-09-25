@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from server import db, game, providers
+from server import db, decks, game, providers
 
 
 @pytest.fixture
@@ -163,7 +163,7 @@ def test_collection_progress_counts_designs_once(world):
     with db.connect() as conn:
         initial = game.collection_progress(conn, alice)
         assert initial["cards"]["collected"] == 3
-        assert initial["cards"]["total"] == 11
+        assert initial["cards"]["total"] == 16
         assert initial["foils"]["collected"] == 2
         assert initial["borders"] == {"collected": 1, "total": 3, "percent": 33}
         assert initial["backs"] == {"collected": 1, "total": 3, "percent": 33}
@@ -173,7 +173,7 @@ def test_collection_progress_counts_designs_once(world):
     with db.transaction() as conn:
         game.reprint(conn, alice, printed)
         after = game.collection_progress(conn, alice)
-        assert after["cards"] == {"collected": 4, "total": 12, "percent": 33}
+        assert after["cards"] == {"collected": 4, "total": 17, "percent": 24}
         assert game.collection_progress(conn, bob)["cards"]["collected"] == 3
         conn.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (alice, "holo"))
         assert game.collection_progress(conn, alice)["foils"]["collected"] == 3
@@ -304,3 +304,60 @@ def test_print_hint_reaches_generation_and_rejects_long_input(world):
     with db.connect() as conn:
         copy_id = conn.execute("SELECT copy_id FROM jobs WHERE id=?", (job["id"],)).fetchone()[0]
         assert game.copy_detail(conn, copy_id, alice)["name"] == recipe["hint"]
+
+
+def test_curated_deck_claim_is_once_and_preserves_cards(world):
+    alice, bob = world
+    with db.transaction() as conn:
+        before = decks.list_decks(conn, alice)
+        pressroom = next(deck for deck in before if deck["id"] == "pressroom")
+        assert pressroom["filled"] == 3 and not pressroom["claimed"]
+        assert pressroom["analysis"]["type_counts"] == {"monster": 2, "spell": 1}
+        original_ids = {slot["card"]["id"] for slot in pressroom["slots"]}
+        reward = decks.claim_reward(conn, alice, "pressroom")
+        assert reward["resources"] == {"sleeve": 1}
+        copy = game.copy_detail(conn, reward["copy_id"], alice)
+        assert copy["design_id"] == "reward-press-cat-holo"
+        assert copy["finish_id"] == "holo"
+        assert original_ids <= {card["id"] for card in game.library(conn, alice)}
+        assert decks.list_decks(conn, alice)[0]["claimed"]
+        with pytest.raises(game.GameError) as duplicate:
+            decks.claim_reward(conn, alice, "pressroom")
+        assert duplicate.value.status == 409
+        with pytest.raises(game.GameError):
+            decks.claim_reward(conn, bob, "starlit")
+
+
+def test_custom_decks_match_theme_and_respect_ownership(world):
+    alice, bob = world
+    with db.transaction() as conn:
+        custom_id = decks.create_custom(conn, alice, "  Paper friends  ", "storybook")
+        created = next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)
+        assert created["title"] == "Paper friends" and created["filled"] == 2
+        assert created["reward"] is None
+        assert [slot["type_id"] for slot in created["slots"]] == ["land", "monster", "spell"]
+        assert custom_id not in {deck["id"] for deck in decks.list_decks(conn, bob)}
+        land_id = game.mint_copy(conn, "npc-borrowed-dawn", alice, quality_override=88)
+        assert next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)["filled"] == 2
+        design = conn.execute("SELECT * FROM designs WHERE id='npc-borrowed-dawn'").fetchone()
+        conn.execute("UPDATE designs SET theme_id='storybook' WHERE id=?", (design["id"],))
+        assert next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)["filled"] == 3
+        conn.execute("UPDATE copies SET owner_id=? WHERE id=?", (bob, land_id))
+        assert next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)["filled"] == 2
+        decks.update_custom(conn, alice, custom_id, "New title", "celestial")
+        assert next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)["title"] == "New title"
+        with pytest.raises(game.GameError):
+            decks.update_custom(conn, bob, custom_id, "Stolen", "celestial")
+        decks.delete_custom(conn, alice, custom_id)
+        assert custom_id not in {deck["id"] for deck in decks.list_decks(conn, alice)}
+
+
+def test_slabbed_deck_reward(world):
+    alice, _ = world
+    with db.transaction() as conn:
+        for design_id in ("npc-foil-fox", "npc-foil-fox-standard"):
+            game.mint_copy(conn, design_id, alice, quality_override=88)
+        reward = decks.claim_reward(conn, alice, "velvet")
+        copy = game.copy_detail(conn, reward["copy_id"], alice)
+        assert copy["slab_grade"] == 8 and copy["grade"] == 8
+        assert copy["design_id"] == "reward-foil-fox-holo"
