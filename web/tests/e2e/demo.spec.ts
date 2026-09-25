@@ -5,7 +5,9 @@ test('a public card link opens in another browser without the offline collection
   await navigate(page, 'Card Library')
   await page.getByRole('button', { name: /Inspect Apprentice Press Cat/ }).first().click()
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
-  await page.getByRole('button', { name: 'Copy public link' }).click()
+  const share = page.getByRole('link', { name: 'Copy public link' })
+  await expect(share).toHaveAttribute('href', /#\/card\/snapshot\//)
+  await share.click()
   await expect(page.getByRole('status')).toContainText('Public card link copied')
   const link = await page.evaluate(() => navigator.clipboard.readText())
   expect(link).toContain('#/card/snapshot/')
@@ -17,6 +19,27 @@ test('a public card link opens in another browser without the offline collection
   await expect(publicPage.getByText('This is a view-only card.')).toBeVisible()
   await expect(publicPage.locator('.inspect-actions')).toHaveCount(0)
   await guest.close()
+})
+
+test('card links can be copied when the Clipboard API is unavailable', async ({ page }) => {
+  await startDemo(page)
+  await navigate(page, 'Card Library')
+  await page.getByRole('button', { name: /Inspect Apprentice Press Cat/ }).first().click()
+  const share = page.getByRole('link', { name: 'Copy public link' })
+  const href = await share.getAttribute('href')
+  expect(href).toContain('#/card/snapshot/')
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined }))
+  await share.click()
+  await expect(page.getByRole('status')).toContainText('Public card link copied')
+  const copied = await page.evaluate(async () => { Reflect.deleteProperty(navigator, 'clipboard'); return navigator.clipboard.readText() })
+  expect(copied).toContain(href!)
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined })
+    document.execCommand = () => false
+  })
+  await share.click()
+  await expect(page.getByRole('textbox', { name: 'Public card link' })).toHaveValue(copied)
 })
 
 async function startDemo(page: Page) {
@@ -165,7 +188,7 @@ test('the press accepts a hint and saves the printed card', async ({ page, brows
   await expect(page.getByRole('button', { name: 'Close inspection' })).toBeVisible({ timeout: 20_000 })
   await expect(page.locator('.inspect-info h2')).toHaveText('A fox in a moonlit bookshop')
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
-  await page.getByRole('button', { name: 'Copy public link' }).click()
+  await page.getByRole('link', { name: 'Copy public link' }).click()
   await expect(page.getByRole('status')).toContainText('Public card link copied')
   const guest = await browser.newContext()
   const publicPage = await guest.newPage()

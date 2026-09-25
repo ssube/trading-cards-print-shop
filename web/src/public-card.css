@@ -18,3 +18,9 @@
 .public-card-loading{grid-column:1/-1;text-align:center;min-height:40vh;display:grid;place-content:center;color:#f0dcaf;font:1.2rem 'Fraunces',serif}
 .public-card-loading a{color:#f0dcaf}
 @media(max-width:750px){.public-card-content{grid-template-columns:1fr;justify-items:center;gap:70px;padding:48px 20px 65px}.public-card-art{max-width:320px}.public-card-details{width:100%}.public-card-header{padding:15px 20px}}
+.inspect-share{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid #aa9e734b}
+.inspect-share>span{color:#cbb682;font-size:.58rem;font-weight:700;letter-spacing:.16em}
+.public-link-action{display:inline-block;padding:9px 11px;font-size:.69rem;text-decoration:none}
+.public-link-action[aria-disabled="true"]{opacity:.5;pointer-events:none}
+.public-link-manual{width:100%;font-size:.65rem;color:#cbb682}
+.public-link-manual input{margin-top:6px;font-size:.7rem}
