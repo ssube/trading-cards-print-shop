@@ -204,7 +204,8 @@ def generate_art(design_id, recipe, name):
         if not key:
             raise GameError("OpenRouter key is missing")
         data = _post("https://openrouter.ai/api/v1/images", {"Authorization": f"Bearer {key}"},
-                     {"model": os.getenv("IMAGE_MODEL") or "openai/gpt-image-1", "prompt": prompt})
+                     {"model": os.getenv("IMAGE_MODEL") or "openai/gpt-image-1", "prompt": prompt,
+                      "aspect_ratio": "2:3"})
         raw = base64.b64decode(data["data"][0]["b64_json"])
     elif provider == "comfyui":
         workflow_path = os.getenv("COMFYUI_WORKFLOW", "./comfy-workflow.json")
