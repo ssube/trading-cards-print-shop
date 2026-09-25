@@ -30,6 +30,7 @@
 .physical-placement .finish-etched .foil-shine,.physical-placement .finish-aurora .foil-shine{opacity:.16!important;mix-blend-mode:soft-light}
 .physical-placement .finish-starfield .foil-shine,.physical-placement .finish-glitter .foil-shine,.physical-placement .finish-spooky .foil-shine{opacity:.2!important;mix-blend-mode:soft-light}
 .physical-placement .finish-confetti .foil-shine{opacity:.42!important;mix-blend-mode:normal}
+.physical-placement .finish-pumpkin .foil-shine{opacity:.25!important;mix-blend-mode:soft-light}
 .physical-sheet-front .card-flipper>.card-back{display:none}
 .physical-sheet-front .card-flipper>.trading-card{backface-visibility:visible;-webkit-backface-visibility:visible}
 .physical-sheet-back .card-flipper.is-flipped{transform:none}

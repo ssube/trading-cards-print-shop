@@ -98,6 +98,46 @@ test('pages and nested views survive reload, history, and direct links', async (
   await expect(page).toHaveURL(/#\/progress\/part\//)
 })
 
+test('finish preview fits at maximum zoom and keeps its controls usable', async ({ page }) => {
+  await startDemo(page)
+  await navigate(page, 'Finish Gallery')
+  await page.locator('.finish-option').filter({ hasText: 'Full Holo' }).click()
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1100 })
+    await page.locator('.finish-showcase input[type=range]').fill('1.6')
+    await page.waitForTimeout(200)
+    const positions = await page.locator('.finish-showcase, .finish-showcase .card-body, .finish-showcase .card-controls').evaluateAll(elements => elements.map(element => {
+      const { left, right, top, bottom } = element.getBoundingClientRect()
+      return { left, right, top, bottom }
+    }))
+    const [showcase, card, controls] = positions
+    expect(card.left).toBeGreaterThanOrEqual(showcase.left)
+    expect(card.right).toBeLessThanOrEqual(showcase.right)
+    expect(card.top).toBeGreaterThanOrEqual(showcase.top)
+    expect(card.bottom).toBeLessThanOrEqual(showcase.bottom)
+    expect(controls.top).toBeGreaterThan(card.bottom)
+    expect(controls.bottom).toBeLessThan(showcase.bottom)
+    await page.locator('.finish-showcase').getByRole('button', { name: 'Flip card' }).click()
+    await expect(page.locator('.finish-showcase').getByRole('button', { name: 'Show front' })).toBeVisible()
+    await page.locator('.finish-showcase').getByRole('button', { name: 'Show front' }).click()
+  }
+})
+
+test('confetti flecks shift slightly with the light', async ({ page }) => {
+  await startDemo(page)
+  await navigate(page, 'Finish Gallery')
+  await page.locator('.finish-option').filter({ hasText: 'Confetti' }).click()
+  await page.locator('.finish-showcase').scrollIntoViewIfNeeded()
+  const foil = page.locator('.finish-showcase .card-perspective')
+  await expect(foil).toBeVisible()
+  const box = await foil.boundingBox()
+  expect(box).not.toBeNull()
+  await page.mouse.move(box!.x + box!.width * .8, box!.y + box!.height * .3)
+  await expect(foil).toHaveCSS('--foil-dx', '3.6px')
+  await expect(foil).toHaveCSS('--foil-dy', '-2.4px')
+  await expect(page.locator('.finish-showcase .foil-shine')).toHaveCSS('background-image', /foil-confetti-near/)
+})
+
 test('sleeves and slabs tilt with their cards as one layer', async ({ page }) => {
   await startDemo(page)
   await page.evaluate(() => {
@@ -243,6 +283,8 @@ test('finish gallery and games hub open', async ({ page }) => {
   await navigate(page, 'Finish Gallery')
   await expect(page.getByRole('heading', { name: /See it in a different light/ })).toBeVisible()
   await expect(page.locator('.finish-option').first()).toBeVisible()
+  await expect(page.locator('.finish-option').filter({ hasText: 'Etched Silver' })).toContainText('3 FOIL')
+  await expect(page.locator('.finish-option').filter({ hasText: 'Aurora' })).toContainText('3 FOIL')
   await navigate(page, 'Games')
   await expect(page.locator('.game-stub')).toHaveCount(4)
   await expect(page.getByRole('heading', { name: 'Feline Papermill' })).toBeVisible()

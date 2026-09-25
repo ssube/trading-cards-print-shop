@@ -27,6 +27,7 @@ export function FinishGallery({ catalog, library, onUseFinish, offline = false, 
   const finishes = catalog.filter(part => part.kind === 'finish')
   const standardCards = library.filter(card => card.finish_id === 'standard')
   const [sourceId, setSourceId] = useState('')
+  const [previewZoom, setPreviewZoom] = useState(1)
   const source = standardCards.find(card => card.id === sourceId)
   const selectedFinish = finishes.find(finish => finish.id === finishId) || finishes[0]
   const specimen = (id: string) => ({ ...(source || blankStock), finish_id: id, slab_grade: null, sleeved: 0 })
@@ -38,9 +39,9 @@ export function FinishGallery({ catalog, library, onUseFinish, offline = false, 
       <p>Try every finish on blank stock or any standard card in your box. These are previews; your copies stay exactly as they are.</p>
     </div>
     <div className="finish-gallery-layout">
-      <div className="finish-showcase">
+      <div className="finish-showcase" style={{ '--zoom-clearance': `${Math.ceil((previewZoom - 1) * 252)}px`, '--zoom-card-max': `calc(${100 / previewZoom}vw - ${72 / previewZoom}px)` } as React.CSSProperties}>
         <div className="finish-showcase-top"><span>✦ &nbsp; LIVE SPECIMEN</span><span>MOVE TO CATCH THE LIGHT</span></div>
-        <div className="finish-showcase-card"><Card key={`${source?.id || 'blank'}-${selectedFinish?.id || 'standard'}`} card={specimen(selectedFinish?.id || 'standard')} blank={!source} large interactive /></div>
+        <div className="finish-showcase-card"><Card key={`${source?.id || 'blank'}-${selectedFinish?.id || 'standard'}`} card={specimen(selectedFinish?.id || 'standard')} blank={!source} large interactive onZoomChange={setPreviewZoom} /></div>
         <div className="finish-showcase-bottom"><span>{source ? source.name : 'Blank print stock'}</span><strong>{selectedFinish?.name || 'Standard'}</strong></div>
       </div>
       <div className="finish-gallery-controls">
@@ -48,7 +49,7 @@ export function FinishGallery({ catalog, library, onUseFinish, offline = false, 
           <p className="eyebrow">01 / CHOOSE YOUR CANVAS</p>
           <h2>The card beneath the shine</h2>
           <label htmlFor="finish-source">Preview on</label>
-          <select id="finish-source" value={source?.id || ''} onChange={event => setSourceId(event.target.value)}>
+          <select id="finish-source" value={source?.id || ''} onChange={event => { setSourceId(event.target.value); setPreviewZoom(1) }}>
             <option value="">Blank print stock</option>
             {standardCards.map(card => <option key={card.id} value={card.id}>{card.name} · #{card.id.slice(0, 6).toUpperCase()}</option>)}
           </select>
@@ -59,7 +60,7 @@ export function FinishGallery({ catalog, library, onUseFinish, offline = false, 
           <h2>Light, layered on paper</h2>
           <div className="finish-options">
             {finishes.map(finish => <button key={finish.id} type="button" className={`finish-option ${selectedFinish?.id === finish.id ? 'selected' : ''}`}
-              aria-pressed={selectedFinish?.id === finish.id} onClick={() => onSelectFinish(finish.id)}>
+              aria-pressed={selectedFinish?.id === finish.id} onClick={() => { onSelectFinish(finish.id); setPreviewZoom(1) }}>
               <span className="finish-option-card"><Card card={specimen(finish.id)} blank={!source} /></span>
               <span className="finish-option-copy"><strong>{finish.name}</strong><small>{finish.description}</small><span>{finish.learned ? 'LEARNED' : 'UNDISCOVERED'} · {foilCost(finish) ? `${foilCost(finish)} FOIL` : 'NO FOIL'}</span></span>
               <span className="finish-option-arrow">↗</span>

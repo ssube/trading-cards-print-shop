@@ -1,4 +1,5 @@
 import { uniqueId } from './id'
+import { printInkCost } from './print-cost'
 import { discoveryIds, offlineCatalog, offlineDesigns, offlineStarterDecks } from './offline-data'
 import { curatedDecks, offlineDeckList, validateCustomDeck } from './offline-decks'
 import type { SavedCustomDeck } from './offline-decks'
@@ -7,7 +8,7 @@ import type { CardCopy, CollectionProgress, Part, State, User } from './types'
 const STORAGE_KEY = 'cards-the-printing.offline-demo.v1'
 const PROFILE: User = { id: 0, username: 'Demo Collector', is_admin: 0, csrf: '', starter_deck_id: null }
 const gradeNames = ['Poor', 'Fair', 'Very Good', 'Very Good+', 'Excellent', 'Excellent+', 'Near Mint', 'Near Mint-Mint', 'Mint', 'Gem Mint']
-const foilCost: Record<string, number> = { standard: 0, shimmer: 1, etched: 1, starfield: 2, glitter: 2, aurora: 2, spooky: 2, confetti: 3, holo: 3 }
+const foilCost: Record<string, number> = { standard: 0, shimmer: 1, etched: 3, starfield: 2, glitter: 2, aurora: 3, spooky: 2, pumpkin: 2, confetti: 3, holo: 3 }
 const names: Record<string, Record<string, string[]>> = {
   storybook: { land: ['The Library Between Moons', 'The Kittens’ Paper Mill'], monster: ['Sir Pounce of the Press', 'Moth of a Thousand Margins'], spell: ['An Unexpected Footnote', 'The Last Drop of Ink'] },
   celestial: { land: ['The Observatory of Small Stars', 'An Orchard of Forgotten Maps'], monster: ['The Starbound Typesetter', 'A Moth Among Moons'], spell: ['A Note to the Night', 'The Missing Constellation'] },
@@ -167,7 +168,7 @@ function print(save: Save, body: unknown, requestKey: string) {
   if (recipe.rule_ids.reduce((power, rule) => power + parts.get(rule)!.power, 0) > 5) fail('The card exceeds its power limit')
   if (save.generation_day !== today()) { save.generation_day = today(); save.generation_count = 0 }
   if (save.generation_count >= 5) fail('Daily design limit reached')
-  balance(save, { paper: -1, ink: -(1 + recipe.rule_ids.length), foil: -(foilCost[recipe.finish_id] || 0) })
+  balance(save, { paper: -1, ink: -printInkCost(recipe.rule_ids.length, recipe.finish_id), foil: -(foilCost[recipe.finish_id] || 0) })
   const designId = `offline-${id()}`
   const pool = names[recipe.theme_id]?.[recipe.type_id] || names.storybook.monster
   const name = hint ? hint.slice(0, 48) : pool[Math.floor(Math.random() * pool.length)]
@@ -201,7 +202,7 @@ function action(save: Save, copyId: string, operation: string) {
     if (item.condition <= 0) fail('This copy is too worn to reprint')
     if (item.slab_grade !== null) fail('Break the slab before reprinting')
     if (![item.type_id, item.theme_id, item.finish_id, item.border_id, item.back_id, ...item.rule_ids].every(part => save.learned.includes(part))) fail('Study this design before reprinting')
-    balance(save, { paper: -1, ink: -(1 + item.rule_ids.length), foil: -(foilCost[item.finish_id] || 0) })
+    balance(save, { paper: -1, ink: -printInkCost(item.rule_ids.length, item.finish_id), foil: -(foilCost[item.finish_id] || 0) })
     const reprint = copyOf(item, undefined, item.id)
     save.library.unshift(reprint)
     if (!item.sleeved) item.condition = Math.max(0, item.condition - 1)

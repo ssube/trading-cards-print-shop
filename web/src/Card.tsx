@@ -3,7 +3,7 @@ import { aimFoil, aimFoilFromTilt, resetFoil } from './foil'
 import type { CardCopy } from './types'
 import { wearOpacity, wearTexture } from './wear'
 
-export function Card({ card, interactive = false, onClick, large = false, blank = false, showFoil = true, showQuality = true, side = 'front', physical = false }: { card: CardCopy; interactive?: boolean; onClick?: () => void; large?: boolean; blank?: boolean; showFoil?: boolean; showQuality?: boolean; side?: 'front' | 'back'; physical?: boolean }) {
+export function Card({ card, interactive = false, onClick, large = false, blank = false, showFoil = true, showQuality = true, side = 'front', physical = false, onZoomChange }: { card: CardCopy; interactive?: boolean; onClick?: () => void; large?: boolean; blank?: boolean; showFoil?: boolean; showQuality?: boolean; side?: 'front' | 'back'; physical?: boolean; onZoomChange?: (zoom: number) => void }) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [flipped, setFlipped] = useState(side === 'back')
@@ -66,6 +66,6 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
     </div>
     {card.slab_grade !== null ? <span className="slab-base-marker">✦ CERTIFIED · № {card.id.slice(0, 6).toUpperCase()}</span> : card.sleeved === 1 ? <span className="sleeve-badge">◇ SLEEVED</span> : null}
     </div>
-    {interactive && <div className="card-controls"><button onClick={() => setFlipped(!flipped)}>{flipped ? 'Show front' : 'Flip card'}</button><label>Zoom <input type="range" min="1" max="1.6" step="0.05" value={zoom} onChange={e => setZoom(Number(e.target.value))} /></label><button onClick={() => rotate(-10)} aria-label="Rotate left">↶</button><button onClick={() => rotate(10)} aria-label="Rotate right">↷</button></div>}
+    {interactive && <div className="card-controls"><button onClick={() => setFlipped(!flipped)}>{flipped ? 'Show front' : 'Flip card'}</button><label>Zoom <input type="range" min="1" max="1.6" step="0.05" value={zoom} onChange={e => { const next = Number(e.target.value); setZoom(next); onZoomChange?.(next) }} /></label><button onClick={() => rotate(-10)} aria-label="Rotate left">↶</button><button onClick={() => rotate(10)} aria-label="Rotate right">↷</button></div>}
   </div>
 }

@@ -39,6 +39,7 @@ const others = [
   ['glitter', 'finish', 'Glitter', 'Dense, scattered foil flecks sparkle as the card moves.'],
   ['aurora', 'finish', 'Aurora', 'Soft waves of green and violet light.'],
   ['spooky', 'finish', 'Spooky', 'Ghostly shapes drift through a cold, violet haze.'],
+  ['pumpkin', 'finish', 'Pumpkin Spice', 'Copper and amber light catches scattered autumn leaves.'],
   ['classic', 'border', 'Classic Gilt', 'Warm paper and a gilt frame.'],
   ['starlit', 'border', 'Starlit Filigree', 'A midnight frame traced with stars.'],
   ['velvet', 'border', 'Velvet Scrollwork', 'A rose and ink ornamental frame.'],
@@ -48,7 +49,7 @@ const others = [
 ] as const
 
 export const offlineCatalog: Part[] = [
-  ...others.map(([id, kind, name, description]) => ({ id, kind, name, description, power: 0, slot: '', cost_json: kind === 'finish' ? JSON.stringify({ foil: ({ standard: 0, shimmer: 1, etched: 1, starfield: 2, glitter: 2, aurora: 2, spooky: 2, confetti: 3, holo: 3 } as Record<string, number>)[id] }) : '{}', learned: 0 })),
+  ...others.map(([id, kind, name, description]) => ({ id, kind, name, description, power: 0, slot: '', cost_json: kind === 'finish' ? JSON.stringify({ foil: ({ standard: 0, shimmer: 1, etched: 3, starfield: 2, glitter: 2, aurora: 3, spooky: 2, pumpkin: 2, confetti: 3, holo: 3 } as Record<string, number>)[id] }) : '{}', learned: 0 })),
   ...rules.map(([id, name, description, power, slot]) => ({ id, kind: 'rule', name, description, power, slot, cost_json: '{}', learned: 0 })),
 ]
 
@@ -117,6 +118,7 @@ export function offlineDesigns(): Design[] {
     { ...design('npc-sunlit-note', 'A Note from the Sun', 'Please return the moon by Thursday.', 'spell', ['arrival', 'draw'], 'celestial', 'holo', 'starlit', 'atlas'), id: 'npc-sunlit-note-confetti', finish_id: 'confetti' },
     { ...design('npc-tideglass-portal', 'The Tideglass Portal', 'Every shore has a door that the tide remembers.', 'spell', ['arrival', 'if_spell', 'return'], 'maritime', 'standard', 'starlit', 'atlas'), id: 'npc-tideglass-portal-aurora', finish_id: 'aurora' },
     { ...design('demon-ashwarden', "Ashwarden's Gate", "Its hinges were cast from yesterday's excuses.", 'land', ['dusk', 'mend'], 'infernal', 'shimmer'), id: 'demon-ashwarden-spooky', finish_id: 'spooky' },
+    { ...design('npc-borrowed-dawn', 'The Orchard of Borrowed Dawn', 'The fruit ripens only when someone needs another morning.', 'land', ['dawn', 'if_land', 'mend'], 'botanical'), id: 'npc-borrowed-dawn-pumpkin', finish_id: 'pumpkin' },
     { ...design('npc-borrowed-dawn', 'The Orchard of Borrowed Dawn', 'The fruit ripens only when someone needs another morning.', 'land', ['dawn', 'if_land', 'mend'], 'botanical'), id: 'reward-borrowed-dawn-holo', finish_id: 'holo' },
     { ...design('npc-clockwork-heron', 'The Clockwork Heron', "It remembers tomorrow's stars better than yesterday's roads.", 'monster', ['on_draw', 'if_monster', 'glimpse'], 'clockwork', 'shimmer', 'starlit', 'atlas'), id: 'reward-clockwork-heron-holo', finish_id: 'holo' },
     { ...design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['sleeved', 'echo'], 'storybook'), id: 'reward-mill-master-holo', finish_id: 'holo' },
@@ -136,4 +138,4 @@ export function offlineStarterDecks(): StarterDeck[] {
   ]
 }
 
-export const discoveryIds = ['npc-starlit-map', 'npc-foil-fox', 'npc-sunlit-note', 'npc-borrowed-dawn', 'npc-clockwork-heron', 'npc-tideglass-portal', 'starter-press-cat-foil', 'npc-starlit-map-foil', 'npc-foil-fox-standard', 'starter-press-cat-etched', 'npc-starlit-map-starfield', 'npc-foil-fox-glitter', 'npc-sunlit-note-confetti', 'npc-tideglass-portal-aurora', 'demon-ashwarden-spooky']
+export const discoveryIds = ['npc-borrowed-dawn-pumpkin', 'npc-starlit-map', 'npc-foil-fox', 'npc-sunlit-note', 'npc-borrowed-dawn', 'npc-clockwork-heron', 'npc-tideglass-portal', 'starter-press-cat-foil', 'npc-starlit-map-foil', 'npc-foil-fox-standard', 'starter-press-cat-etched', 'npc-starlit-map-starfield', 'npc-foil-fox-glitter', 'npc-sunlit-note-confetti', 'npc-tideglass-portal-aurora', 'demon-ashwarden-spooky']

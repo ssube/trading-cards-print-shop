@@ -32,8 +32,9 @@
 }
 .finish-confetti .foil-shine{
   opacity:.82;mix-blend-mode:normal;
-  background-image:radial-gradient(circle at var(--foil-x) var(--foil-y),#fff7e444,transparent 45%),url('./foil-confetti.svg');
-  background-size:100% 100%,100% 100%;background-repeat:no-repeat;
+  background-image:radial-gradient(circle at var(--foil-x) var(--foil-y),#fff7e444,transparent 45%),url('./foil-confetti-near.svg'),url('./foil-confetti.svg');
+  background-size:100% 100%,100% 100%,100% 100%;background-repeat:no-repeat;
+  background-position:center,calc(50% + var(--foil-dx,0px)) calc(50% + var(--foil-dy,0px)),center;
 }
 .finish-glitter .foil-shine{
   opacity:.72;mix-blend-mode:screen;
@@ -55,6 +56,13 @@
   background-size:46% 42%;background-position:var(--foil-x) var(--foil-y);
   opacity:.6;
 }
+.finish-pumpkin .foil-shine{
+  opacity:.72;mix-blend-mode:normal;
+  background-image:radial-gradient(ellipse 46% 35% at var(--foil-x) var(--foil-y),#ffe0a88c,#ff713f75 28%,transparent 76%),linear-gradient(112deg,transparent 18%,#b92f2c38 36%,#f06b354d 46%,#f5a04978 52%,#ba392f48 63%,transparent 81%),url('./foil-pumpkin.svg');
+  background-size:100% 100%,190% 190%,100% 100%;
+  background-position:center,var(--foil-x) var(--foil-y),center;
+  background-repeat:no-repeat;
+}
 .card-perspective:hover .finish-shimmer .foil-shine,.starter-fan-card.finish-shimmer:hover .foil-shine{opacity:.43}
 .card-perspective:hover .finish-holo .foil-shine,.starter-fan-card.finish-holo:hover .foil-shine{opacity:.59}
 .card-perspective:hover .finish-etched .foil-shine{opacity:.6}
@@ -63,6 +71,7 @@
 .card-perspective:hover .finish-glitter .foil-shine{opacity:.84}
 .card-perspective:hover .finish-spooky .foil-shine{opacity:.55}
 .card-perspective:hover .finish-confetti .foil-shine{opacity:.9}
+.card-perspective:hover .finish-pumpkin .foil-shine{opacity:.88}
 .blank-finish-card.finish-shimmer .foil-shine{opacity:.28}
 .blank-finish-card.finish-holo .foil-shine{opacity:.4}
 .blank-finish-card.finish-etched .foil-shine{opacity:.48}
@@ -71,6 +80,7 @@
 .blank-finish-card.finish-glitter .foil-shine{opacity:.76}
 .blank-finish-card.finish-spooky .foil-shine{opacity:.5}
 .blank-finish-card.finish-confetti .foil-shine{opacity:.86}
+.blank-finish-card.finish-pumpkin .foil-shine{opacity:.76}
 .card-perspective:hover .blank-finish-card.finish-shimmer .foil-shine{opacity:.51}
 .card-perspective:hover .blank-finish-card.finish-holo .foil-shine{opacity:.64}
 .foil-shine:after{

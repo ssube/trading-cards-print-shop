@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 500">
+  <defs><path id="leaf" d="M0-10 2-5 6-8 5-3 10-2 6 1 8 6 3 5 0 11-3 5-8 6-6 1-10-2-5-3-6-8-2-5Z"/></defs>
+  <g fill="#ff8a42" opacity=".72">
+    <use href="#leaf" transform="translate(42 38) rotate(-24) scale(.52)"/>
+    <use href="#leaf" transform="translate(268 43) rotate(48) scale(.63)"/>
+    <use href="#leaf" transform="translate(173 91) rotate(-12) scale(.46)"/>
+    <use href="#leaf" transform="translate(317 145) rotate(32) scale(.54)"/>
+    <use href="#leaf" transform="translate(72 192) rotate(71) scale(.48)"/>
+    <use href="#leaf" transform="translate(240 225) rotate(-42) scale(.62)"/>
+    <use href="#leaf" transform="translate(121 302) rotate(14) scale(.52)"/>
+    <use href="#leaf" transform="translate(295 342) rotate(-67) scale(.56)"/>
+    <use href="#leaf" transform="translate(58 411) rotate(26) scale(.58)"/>
+    <use href="#leaf" transform="translate(202 469) rotate(-18) scale(.52)"/>
+  </g>
+  <g fill="#d9442f" opacity=".7">
+    <use href="#leaf" transform="translate(106 60) rotate(31) scale(.65)"/>
+    <use href="#leaf" transform="translate(298 87) rotate(-46) scale(.48)"/>
+    <use href="#leaf" transform="translate(37 135) rotate(65) scale(.54)"/>
+    <use href="#leaf" transform="translate(211 160) rotate(13) scale(.61)"/>
+    <use href="#leaf" transform="translate(117 247) rotate(-60) scale(.47)"/>
+    <use href="#leaf" transform="translate(327 268) rotate(42) scale(.64)"/>
+    <use href="#leaf" transform="translate(31 328) rotate(-19) scale(.52)"/>
+    <use href="#leaf" transform="translate(198 367) rotate(58) scale(.48)"/>
+    <use href="#leaf" transform="translate(266 431) rotate(-38) scale(.61)"/>
+  </g>
+  <g fill="#fff0b9" opacity=".8">
+    <circle cx="66" cy="78" r="1.7"/><circle cx="221" cy="52" r="1.2"/><circle cx="278" cy="119" r="1.5"/>
+    <circle cx="144" cy="166" r="1.6"/><circle cx="46" cy="236" r="1.2"/><circle cx="273" cy="287" r="1.8"/>
+    <circle cx="173" cy="330" r="1.3"/><circle cx="81" cy="372" r="1.5"/><circle cx="324" cy="390" r="1.2"/>
+    <circle cx="152" cy="444" r="1.8"/><circle cx="308" cy="473" r="1.4"/>
+  </g>
+</svg>

@@ -42,7 +42,7 @@ test('the published artifact exposes the offline workshop and recent pages', asy
   await starter.getByRole('button', { name: 'Claim reward' }).click()
   await expect(starter.getByRole('button', { name: 'Reward claimed' })).toBeDisabled()
   await page.locator('.sidebar nav').getByRole('link', { name: 'Finish Gallery' }).click()
-  await expect(page.locator('.finish-option')).toHaveCount(9)
+  await expect(page.locator('.finish-option')).toHaveCount(10)
   await page.locator('.sidebar nav').getByRole('link', { name: 'Games' }).click()
   await expect(page.locator('.game-stub')).toHaveCount(4)
   await page.getByRole('button', { name: 'Play ↗' }).first().click()

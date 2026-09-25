@@ -5,8 +5,10 @@
 .finish-showcase:after{content:'';position:absolute;inset:14px;border:1px solid #d2bd8550;border-radius:6px;pointer-events:none}
 .finish-showcase-top,.finish-showcase-bottom{position:relative;z-index:1;display:flex;justify-content:space-between;gap:15px;color:#d1bf91;letter-spacing:.16em;font-size:.58rem;font-weight:700}
 .finish-showcase-top span:last-child{color:#a6b9ad}
-.finish-showcase-card{position:relative;z-index:1;display:grid;place-items:center;min-height:495px;padding-bottom:48px}
+.finish-showcase-card{position:relative;z-index:1;display:grid;place-items:center;min-height:495px;padding-top:var(--zoom-clearance,0px);padding-bottom:calc(48px + var(--zoom-clearance,0px))}
+.finish-showcase-card .card-large{width:min(330px,100%)}
 .finish-showcase-card .card-frame{filter:drop-shadow(0 24px 24px #0009)}
+.finish-showcase-card .card-controls{top:calc(100% + var(--zoom-clearance,0px) + 10px);z-index:4}
 .finish-showcase-bottom{align-items:end;letter-spacing:0;font-size:.77rem;color:#b4c2b2}
 .finish-showcase-bottom strong{color:#f1dca8;font:italic 1.3rem 'Fraunces',serif}
 .finish-gallery-controls{display:grid;gap:18px}
@@ -47,4 +49,4 @@
 .blank-finish-card.finish-shimmer .foil-shine{opacity:.62}
 .blank-finish-card.finish-holo .foil-shine{opacity:.75;mix-blend-mode:soft-light}
 @media(max-width:1050px){.finish-gallery-layout{grid-template-columns:1fr}.finish-showcase{min-height:605px}.finish-showcase-card{min-height:470px}}
-@media(max-width:650px){.finish-gallery-layout{gap:16px}.finish-showcase{min-height:560px;padding:20px}.finish-showcase-top span:last-child{display:none}.finish-showcase-card{min-height:440px}.finish-showcase-card .card-large{width:min(285px,72vw)}.finish-gallery-action{display:block}.finish-gallery-action button{width:100%;margin-top:13px}}
+@media(max-width:650px){.finish-gallery-layout{gap:16px}.finish-showcase{min-height:560px;padding:20px}.finish-showcase-top span:last-child{display:none}.finish-showcase-card{min-height:440px}.finish-showcase-card .card-large{width:min(285px,72vw,var(--zoom-card-max))}.finish-gallery-action{display:block}.finish-gallery-action button{width:100%;margin-top:13px}}

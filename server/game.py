@@ -75,6 +75,7 @@ PARTS = [
     ("glitter", "finish", "Glitter", "Dense, scattered foil flecks sparkle as the card moves.", 0),
     ("aurora", "finish", "Aurora", "Soft waves of green and violet light.", 0),
     ("spooky", "finish", "Spooky", "Ghostly shapes drift through a cold, violet haze.", 0),
+    ("pumpkin", "finish", "Pumpkin Spice", "Copper and amber light catches scattered autumn leaves.", 0),
     ("classic", "border", "Classic Gilt", "Warm paper and a gilt frame.", 0),
     ("starlit", "border", "Starlit Filigree", "A midnight frame traced with stars.", 0),
     ("velvet", "border", "Velvet Scrollwork", "A rose and ink ornamental frame.", 0),
@@ -100,8 +101,8 @@ STARTER_DECKS = {
     },
 }
 RESOURCE_KINDS = {"paper", "ink", "sleeve", "foil"}
-FINISH_COST = {"standard": 0, "shimmer": 1, "etched": 1, "starfield": 2,
-               "glitter": 2, "aurora": 2, "spooky": 2, "confetti": 3, "holo": 3}
+FINISH_COST = {"standard": 0, "shimmer": 1, "etched": 3, "starfield": 2,
+               "glitter": 2, "aurora": 3, "spooky": 2, "pumpkin": 2, "confetti": 3, "holo": 3}
 DESIGN_STYLES = {"npc-starlit-map": ("starlit", "atlas"),
                  "npc-foil-fox": ("velvet", "mischief"),
                  "npc-sunlit-note": ("starlit", "atlas"),
@@ -130,7 +131,7 @@ def seed():
         for part_id, slot in RULE_SLOTS.items():
             db.execute("UPDATE parts SET slot=? WHERE id=?", (slot, part_id))
         for part_id, foil in FINISH_COST.items():
-            db.execute("UPDATE parts SET cost_json=? WHERE id=? AND cost_json='{}'", (json.dumps({"foil": foil}), part_id))
+            db.execute("UPDATE parts SET cost_json=? WHERE id=? AND kind='finish'", (json.dumps({"foil": foil}), part_id))
         from .providers import bundled_art, demo_art
         npc_designs = [
             ("starter-press-cat", "Apprentice Press Cat", "He insists every proof needs one more paw print.",
@@ -207,7 +208,8 @@ def seed():
         # Specimen editions let collectors study each finish without requiring an admin grant.
         for base_id, finish in (("starter-press-cat", "etched"), ("npc-starlit-map", "starfield"),
                                 ("npc-foil-fox", "glitter"), ("npc-sunlit-note", "confetti"),
-                                ("npc-tideglass-portal", "aurora"), ("demon-ashwarden", "spooky")):
+                                ("npc-tideglass-portal", "aurora"), ("demon-ashwarden", "spooky"),
+                                ("npc-borrowed-dawn", "pumpkin")):
             base = db.execute("SELECT * FROM designs WHERE id=?", (base_id,)).fetchone()
             db.execute("INSERT OR IGNORE INTO designs(id,creator_id,type_id,rule_ids,theme_id,finish_id,name,flavor,art_path,created_at,border_id,back_id) "
                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -237,6 +239,7 @@ def seed():
             ("confetti-lesson", "Madam Moth", "A celebration in color", {"resources": {"foil": 3, "ink": 2}}, {"design_id": "npc-sunlit-note-confetti"}),
             ("aurora-lesson", "Madam Moth", "The northern press", {"resources": {"foil": 2, "ink": 3}}, {"design_id": "npc-tideglass-portal-aurora"}),
             ("spooky-lesson", "The Archivist", "The haunted proof", {"resources": {"foil": 2, "paper": 2}}, {"design_id": "demon-ashwarden-spooky"}),
+            ("pumpkin-lesson", "Madam Moth", "A little autumn warmth", {"resources": {"paper": 3, "ink": 2}}, {"design_id": "npc-borrowed-dawn-pumpkin"}),
             ("starlit-map", "Astrid the Binder", "Trade for a celestial map", {"type": "land", "min_grade": 6}, {"design_id": "npc-starlit-map"}),
             ("fox-copy", "The Foil Fox", "A shining example", {"type": "monster", "min_grade": 7}, {"design_id": "npc-foil-fox"}),
             ("sunlit-note", "Madam Moth", "The rarest letter", {"resources": {"foil": 3, "ink": 1}}, {"design_id": "npc-sunlit-note"}),
@@ -350,7 +353,7 @@ def collection_progress(db, user_id):
 def print_cost(db, rule_ids, finish_id):
     row = db.execute("SELECT cost_json FROM parts WHERE id=? AND kind='finish'", (finish_id,)).fetchone()
     need(row is not None, "Unknown finish")
-    cost = {"paper": 1, "ink": 1 + len(rule_ids), "foil": 0}
+    cost = {"paper": 1, "ink": max(1, len(rule_ids) - 1) + (0 if finish_id == "standard" else 2), "foil": 0}
     for kind, amount in json.loads(row[0]).items():
         need(kind in RESOURCE_KINDS and isinstance(amount, int) and amount >= 0, "Invalid finish recipe")
         cost[kind] = cost.get(kind, 0) + amount

@@ -12,6 +12,7 @@ import { DecksPage } from './DecksPage'
 import { StarterWelcome } from './StarterWelcome'
 import { PublicCardView } from './PublicCardView'
 import { publicCardUrl } from './public-card'
+import { printInkCost } from './print-cost'
 import { copyText } from './clipboard'
 import { isOfflineDemo, resetOfflineDemo } from './offline-game'
 import { navigate, readRoute, routeUrl, type Page, type Route } from './routes'
@@ -178,7 +179,7 @@ function App() {
   }
   const learned = (kind: string) => state.catalog.filter(p => p.kind === kind && p.learned)
   const finishCosts = JSON.parse(state.catalog.find(p => p.id === recipe.finish_id)?.cost_json || '{}') as Record<string, number>
-  const cost: Record<string, number> = { paper: 1, ink: 1 + [recipe.trigger, recipe.condition, recipe.effect].filter(Boolean).length, foil: 0 }
+  const cost: Record<string, number> = { paper: 1, ink: printInkCost([recipe.trigger, recipe.condition, recipe.effect].filter(Boolean).length, recipe.finish_id), foil: 0 }
   for (const [kind, amount] of Object.entries(finishCosts)) cost[kind] = (cost[kind] || 0) + amount
   const canPrint = Object.entries(cost).every(([kind, amount]) => (state.resources[kind] || 0) >= amount) && state.generation_count < state.generation_limit
   const nav: { key: Tab; label: string; icon: string; disabled?: boolean }[] = [
