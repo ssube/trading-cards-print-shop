@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="24" fill="#172428"/>
+  <rect x="9" y="9" width="110" height="110" rx="19" fill="none" stroke="#d8bd82" stroke-width="4"/>
+  <path d="M27 29h74M27 99h74" stroke="#d8bd82" stroke-width="2" opacity=".75"/>
+  <text x="64" y="75" fill="#f3dca7" font-family="Georgia,serif" font-size="31" font-weight="bold" letter-spacing="-3" text-anchor="middle">TC:PS</text>
+</svg>
