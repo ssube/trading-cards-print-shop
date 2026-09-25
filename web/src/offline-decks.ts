@@ -13,6 +13,7 @@ export const curatedDecks: Definition[] = [
   { id: 'tideglass', title: 'The Tideglass Expedition', theme: 'maritime', description: 'Find a door, draw a map, and let the fox navigate.', accent: 'teal', designs: ['npc-tideglass-portal', 'npc-starlit-map', 'npc-foil-fox'], reward: { resources: { foil: 3, sleeve: 2 } } },
   { id: 'papermill', title: 'The Feline Papermill', theme: 'storybook', description: 'Three shifts, six cats, and absolutely no accounting questions.', accent: 'amber', designs: ['mill-apprentice', 'mill-roller', 'mill-master'], reward: { design_id: 'reward-mill-master-holo', resources: { sleeve: 1 } } },
   { id: 'fish', title: 'The Curious Catch', theme: 'maritime', description: 'Three rare fish from the pond behind the press.', accent: 'teal', designs: ['fish-lanternfin', 'fish-inkscale', 'fish-moonkoi'], reward: { design_id: 'reward-moonkoi-holo', resources: { foil: 1 } } },
+  { id: 'demon', title: 'The Infernal Press', theme: 'infernal', description: 'Three bosses escaped the furnace. File them under occupational hazards.', accent: 'rose', designs: ['demon-cinderlord', 'demon-ashwarden', 'demon-pressfiend'], reward: { design_id: 'reward-pressfiend-holo', resources: { foil: 1, sleeve: 1 } } },
 ]
 
 export function validateCustomDeck(title: unknown, theme: unknown) {

@@ -38,6 +38,7 @@ def demo_art(design_id, theme, name):
         "botanical": ("#213e31", "#e8c67e", "#91b98b"),
         "clockwork": ("#263449", "#d6a567", "#90b7c0"),
         "maritime": ("#123e52", "#9cdbdb", "#dfad8e"),
+        "infernal": ("#3d1d28", "#f2a45e", "#d46652"),
     }
     bg, glow, accent = palettes.get(theme, palettes["storybook"])
     stars = "".join(f'<circle cx="{rng.randrange(20,380)}" cy="{rng.randrange(20,500)}" r="{rng.randrange(1,4)}" fill="{glow}" opacity=".72"/>' for _ in range(55))
@@ -149,6 +150,7 @@ def generate_art(design_id, recipe, name):
         "botanical": "luminous botanical fantasy painting, enchanted foliage and warm dawn light",
         "clockwork": "intricate clockwork fantasy painting, brass mechanisms and observatory light",
         "maritime": "magical maritime fantasy painting, sea glass, coral, and luminous tides",
+        "infernal": "original dark fantasy painting, furnace light, ember dust, and haunted machinery",
     }.get(recipe["theme_id"], recipe.get("theme_description", "original painterly fantasy"))
     subject = {"land": "a wondrous place", "monster": "a distinctive creature", "spell": "a magical event"}.get(recipe["type_id"], recipe.get("type_name", "fantasy subject"))
     motifs = "; ".join(rule["description"] for rule in recipe.get("rules", []))

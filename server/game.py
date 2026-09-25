@@ -65,6 +65,7 @@ PARTS = [
     ("botanical", "theme", "Botanical", "Enchanted gardens, living paper, and gentle wilds.", 0),
     ("clockwork", "theme", "Clockwork", "Brass mechanisms and curious inventions.", 0),
     ("maritime", "theme", "Maritime", "Tidal magic, sea glass, and impossible harbors.", 0),
+    ("infernal", "theme", "Infernal", "Furnace light, ember dust, and haunted machinery.", 0),
     ("standard", "finish", "Standard", "Soft matte print.", 0),
     ("shimmer", "finish", "Shimmer", "A narrow, shifting foil gleam.", 0),
     ("holo", "finish", "Full Holo", "An extravagant prismatic surface.", 0),
@@ -153,6 +154,12 @@ def seed():
              "monster", ["on_draw", "draw"], "maritime", "shimmer"),
             ("fish-moonkoi", "Moon Koi", "The pond insists the moon is one of its fish.",
              "monster", ["dusk", "grow"], "maritime", "standard"),
+            ("demon-cinderlord", "Cinderlord of the Press", "Even the furnace asks for a day off.",
+             "monster", ["arrival", "grow"], "infernal", "standard"),
+            ("demon-ashwarden", "Ashwarden's Gate", "Its hinges were cast from yesterday's excuses.",
+             "land", ["dusk", "mend"], "infernal", "shimmer"),
+            ("demon-pressfiend", "The Pressfiend's Bargain", "Read the fine print. Then read it again.",
+             "spell", ["arrival", "return"], "infernal", "standard"),
         ]
         # Finish variants share their featured card's artwork and text.
         variants = {"starter-press-cat": ("starter-press-cat-foil", "shimmer"),

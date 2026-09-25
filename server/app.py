@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import game, decks, papermill, fishing
+from . import game, decks, papermill, fishing, shooter
 from .db import connect, init, transaction
 from .providers import ASSETS, process_job
 
@@ -208,6 +208,34 @@ async def delete_deck(deck_id: str, user=Depends(mutation)):
 async def claim_deck(deck_id: str, user=Depends(mutation)):
     with transaction() as db:
         return decks.claim_reward(db, user["id"], deck_id)
+
+
+class ShooterKillPayload(BaseModel):
+    enemy_index: int
+
+
+@app.get("/api/games/shooter")
+async def shooter_status(user=Depends(auth)):
+    with transaction() as db:
+        return shooter.status(db, user["id"])
+
+
+@app.post("/api/games/shooter/runs")
+async def shooter_start(user=Depends(mutation)):
+    with transaction() as db:
+        return shooter.start_run(db, user["id"])
+
+
+@app.post("/api/games/shooter/runs/{run_id}/kills")
+async def shooter_kill(run_id: str, payload: ShooterKillPayload, user=Depends(mutation)):
+    with transaction() as db:
+        return shooter.claim_kill(db, user["id"], run_id, payload.enemy_index)
+
+
+@app.post("/api/games/shooter/runs/{run_id}/boss")
+async def shooter_boss(run_id: str, user=Depends(mutation)):
+    with transaction() as db:
+        return shooter.claim_boss(db, user["id"], run_id)
 
 
 class FishingReelPayload(BaseModel):

@@ -25,6 +25,7 @@ type Save = {
   custom_decks?: SavedCustomDeck[]; deck_claims?: string[]
   papermill?: { pulp: number; cats: number; roller: boolean; ink_vat: boolean; seconds_credit: number; last_at: string; day: string; paper_today: number; ink_today: number; last_tap_at: string | null }
   fishing_casts?: { id: string; day: string; created_at: string; target_ms: number; tolerance_ms: number; prize_kind: 'card' | 'resource'; prize_value: string; resolved_at: string | null; success: boolean | null; reward: { resources?: Record<string, number>; card?: { design_id: string; copy_id: string } } }[]
+  shooter_runs?: { id: string; day: string; boss_id: string; started_at: string; kill_mask: number; boss_claimed: boolean; last_kill_at: string | null }[]
 }
 
 function today() { return new Date().toISOString().slice(0, 10) }
@@ -120,7 +121,7 @@ function escapeXml(value: string) { return value.replace(/[&<>"']/g, char => ({ 
 function generatedArt(designId: string, theme: string, name: string) {
   const palettes: Record<string, [string, string, string]> = {
     storybook: ['#1b3545', '#e7b979', '#8dbfb6'], celestial: ['#162139', '#bca2e8', '#f7d796'], absurd: ['#4d2740', '#f3b668', '#ed7896'],
-    botanical: ['#213e31', '#e8c67e', '#91b98b'], clockwork: ['#263449', '#d6a567', '#90b7c0'], maritime: ['#123e52', '#9cdbdb', '#dfad8e'],
+    botanical: ['#213e31', '#e8c67e', '#91b98b'], clockwork: ['#263449', '#d6a567', '#90b7c0'], maritime: ['#123e52', '#9cdbdb', '#dfad8e'], infernal: ['#3d1d28', '#f2a45e', '#d46652'],
   }
   const [bg, glow, accent] = palettes[theme] || palettes.storybook
   let seed = [...designId].reduce((value, letter) => (value * 31 + letter.charCodeAt(0)) >>> 0, 1)
@@ -211,6 +212,61 @@ export function isOfflineDemo() {
 export function resetOfflineDemo() {
   try { storage().removeItem(STORAGE_KEY) }
   catch { fail('The offline collection could not be cleared from browser storage.') }
+}
+
+const shooterBosses = [
+  { design_id: 'demon-cinderlord', name: 'Cinderlord of the Press' },
+  { design_id: 'demon-ashwarden', name: "Ashwarden's Gate" },
+  { design_id: 'demon-pressfiend', name: "The Pressfiend's Bargain" },
+]
+function shooterStatus(save: Save) {
+  const runs = (save.shooter_runs || []).filter(run => run.day === today())
+  const kills = runs.reduce((sum, run) => sum + [0, 1, 2].filter(i => Boolean(run.kill_mask & (1 << i))).length, 0)
+  const active = [...runs].reverse().find(run => !run.boss_claimed) || null
+  return { day: today(), runs_used: runs.length, run_limit: 3, resources_earned: Math.min(kills, 6), resource_limit: 6,
+    boss_card_claimed: runs.some(run => run.boss_claimed), active_run: active, bosses: shooterBosses }
+}
+function shooterStart(save: Save) {
+  save.shooter_runs ||= []
+  const count = save.shooter_runs.filter(run => run.day === today()).length
+  if (count >= 3) fail('All three runs have been used today')
+  const ordinal = Math.floor(Date.parse(`${today()}T00:00:00Z`) / 86400000) + 719163
+  const run = { id: id(), day: today(), boss_id: shooterBosses[(ordinal + count) % 3].design_id, started_at: new Date().toISOString(), kill_mask: 0, boss_claimed: false, last_kill_at: null }
+  save.shooter_runs.push(run)
+  save.shooter_runs = save.shooter_runs.filter(item => item.day === today())
+  return run
+}
+function shooterRun(save: Save, runId: string) {
+  const run = save.shooter_runs?.find(item => item.id === runId) || fail('Run not found')
+  if (run.day !== today()) fail('This run has expired')
+  return run
+}
+function shooterKill(save: Save, runId: string, index: unknown) {
+  if (typeof index !== 'number' || !Number.isInteger(index) || index < 0 || index > 2) fail('Invalid enemy')
+  const run = shooterRun(save, runId)
+  if (run.boss_claimed || run.kill_mask & (1 << index)) fail('Enemy reward already claimed')
+  if ((Date.now() - Date.parse(run.started_at)) / 1000 < (index + 1) * 2) fail('The enemy is still in the maze')
+  if (run.last_kill_at && Date.now() - Date.parse(run.last_kill_at) < 1000) fail('Give the next enemy a moment')
+  run.kill_mask |= 1 << index; run.last_kill_at = new Date().toISOString()
+  const earned = (save.shooter_runs || []).filter(item => item.day === today()).reduce((sum, item) => sum + [0, 1, 2].filter(i => Boolean(item.kill_mask & (1 << i))).length, 0)
+  const resource = earned <= 6 ? (index + (parseInt(runId.slice(0, 2), 16) % 2)) % 2 === 0 ? 'paper' : 'ink' : null
+  if (resource) balance(save, { [resource]: 1 })
+  return { enemy_index: index, resource, status: shooterStatus(save) }
+}
+function shooterBoss(save: Save, runId: string) {
+  const run = shooterRun(save, runId)
+  if (run.boss_claimed) fail('Boss reward already claimed')
+  if (run.kill_mask !== 7) fail('Defeat the three guards first')
+  if (Date.now() - Date.parse(run.started_at) < 12000) fail('The boss is still preparing')
+  const previouslyAwarded = (save.shooter_runs || []).some(item => item.day === today() && item.boss_claimed)
+  let copyId: string | null = null
+  if (!previouslyAwarded) {
+    const design = offlineDesigns().find(item => item.id === run.boss_id) || fail('Boss card not found')
+    const copy = copyOf({ ...design, design_id: design.id }, 85)
+    save.library.unshift(copy); copyId = copy.id
+  }
+  run.boss_claimed = true
+  return { boss_id: run.boss_id, copy_id: copyId, status: shooterStatus(save) }
 }
 
 function fishingState(save: Save) {
@@ -316,6 +372,11 @@ export async function offlineApi<T>(path: string, method = 'GET', body?: unknown
     return state(save) as T
   }
   if (path === '/market' && method === 'GET') return [] as T
+  if (path === '/games/shooter' && method === 'GET') return shooterStatus(save) as T
+  if (path === '/games/shooter/runs' && method === 'POST') return mutate(current => shooterStart(current)) as T
+  const shooterMatch = path.match(/^\/games\/shooter\/runs\/([^/]+)\/(kills|boss)$/)
+  if (shooterMatch && method === 'POST' && shooterMatch[2] === 'kills') return mutate(current => shooterKill(current, shooterMatch[1], (body as { enemy_index?: unknown })?.enemy_index)) as T
+  if (shooterMatch && method === 'POST' && shooterMatch[2] === 'boss') return mutate(current => shooterBoss(current, shooterMatch[1])) as T
   if (path === '/games/fishing' && method === 'GET') return mutate(current => fishingState(current)) as T
   if (path === '/games/fishing/cast' && method === 'POST') return mutate(current => fishingCast(current)) as T
   if (path === '/games/fishing/reel' && method === 'POST') return mutate(current => fishingReel(current, (body as { cast_id?: unknown })?.cast_id)) as T

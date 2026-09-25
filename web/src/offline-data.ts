@@ -29,6 +29,7 @@ const others = [
   ['botanical', 'theme', 'Botanical', 'Enchanted gardens, living paper, and gentle wilds.'],
   ['clockwork', 'theme', 'Clockwork', 'Brass mechanisms and curious inventions.'],
   ['maritime', 'theme', 'Maritime', 'Tidal magic, sea glass, and impossible harbors.'],
+  ['infernal', 'theme', 'Infernal', 'Furnace light, ember dust, and haunted machinery.'],
   ['standard', 'finish', 'Standard', 'Soft matte print.'],
   ['shimmer', 'finish', 'Shimmer', 'A narrow, shifting foil gleam.'],
   ['holo', 'finish', 'Full Holo', 'An extravagant prismatic surface.'],
@@ -46,6 +47,11 @@ export const offlineCatalog: Part[] = [
 ]
 
 function art(id: string) {
+  if (id.startsWith('demon-')) {
+    const color = id === 'demon-ashwarden' ? '#c88a72' : id === 'demon-pressfiend' ? '#aa72a2' : '#eaa45d'
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560"><rect width="400" height="560" fill="#251821"/><circle cx="200" cy="280" r="160" fill="#9a4238" opacity=".4"/><path d="M105 432Q77 240 138 173L90 90l98 65 48 0 78-65-50 99q63 78 31 243Z" fill="${color}" stroke="#f3c68b" stroke-width="8"/><path d="M146 248l42 20m68-20-42 20" stroke="#361923" stroke-width="16"/><path d="M142 355q58 40 116 0" fill="none" stroke="#361923" stroke-width="10"/><path d="M70 489h260" stroke="#e18b58" stroke-width="13"/></svg>`
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`
+  }
   if (id.startsWith('fish-')) {
     const color = id === 'fish-inkscale' ? '#687bd3' : id === 'fish-moonkoi' ? '#e6bca0' : '#b7dca3'
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560"><rect width="400" height="560" fill="#123a4c"/><circle cx="200" cy="250" r="155" fill="#3a8195" opacity=".3"/><path d="M60 175q140-80 280 0M50 335q150 90 300 0" fill="none" stroke="#9cdddd" stroke-width="4" opacity=".5"/><path d="M90 280q105-130 230 0-125 130-230 0l-55-85v170z" fill="${color}" stroke="#ecedd8" stroke-width="7"/><circle cx="242" cy="258" r="12" fill="#183b43"/><circle cx="246" cy="254" r="3" fill="#fff"/><path d="M165 280h-45m55 28h-42" stroke="#ffffff" stroke-width="6" opacity=".5"/></svg>`
@@ -85,6 +91,9 @@ export function offlineDesigns(): Design[] {
     design('fish-lanternfin', 'Lanternfin', 'Its light arrives a moment before the fish does.', 'monster', ['arrival', 'glimpse'], 'maritime'),
     design('fish-inkscale', 'Inkscale', 'Every ripple writes a new sentence.', 'monster', ['on_draw', 'draw'], 'maritime', 'shimmer'),
     design('fish-moonkoi', 'Moon Koi', 'The pond insists the moon is one of its fish.', 'monster', ['dusk', 'grow'], 'maritime'),
+    design('demon-cinderlord', 'Cinderlord of the Press', 'Even the furnace asks for a day off.', 'monster', ['arrival', 'grow'], 'infernal'),
+    design('demon-ashwarden', "Ashwarden's Gate", "Its hinges were cast from yesterday's excuses.", 'land', ['dusk', 'mend'], 'infernal', 'shimmer'),
+    design('demon-pressfiend', "The Pressfiend's Bargain", 'Read the fine print. Then read it again.', 'spell', ['arrival', 'return'], 'infernal'),
     { ...cat, id: 'reward-press-cat-holo', finish_id: 'holo' },
     { ...map, id: 'reward-starlit-map-holo', finish_id: 'holo' },
     { ...fox, id: 'reward-foil-fox-holo', finish_id: 'holo' },
@@ -92,6 +101,7 @@ export function offlineDesigns(): Design[] {
     { ...design('npc-clockwork-heron', 'The Clockwork Heron', "It remembers tomorrow's stars better than yesterday's roads.", 'monster', ['on_draw', 'if_monster', 'glimpse'], 'clockwork', 'shimmer', 'starlit', 'atlas'), id: 'reward-clockwork-heron-holo', finish_id: 'holo' },
     { ...design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['sleeved', 'echo'], 'storybook'), id: 'reward-mill-master-holo', finish_id: 'holo' },
     { ...design('fish-moonkoi', 'Moon Koi', 'The pond insists the moon is one of its fish.', 'monster', ['dusk', 'grow'], 'maritime'), id: 'reward-moonkoi-holo', finish_id: 'holo' },
+    { ...design('demon-pressfiend', "The Pressfiend's Bargain", 'Read the fine print. Then read it again.', 'spell', ['arrival', 'return'], 'infernal'), id: 'reward-pressfiend-holo', finish_id: 'holo' },
   ]
 }
 
