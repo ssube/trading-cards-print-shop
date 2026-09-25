@@ -139,6 +139,22 @@ def test_daily_allowance_is_unique(world):
     assert len(available) == 1
 
 
+def test_print_defects_are_rare_and_centered():
+    samples = [game.quality_attributes({"rule_ids": ["arrival", "draw"]}) for _ in range(2000)]
+    centered = [sample for sample in samples if sample[1] or sample[2]]
+    registered = [sample for sample in samples if any(sample[3:7])]
+    colored = [sample for sample in samples if sample[7] != "none"]
+    clean = [sample for sample in samples if not any(sample[1:7]) and sample[7] == "none" and sample[8] == sample[9] == 0]
+    assert 0.10 < len(centered) / len(samples) < 0.27
+    assert 0.08 < len(registered) / len(samples) < 0.25
+    assert len(colored) / len(samples) < 0.09
+    assert len(clean) / len(samples) > 0.45
+    assert abs(sum(sample[1] for sample in samples) / len(samples)) < 0.02
+    assert abs(sum(sample[2] for sample in samples) / len(samples)) < 0.02
+    assert max(abs(value) for sample in samples for value in sample[1:3]) <= 0.45
+    assert max(abs(value) for sample in samples for value in sample[3:7]) <= 0.28
+
+
 def test_saved_print_attributes_are_two_axis_cmyk(world):
     alice, _ = world
     card_id = new_card(alice, "defect-print-123")

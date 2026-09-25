@@ -52,19 +52,39 @@ function persist(save: Save) {
   try { storage().setItem(STORAGE_KEY, JSON.stringify(save)) }
   catch { return fail('The offline collection could not be saved. Check available browser storage before continuing.') }
 }
+function bellOffset(scale: number, limit: number) {
+  const value = (Array.from({ length: 6 }, () => Math.random()).reduce((sum, roll) => sum + roll, 0) - 3) * scale
+  return Math.round(Math.max(-limit, Math.min(limit, value)) * 100) / 100
+}
+function printDefects() {
+  const centering = Math.random() < .18 ? [bellOffset(.20, .45), bellOffset(.20, .45)] : [0, 0]
+  const shifts = [0, 0, 0, 0]
+  if (Math.random() < .16) {
+    const first = Math.floor(Math.random() * 4)
+    shifts[first] = bellOffset(.12, .28)
+    if (Math.random() < .20) shifts[(first + 1 + Math.floor(Math.random() * 3)) % 4] = bellOffset(.12, .28)
+  }
+  return {
+    centering_x: centering[0], centering_y: centering[1], shift_c: shifts[0], shift_m: shifts[1], shift_y: shifts[2], shift_k: shifts[3],
+    color_effect: Math.random() < .05 ? ['fade', 'desaturated', 'hue-shift'][Math.floor(Math.random() * 3)] : 'none',
+    surface: Math.random() < .12 ? Math.abs(bellOffset(.14, .3)) : 0,
+    edge: Math.random() < .08 ? Math.abs(bellOffset(.10, .22)) : 0,
+  }
+}
 function copyOf(template: Pick<CardCopy, 'design_id' | 'type_id' | 'rule_ids' | 'theme_id' | 'finish_id' | 'border_id' | 'back_id' | 'name' | 'flavor' | 'art_path'>, score?: number, origin_id: string | null = null): OfflineCard {
-  const quality = score ?? Math.max(1, Math.min(100, Math.round(100 - Math.random() * 25 - Math.max(0, template.rule_ids.length - 2) * 3)))
+  const defects = score === undefined ? printDefects() : { centering_x: 0, centering_y: 0, shift_c: 0, shift_m: 0, shift_y: 0, shift_k: 0, color_effect: 'none', surface: 0, edge: 0 }
+  const complexity = Math.max(0, template.rule_ids.length - 2) * 3
+  const quality = score ?? Math.max(1, Math.min(100, Math.round(100 - complexity - 5 * Math.abs(defects.centering_x) - 5 * Math.abs(defects.centering_y)
+    - 3 * [defects.shift_c, defects.shift_m, defects.shift_y, defects.shift_k].reduce((total, value) => total + Math.abs(value), 0)
+    - 4 * Number(defects.color_effect !== 'none') - 9 * defects.surface - 7 * defects.edge)))
   const n = Math.max(1, Math.min(10, Math.ceil(quality / 10)))
   const parts = new Map(offlineCatalog.map(part => [part.id, part]))
-  const shift = () => score === undefined ? Math.round((Math.random() - .5) * 100) / 100 : 0
   return {
     id: id(), design_id: template.design_id, owner_id: 0, creator: template.design_id.startsWith('offline-') ? PROFILE.username : null, origin_id,
     type_id: template.type_id, rule_ids: [...template.rule_ids], theme_id: template.theme_id, finish_id: template.finish_id,
     border_id: template.border_id, back_id: template.back_id, name: template.name, flavor: template.flavor, art_path: template.art_path,
     rule_names: template.rule_ids.map(rule => parts.get(rule)?.name || rule), rule_text: template.rule_ids.map(rule => parts.get(rule)?.description || rule),
-    print_score: quality, condition: 100, centering_x: shift(), centering_y: shift(), shift_c: shift(), shift_m: shift(), shift_y: shift(), shift_k: shift(),
-    color_effect: score === undefined ? ['none', 'none', 'none', 'fade', 'desaturated', 'hue-shift'][Math.floor(Math.random() * 6)] : 'none',
-    surface: score === undefined ? Math.round(Math.random() * 70) / 100 : 0, edge: score === undefined ? Math.round(Math.random() * 50) / 100 : 0,
+    print_score: quality, condition: 100, ...defects,
     sleeved: 0, slab_grade: null, listed: 0, grade: n, grade_name: gradeNames[n - 1],
     estimated_grade: n >= 9 ? 'Mint' : n >= 7 ? 'Near Mint' : n >= 4 ? 'Played' : 'Poor', exact_grade_visible: true, aged_at: today(),
   }

@@ -385,16 +385,26 @@ def create_print_job(db, user_id, payload, request_key):
     return obj(db.execute("SELECT * FROM jobs WHERE id=?", (request_key,)).fetchone())
 
 
+def _bell_offset(scale, limit):
+    # Six uniform draws form a symmetric, bell-shaped offset around zero.
+    value = (sum(secrets.randbelow(1001) for _ in range(6)) / 1000 - 3) * scale
+    return round(max(-limit, min(limit, value)), 2)
+
+
 def quality_attributes(recipe, quality_override=None):
     if quality_override is not None:
         score = max(0, min(100, int(quality_override)))
         return score, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "none", 0.0, 0.0
-    centering_x = round((secrets.randbelow(181) - 90) / 100, 2)
-    centering_y = round((secrets.randbelow(181) - 90) / 100, 2)
-    shifts = [round((secrets.randbelow(121) - 60) / 100, 2) for _ in range(4)]
-    effect = secrets.choice(["none", "none", "none", "fade", "desaturated", "hue-shift"])
-    surface = round(secrets.randbelow(71) / 100, 2)
-    edge = round(secrets.randbelow(51) / 100, 2)
+    centering_x, centering_y = (_bell_offset(.20, .45), _bell_offset(.20, .45)) if secrets.randbelow(100) < 18 else (0.0, 0.0)
+    shifts = [0.0] * 4
+    if secrets.randbelow(100) < 16:
+        first = secrets.randbelow(4)
+        shifts[first] = _bell_offset(.12, .28)
+        if secrets.randbelow(100) < 20:
+            shifts[(first + 1 + secrets.randbelow(3)) % 4] = _bell_offset(.12, .28)
+    effect = secrets.choice(["fade", "desaturated", "hue-shift"]) if secrets.randbelow(100) < 5 else "none"
+    surface = abs(_bell_offset(.14, .3)) if secrets.randbelow(100) < 12 else 0.0
+    edge = abs(_bell_offset(.10, .22)) if secrets.randbelow(100) < 8 else 0.0
     complexity = max(0, len(recipe.get("rule_ids", [])) - 2) * 3
     score = max(1, min(100, round(100 - complexity - 5*abs(centering_x) - 5*abs(centering_y)
                                   - 3*sum(abs(v) for v in shifts) - 4*(effect != "none")
