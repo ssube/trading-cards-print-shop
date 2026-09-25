@@ -53,6 +53,7 @@ await call('/allowance/claim', 'POST')
 await assert.rejects(call('/allowance/claim', 'POST'), /already collected/)
 
 const recipe = { type_id: 'monster', rule_ids: ['arrival', 'draw'], theme_id: 'storybook', finish_id: 'standard', border_id: 'classic', back_id: 'archive' }
+await assert.rejects(call('/prints', 'POST', { ...recipe, hint: 'x'.repeat(255) }, { 'Idempotency-Key': 'hint-too-long' }), /Hint must be/)
 const first = await call('/prints', 'POST', recipe, { 'Idempotency-Key': 'smoke-print-one' })
 assert.equal((await call(`/jobs/${first.id}`)).copy_id, first.copy_id)
 assert.match(first.discovery_name, /Map of Unfinished/)
@@ -69,8 +70,9 @@ await call(`/copies/${sample.id}/study`, 'POST')
 state = await call('/state')
 assert.equal(state.catalog.find(part => part.id === 'starlit').learned, 1)
 assert.equal(state.catalog.find(part => part.id === 'atlas').learned, 1)
-const second = await call('/prints', 'POST', { ...recipe, theme_id: 'celestial', border_id: 'starlit', back_id: 'atlas' }, { 'Idempotency-Key': 'smoke-print-two' })
+const second = await call('/prints', 'POST', { ...recipe, theme_id: 'celestial', border_id: 'starlit', back_id: 'atlas', hint: 'A fox in a moonlit bookshop' }, { 'Idempotency-Key': 'smoke-print-two' })
 const styled = await call(`/copies/${second.copy_id}`)
+assert.equal(styled.name, 'A fox in a moonlit bookshop')
 assert.equal(styled.border_id, 'starlit')
 assert.equal(styled.back_id, 'atlas')
 

@@ -309,6 +309,9 @@ def validate_recipe(db, user_id, payload):
     finish = payload.get("finish_id", "standard")
     border = payload.get("border_id", "classic")
     back = payload.get("back_id", "archive")
+    hint = payload.get("hint", "")
+    need(isinstance(hint, str) and len(hint) <= 254, "Hint must be 254 characters or fewer")
+    hint = " ".join(hint.split())
     need(isinstance(rules, list) and 1 <= len(rules) <= 3 and len(set(rules)) == len(rules), "Choose one to three distinct rules")
     selected = [(type_id, "type"), (theme, "theme"), (finish, "finish"),
                 (border, "border"), (back, "back")] + [(r, "rule") for r in rules]
@@ -323,7 +326,7 @@ def validate_recipe(db, user_id, payload):
     need(slots.count("trigger") == 1 and slots.count("effect") == 1 and slots.count("condition") <= 1,
          "Choose one trigger, one effect, and at most one condition")
     return {"type_id": type_id, "rule_ids": rules, "theme_id": theme, "finish_id": finish,
-            "border_id": border, "back_id": back}
+            "border_id": border, "back_id": back, "hint": hint}
 
 
 def generation_count(db, user_id):

@@ -185,6 +185,7 @@ async def copy_detail(copy_id: str, user=Depends(auth)):
 
 
 class PrintPayload(BaseModel):
+    hint: str = Field(default="", max_length=254)
     type_id: str
     rule_ids: list[str]
     theme_id: str

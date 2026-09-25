@@ -127,8 +127,10 @@ function generatedArt(designId: string, theme: string, name: string) {
 function print(save: Save, body: unknown, requestKey: string) {
   if (!requestKey) fail('An idempotency key is required')
   if (save.jobs[requestKey]) return { id: requestKey, status: 'complete', copy_id: save.jobs[requestKey] }
-  const recipe = body as { type_id: string; rule_ids: string[]; theme_id: string; finish_id: string; border_id: string; back_id: string }
+  const recipe = body as { type_id: string; rule_ids: string[]; theme_id: string; finish_id: string; border_id: string; back_id: string; hint?: string }
   if (!recipe || !Array.isArray(recipe.rule_ids) || recipe.rule_ids.length < 2 || recipe.rule_ids.length > 3 || new Set(recipe.rule_ids).size !== recipe.rule_ids.length) fail('Choose two or three distinct rules')
+  if (typeof recipe.hint !== 'undefined' && (typeof recipe.hint !== 'string' || recipe.hint.length > 254)) fail('Hint must be 254 characters or fewer')
+  const hint = (recipe.hint || '').trim().replace(/\s+/g, ' ')
   const parts = new Map(offlineCatalog.map(part => [part.id, part]))
   const choices: [string, string][] = [[recipe.type_id, 'type'], [recipe.theme_id, 'theme'], [recipe.finish_id, 'finish'], [recipe.border_id, 'border'], [recipe.back_id, 'back'], ...recipe.rule_ids.map(rule => [rule, 'rule'] as [string, string])]
   for (const [partId, kind] of choices) if (parts.get(partId)?.kind !== kind || !save.learned.includes(partId)) fail(`You have not learned ${partId}`)
@@ -140,7 +142,7 @@ function print(save: Save, body: unknown, requestKey: string) {
   balance(save, { paper: -1, ink: -(1 + recipe.rule_ids.length), foil: -(foilCost[recipe.finish_id] || 0) })
   const designId = `offline-${id()}`
   const pool = names[recipe.theme_id]?.[recipe.type_id] || names.storybook.monster
-  const name = pool[Math.floor(Math.random() * pool.length)]
+  const name = hint ? hint.slice(0, 48) : pool[Math.floor(Math.random() * pool.length)]
   const printed = copyOf({ design_id: designId, ...recipe, name, flavor: 'Printed under a moon that insists it is the sun.', art_path: generatedArt(designId, recipe.theme_id, name) })
   save.library.unshift(printed)
   save.generation_count++

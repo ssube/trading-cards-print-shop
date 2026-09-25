@@ -287,3 +287,20 @@ def test_physical_print_charge_is_atomic_and_protection_applies(world):
             game.charge_physical_print(conn, alice, [{"copy_id": copy_id, "quantity": 91}], "physical-print-too-many")
         with pytest.raises(game.GameError):
             game.charge_physical_print(conn, alice, [{"copy_id": copy_id, "quantity": 1}], "physical-print-123")
+
+
+def test_print_hint_reaches_generation_and_rejects_long_input(world):
+    alice, _ = world
+    recipe = {"type_id": "monster", "rule_ids": ["arrival", "draw"], "theme_id": "storybook",
+              "finish_id": "standard", "hint": "A fox in a moonlit bookshop"}
+    with db.transaction() as conn:
+        before = game.resource_balance(conn, alice)
+        with pytest.raises(game.GameError, match="Hint must be"):
+            game.create_print_job(conn, alice, {**recipe, "hint": "x" * 255}, "hint-too-long")
+        assert game.resource_balance(conn, alice) == before
+        job = game.create_print_job(conn, alice, recipe, "hint-valid-123")
+        assert json.loads(job["payload"])["recipe"]["hint"] == recipe["hint"]
+    providers.process_job(job["id"])
+    with db.connect() as conn:
+        copy_id = conn.execute("SELECT copy_id FROM jobs WHERE id=?", (job["id"],)).fetchone()[0]
+        assert game.copy_detail(conn, copy_id, alice)["name"] == recipe["hint"]
