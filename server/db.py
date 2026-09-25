@@ -33,7 +33,7 @@ def transaction():
 def init():
     with transaction() as db:
         version = db.execute("PRAGMA user_version").fetchone()[0]
-        if version >= 6:
+        if version >= 7:
             return
         if version == 0:
             db.executescript("""
@@ -100,3 +100,7 @@ def init():
             db.execute("CREATE TABLE custom_decks(id TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, title TEXT NOT NULL, theme_id TEXT NOT NULL REFERENCES parts(id), created_at TEXT NOT NULL)")
             db.execute("CREATE TABLE deck_claims(user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, deck_id TEXT NOT NULL, claimed_at TEXT NOT NULL, copy_id TEXT REFERENCES copies(id), PRIMARY KEY(user_id,deck_id))")
             db.execute("PRAGMA user_version=6")
+
+        if version <= 6:
+            db.execute("CREATE TABLE papermills(user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, pulp INTEGER NOT NULL DEFAULT 0, cats INTEGER NOT NULL DEFAULT 0, roller INTEGER NOT NULL DEFAULT 0, ink_vat INTEGER NOT NULL DEFAULT 0, seconds_credit INTEGER NOT NULL DEFAULT 0, last_at TEXT NOT NULL, day TEXT NOT NULL, paper_today INTEGER NOT NULL DEFAULT 0, ink_today INTEGER NOT NULL DEFAULT 0, last_tap_at TEXT)")
+            db.execute("PRAGMA user_version=7")

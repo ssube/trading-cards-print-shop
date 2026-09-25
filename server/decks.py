@@ -9,6 +9,7 @@ CURATED = [
     {"id": "garden", "title": "The Borrowed Morning", "theme": "botanical", "description": "Gather a dawn, a spark of ink, and a helpful apprentice.", "accent": "green", "designs": ["npc-borrowed-dawn", "starter-paper-sprite", "starter-press-cat"], "reward": {"design_id": "reward-borrowed-dawn-holo", "resources": {"sleeve": 2}}},
     {"id": "clockwork", "title": "The Clockwork Almanac", "theme": "clockwork", "description": "A heron keeps the hours while the heavens lose count.", "accent": "blue", "designs": ["npc-clockwork-heron", "npc-starlit-map", "npc-sunlit-note"], "reward": {"design_id": "reward-clockwork-heron-holo", "slab_grade": 8, "resources": {}}},
     {"id": "tideglass", "title": "The Tideglass Expedition", "theme": "maritime", "description": "Find a door, draw a map, and let the fox navigate.", "accent": "teal", "designs": ["npc-tideglass-portal", "npc-starlit-map", "npc-foil-fox"], "reward": {"resources": {"foil": 3, "sleeve": 2}}},
+    {"id": "papermill", "title": "The Feline Papermill", "theme": "storybook", "description": "Three shifts, six cats, and absolutely no accounting questions.", "accent": "amber", "designs": ["mill-apprentice", "mill-roller", "mill-master"], "reward": {"design_id": "reward-mill-master-holo", "resources": {"sleeve": 1}}},
 ]
 REWARD_VARIANTS = {
     "reward-press-cat-holo": "starter-press-cat",
@@ -16,6 +17,7 @@ REWARD_VARIANTS = {
     "reward-foil-fox-holo": "npc-foil-fox",
     "reward-borrowed-dawn-holo": "npc-borrowed-dawn",
     "reward-clockwork-heron-holo": "npc-clockwork-heron",
+    "reward-mill-master-holo": "mill-master",
 }
 
 

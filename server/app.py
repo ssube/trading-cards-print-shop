@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import game, decks
+from . import game, decks, papermill
 from .db import connect, init, transaction
 from .providers import ASSETS, process_job
 
@@ -208,6 +208,30 @@ async def delete_deck(deck_id: str, user=Depends(mutation)):
 async def claim_deck(deck_id: str, user=Depends(mutation)):
     with transaction() as db:
         return decks.claim_reward(db, user["id"], deck_id)
+
+
+@app.get("/api/games/papermill")
+async def papermill_status(user=Depends(auth)):
+    with transaction() as db:
+        return papermill.status(db, user["id"])
+
+
+@app.post("/api/games/papermill/tap")
+async def papermill_tap(user=Depends(mutation)):
+    with transaction() as db:
+        return papermill.tap(db, user["id"])
+
+
+@app.post("/api/games/papermill/hire")
+async def papermill_hire(user=Depends(mutation)):
+    with transaction() as db:
+        return papermill.hire(db, user["id"])
+
+
+@app.post("/api/games/papermill/upgrades/{kind}")
+async def papermill_upgrade(kind: str, user=Depends(mutation)):
+    with transaction() as db:
+        return papermill.upgrade(db, user["id"], kind)
 
 
 @app.post("/api/allowance/claim")

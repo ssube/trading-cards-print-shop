@@ -141,6 +141,12 @@ def seed():
              "monster", ["on_draw", "if_monster", "glimpse"], "clockwork", "shimmer"),
             ("npc-tideglass-portal", "The Tideglass Portal", "Every shore has a door that the tide remembers.",
              "spell", ["arrival", "if_spell", "return"], "maritime", "standard"),
+            ("mill-apprentice", "The Pulp Apprentice", "Her first proof has only three paw prints.",
+             "monster", ["arrival", "draw"], "storybook", "standard"),
+            ("mill-roller", "The Moonlit Roller", "All night it turns; by morning, every page is softer.",
+             "land", ["dusk", "grow"], "clockwork", "shimmer"),
+            ("mill-master", "Master of the Midnight Mill", "A spotless apron is the surest sign of management.",
+             "monster", ["sleeved", "echo"], "storybook", "standard"),
         ]
         # Finish variants share their featured card's artwork and text.
         variants = {"starter-press-cat": ("starter-press-cat-foil", "shimmer"),

@@ -23,6 +23,7 @@ type Save = {
   jobs: Record<string, string>
   exports?: Record<string, { signature: string; cards: number; sheets: number }>
   custom_decks?: SavedCustomDeck[]; deck_claims?: string[]
+  papermill?: { pulp: number; cats: number; roller: boolean; ink_vat: boolean; seconds_credit: number; last_at: string; day: string; paper_today: number; ink_today: number; last_tap_at: string | null }
 }
 
 function today() { return new Date().toISOString().slice(0, 10) }
@@ -211,6 +212,48 @@ export function resetOfflineDemo() {
   catch { fail('The offline collection could not be cleared from browser storage.') }
 }
 
+function millState(save: Save) {
+  const now = new Date()
+  const todayUtc = today()
+  save.papermill ||= { pulp: 0, cats: 0, roller: false, ink_vat: false, seconds_credit: 0, last_at: now.toISOString(), day: todayUtc, paper_today: 0, ink_today: 0, last_tap_at: null }
+  const mill = save.papermill
+  const sameDay = mill.day === todayUtc
+  const start = sameDay ? Date.parse(mill.last_at) : Math.max(Date.parse(mill.last_at), Date.parse(`${todayUtc}T00:00:00Z`))
+  const elapsed = Math.max(0, Math.min(86400, Math.floor((now.getTime() - start) / 1000)))
+  if (!sameDay) { mill.seconds_credit = 0; mill.paper_today = 0; mill.ink_today = 0; mill.day = todayUtc }
+  mill.seconds_credit = Math.min(86400 * 6, mill.seconds_credit + elapsed * mill.cats)
+  const paper = Math.max(0, Math.min(4, Math.floor(mill.seconds_credit / (mill.roller ? 600 : 900))) - mill.paper_today)
+  const ink = Math.max(0, Math.min(4, Math.floor(mill.seconds_credit / (mill.ink_vat ? 1200 : 1800))) - mill.ink_today)
+  if (paper || ink) balance(save, { paper, ink })
+  mill.paper_today += paper; mill.ink_today += ink; mill.last_at = now.toISOString()
+  return { pulp: mill.pulp, cats: mill.cats, roller: mill.roller, ink_vat: mill.ink_vat, paper_today: mill.paper_today, ink_today: mill.ink_today, paper_limit: 4, ink_limit: 4, next_cat_cost: mill.cats < 6 ? 5 * (mill.cats + 1) : null }
+}
+function millAction(save: Save, action: string) {
+  millState(save)
+  const mill = save.papermill!
+  if (action === 'tap') {
+    if (mill.last_tap_at && Date.now() - Date.parse(mill.last_tap_at) < 250) fail('Let the pulper finish its stroke')
+    mill.pulp += 1; mill.last_tap_at = new Date().toISOString()
+  } else if (action === 'hire') {
+    if (mill.cats >= 6) fail('The mill is fully staffed')
+    const cost = 5 * (mill.cats + 1)
+    if (mill.pulp < cost) fail('Not enough pulp')
+    mill.pulp -= cost; mill.cats += 1
+    const cardId = ({ 1: 'mill-apprentice', 3: 'mill-roller', 6: 'mill-master' } as Record<number, string>)[mill.cats]
+    if (cardId) {
+      const design = offlineDesigns().find(item => item.id === cardId) || fail('Mill card not found')
+      save.library.unshift(copyOf({ ...design, design_id: design.id }, 84))
+      return { ...millState(save), card_id: cardId }
+    }
+  } else if (action === 'roller' || action === 'ink_vat') {
+    const cost = action === 'roller' ? 15 : 20
+    if (mill[action]) fail('Upgrade already installed')
+    if (mill.pulp < cost) fail('Not enough pulp')
+    mill.pulp -= cost; mill[action] = true
+  } else fail('Unknown mill action')
+  return { ...millState(save), card_id: null }
+}
+
 export async function offlineApi<T>(path: string, method = 'GET', body?: unknown, extra?: Record<string, string>): Promise<T> {
   if (path === '/starter-decks' && method === 'GET') return offlineStarterDecks() as T
   if (path === '/auth/register' && method === 'POST') {
@@ -230,6 +273,11 @@ export async function offlineApi<T>(path: string, method = 'GET', body?: unknown
     return state(save) as T
   }
   if (path === '/market' && method === 'GET') return [] as T
+  if (path === '/games/papermill' && method === 'GET') return mutate(current => millState(current)) as T
+  if (path === '/games/papermill/tap' && method === 'POST') return mutate(current => millAction(current, 'tap')) as T
+  if (path === '/games/papermill/hire' && method === 'POST') return mutate(current => millAction(current, 'hire')) as T
+  const millUpgrade = path.match(/^\/games\/papermill\/upgrades\/(roller|ink_vat)$/)
+  if (millUpgrade && method === 'POST') return mutate(current => millAction(current, millUpgrade[1])) as T
   if (path === '/decks' && method === 'GET') return offlineDeckList(save.library, save.custom_decks || [], save.deck_claims || []) as T
   if (path === '/decks' && method === 'POST') return mutate(current => {
     const payload = body as { title?: unknown; theme?: unknown }

@@ -46,6 +46,11 @@ export const offlineCatalog: Part[] = [
 ]
 
 function art(id: string) {
+  if (id.startsWith('mill-')) {
+    const hue = id === 'mill-roller' ? '#85b7c5' : id === 'mill-master' ? '#f0b988' : '#dcc27e'
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560"><rect width="400" height="560" fill="#213a36"/><circle cx="200" cy="220" r="140" fill="${hue}" opacity=".2"/><path d="M100 420V200l45-70 50 40 60-40 45 70v220Z" fill="${hue}" stroke="#f8eac5" stroke-width="7"/><circle cx="165" cy="245" r="9" fill="#25342f"/><circle cx="235" cy="245" r="9" fill="#25342f"/><path d="M185 286q15 20 30 0M65 440h270v60H65z" fill="none" stroke="#25342f" stroke-width="9"/><path d="M75 445h250v55H75z" fill="#efe5c8"/><path d="M140 470h120" stroke="#a89574" stroke-width="5"/></svg>`
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`
+  }
   return new URL(`demo-art/${id}.png`, document.baseURI).href
 }
 
@@ -69,11 +74,15 @@ export function offlineDesigns(): Design[] {
     design('npc-borrowed-dawn', 'The Orchard of Borrowed Dawn', 'The fruit ripens only when someone needs another morning.', 'land', ['dawn', 'if_land', 'mend'], 'botanical'),
     design('npc-clockwork-heron', 'The Clockwork Heron', "It remembers tomorrow's stars better than yesterday's roads.", 'monster', ['on_draw', 'if_monster', 'glimpse'], 'clockwork', 'shimmer', 'starlit', 'atlas'),
     design('npc-tideglass-portal', 'The Tideglass Portal', 'Every shore has a door that the tide remembers.', 'spell', ['arrival', 'if_spell', 'return'], 'maritime', 'standard', 'starlit', 'atlas'),
+    design('mill-apprentice', 'The Pulp Apprentice', 'Her first proof has only three paw prints.', 'monster', ['arrival', 'draw'], 'storybook'),
+    design('mill-roller', 'The Moonlit Roller', 'All night it turns; by morning, every page is softer.', 'land', ['dusk', 'grow'], 'clockwork', 'shimmer'),
+    design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['sleeved', 'echo'], 'storybook'),
     { ...cat, id: 'reward-press-cat-holo', finish_id: 'holo' },
     { ...map, id: 'reward-starlit-map-holo', finish_id: 'holo' },
     { ...fox, id: 'reward-foil-fox-holo', finish_id: 'holo' },
     { ...design('npc-borrowed-dawn', 'The Orchard of Borrowed Dawn', 'The fruit ripens only when someone needs another morning.', 'land', ['dawn', 'if_land', 'mend'], 'botanical'), id: 'reward-borrowed-dawn-holo', finish_id: 'holo' },
     { ...design('npc-clockwork-heron', 'The Clockwork Heron', "It remembers tomorrow's stars better than yesterday's roads.", 'monster', ['on_draw', 'if_monster', 'glimpse'], 'clockwork', 'shimmer', 'starlit', 'atlas'), id: 'reward-clockwork-heron-holo', finish_id: 'holo' },
+    { ...design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['sleeved', 'echo'], 'storybook'), id: 'reward-mill-master-holo', finish_id: 'holo' },
   ]
 }
 
