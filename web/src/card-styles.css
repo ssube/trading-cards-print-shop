@@ -1,0 +1,41 @@
+.trading-card.border-starlit,.starter-fan-card.border-starlit{
+  border-color:#8ea7bd;
+  background:linear-gradient(145deg,#e2e7e8,#a8b8c8);
+  color:#1e3547;
+  box-shadow:0 2px 3px #0007,0 13px 23px #0008,inset 0 0 0 2px #e6e2c5;
+}
+.trading-card.border-starlit:before{
+  border-color:#d4b979;
+  box-shadow:inset 0 0 0 2px #304f7099;
+}
+.trading-card.border-starlit .art-window,.starter-fan-card.border-starlit .starter-fan-art{border-color:#5e7895}
+.trading-card.border-starlit .card-finish{color:#435d85}
+.trading-card.border-velvet,.starter-fan-card.border-velvet{
+  border-color:#b47b91;
+  background:linear-gradient(145deg,#f1d9d5,#bb96a9);
+  color:#422c3b;
+  box-shadow:0 2px 3px #0007,0 13px 23px #0008,inset 0 0 0 2px #f2dcc5;
+}
+.trading-card.border-velvet:before{
+  border-color:#733d58;
+  box-shadow:inset 0 0 0 2px #c49b67;
+}
+.trading-card.border-velvet .art-window,.starter-fan-card.border-velvet .starter-fan-art{border-color:#74485e}
+.trading-card.border-velvet .card-finish{color:#75405c}
+.card-flipper>.card-back.back-atlas{
+  border-color:#95acc2;
+  color:#f4e4ba;
+  background:radial-gradient(circle at 50% 43%,#617b94 0,#263f60 37%,#15283f 74%);
+  box-shadow:0 2px 3px #0007,0 13px 23px #0008,inset 0 0 0 2px #d6c188;
+}
+.card-back.back-atlas:before,.card-back.back-mischief:before{
+  content:'';position:absolute;inset:5%;border:1px solid currentColor;border-radius:4%;opacity:.7;pointer-events:none;
+}
+.card-back.back-atlas .back-mark{font-size:4rem;border-radius:50%;box-shadow:0 0 0 6px #c8b5843d,inset 0 0 20px #edd9983d}
+.card-flipper>.card-back.back-mischief{
+  border-color:#be89a0;
+  color:#f8dfc9;
+  background:repeating-radial-gradient(circle at 50% 45%,#723f59 0 7px,#613650 8px 14px,#532c45 15px 23px);
+  box-shadow:0 2px 3px #0007,0 13px 23px #0008,inset 0 0 0 2px #e6ba86;
+}
+.card-back.back-mischief .back-mark{border-radius:28%;font-size:4rem;transform:rotate(12deg);background:#49263b99}

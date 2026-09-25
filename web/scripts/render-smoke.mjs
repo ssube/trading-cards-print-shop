@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 const output = resolve('node_modules/.cache/cards-render')
 mkdirSync(output, { recursive: true })
 await build({
-  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/CardLibrary.tsx', 'src/FinishGallery.tsx', 'src/CollectionProgress.tsx', 'src/StarterWelcome.tsx'],
+  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/CardLibrary.tsx', 'src/FinishGallery.tsx', 'src/CollectionProgress.tsx', 'src/ProgressPage.tsx', 'src/StarterWelcome.tsx'],
   outdir: output,
   bundle: true,
   platform: 'node',
@@ -22,11 +22,12 @@ const { Card } = require(resolve(output, 'Card.js'))
 const { CardLibrary, filterLibraryCards } = require(resolve(output, 'CardLibrary.js'))
 const { FinishGallery } = require(resolve(output, 'FinishGallery.js'))
 const { CollectionProgress } = require(resolve(output, 'CollectionProgress.js'))
+const { ProgressPage } = require(resolve(output, 'ProgressPage.js'))
 const { StarterWelcome } = require(resolve(output, 'StarterWelcome.js'))
 const sample = {
   id: 'test-copy-12345678', design_id: 'starter-press-cat', owner_id: 1, creator: null,
   origin_id: null, type_id: 'monster', rule_ids: ['arrival', 'draw'],
-  rule_text: ['When this enters play', 'Draw one card'], theme_id: 'storybook', finish_id: 'shimmer',
+  rule_names: ['On arrival', 'Draw a card'], rule_text: ['When this enters play', 'Draw one card'], theme_id: 'storybook', finish_id: 'shimmer', border_id: 'classic', back_id: 'archive',
   name: 'Apprentice Press Cat', flavor: 'He insists every proof needs one more paw print.',
   art_path: '/assets/starter-press-cat.png', print_score: 91, condition: 97,
   centering_x: .2, centering_y: -.1, shift_c: .1, shift_m: -.2, shift_y: .1, shift_k: 0,
@@ -52,15 +53,31 @@ const galleryMarkup = renderToStaticMarkup(createElement(FinishGallery, {
 const progressMarkup = renderToStaticMarkup(createElement(CollectionProgress, { progress: {
   rules: { collected: 2, total: 8, percent: 25 },
   foils: { collected: 1, total: 3, percent: 33 },
+  borders: { collected: 1, total: 3, percent: 33 },
+  backs: { collected: 1, total: 3, percent: 33 },
   cards: { collected: 1, total: 4, percent: 25 },
 } }))
+const pageMarkup = renderToStaticMarkup(createElement(ProgressPage, {
+  state: {
+    library: [sample, { ...sample, id: 'another-copy' }],
+    catalog: [
+      { id: 'monster', kind: 'type', name: 'Monster', description: 'A creature.', learned: 1, slot: '', cost_json: '{}', power: 0 },
+      { id: 'land', kind: 'type', name: 'Land', description: 'A place.', learned: 0, slot: '', cost_json: '{}', power: 0 },
+      { id: 'arrival', kind: 'rule', name: 'On arrival', description: 'When this enters play', learned: 1, slot: 'trigger', cost_json: '{}', power: 1 },
+    ],
+    collection_progress: { cards: { collected: 1, total: 4, percent: 25 } },
+    generation_count: 1, generation_limit: 5,
+    commissions: [], npcs: [], allowance_claimed: false,
+  },
+  onOpenCard: () => {}, onNavigate: () => {},
+}))
 const welcomeMarkup = renderToStaticMarkup(createElement(StarterWelcome, {
   mode: 'register', setMode: () => {}, decks: [{ id: 'pressroom', name: 'The Pressroom Parade', theme: 'Storybook workshop',
     description: 'A practice deck', accent: 'amber', featured: 'starter-press-cat',
     cards: [{ id: 'starter-press-cat', name: 'Apprentice Press Cat', flavor: 'One more paw print.', type_id: 'monster',
-      rule_ids: ['arrival', 'draw'], theme_id: 'storybook', finish_id: 'standard', art_path: '/assets/starter-press-cat.png', copies: 2 },
+      rule_ids: ['arrival', 'draw'], theme_id: 'storybook', finish_id: 'standard', border_id: 'classic', back_id: 'archive', art_path: '/assets/starter-press-cat.png', copies: 2 },
     { id: 'starter-paper-sprite', name: 'Paper Sprite', flavor: 'A little ink.', type_id: 'spell',
-      rule_ids: ['arrival', 'draw'], theme_id: 'storybook', finish_id: 'standard', art_path: '/assets/starter-paper-sprite.png', copies: 1 }] }],
+      rule_ids: ['arrival', 'draw'], theme_id: 'storybook', finish_id: 'standard', border_id: 'classic', back_id: 'archive', art_path: '/assets/starter-paper-sprite.png', copies: 1 }] }],
   selectedDeck: 'pressroom', setSelectedDeck: () => {}, username: '', setUsername: () => {}, password: '', setPassword: () => {},
   message: '', busy: false, onSubmit: () => {},
 }))
@@ -70,7 +87,8 @@ if (!appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice
     !libraryMarkup.includes('Filter cards by type') || !libraryMarkup.includes('LAND <b>0</b>') || !libraryMarkup.includes('SPELL <b>1</b>') ||
     !galleryMarkup.includes('Blank print stock') || !galleryMarkup.includes('Apprentice Press Cat') || !galleryMarkup.includes('Holo') ||
     !progressMarkup.includes('Unique cards') || !progressMarkup.includes('33%') || !progressMarkup.includes('1 / 4 in your box') ||
+    !pageMarkup.includes('Learned and still to find') || !pageMarkup.includes('TO FIND') || !pageMarkup.includes('2 copies') ||
     !welcomeMarkup.includes('The Pressroom Parade') || !welcomeMarkup.includes('Three cards to begin with') || !welcomeMarkup.includes('COPY 3 OF 3')) {
   throw new Error('Render smoke test failed')
 }
-console.log('App shell, card library filters, finish gallery, collection progress, and starter selection render successfully')
+console.log('App shell, card library filters, finish gallery, progress page, and starter selection render successfully')

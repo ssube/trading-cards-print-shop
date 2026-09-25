@@ -35,6 +35,9 @@ def demo_art(design_id, theme, name):
         "storybook": ("#1b3545", "#e7b979", "#8dbfb6"),
         "celestial": ("#162139", "#bca2e8", "#f7d796"),
         "absurd": ("#4d2740", "#f3b668", "#ed7896"),
+        "botanical": ("#213e31", "#e8c67e", "#91b98b"),
+        "clockwork": ("#263449", "#d6a567", "#90b7c0"),
+        "maritime": ("#123e52", "#9cdbdb", "#dfad8e"),
     }
     bg, glow, accent = palettes.get(theme, palettes["storybook"])
     stars = "".join(f'<circle cx="{rng.randrange(20,380)}" cy="{rng.randrange(20,500)}" r="{rng.randrange(1,4)}" fill="{glow}" opacity=".72"/>' for _ in range(55))
@@ -70,9 +73,21 @@ def generate_text(recipe):
         "monster": ["Sir Pounce of the Press", "The Velvet Typesetter", "Moth of a Thousand Margins"],
         "spell": ["An Unexpected Footnote", "The Last Drop of Ink", "A Very Polite Catastrophe"],
     }
+    themed_names = {
+        "botanical": {"land": ["The Lanternroot Grove", "A Garden of Second Chances"],
+                       "monster": ["The Thistlekeeper", "A Fox in the Ferns"],
+                       "spell": ["Borrowed Spring", "A Seed of Morning"]},
+        "clockwork": {"land": ["The Brass Observatory", "The Clockmaker's Walk"],
+                       "monster": ["The Winding Heron", "The Copper Moth"],
+                       "spell": ["One More Turn of the Key", "A Minute Borrowed"]},
+        "maritime": {"land": ["The Pearlwater Harbor", "The Reef Beyond the Map"],
+                     "monster": ["The Tideglass Keeper", "A Lanternfish of Legend"],
+                     "spell": ["A Door Made of Tide", "The Sea's Second Name"]},
+    }
     if provider == "demo":
         rng = random.Random(json.dumps(recipe, sort_keys=True) + uid())
-        name = rng.choice(names.get(recipe["type_id"], names["monster"]))
+        pool = themed_names.get(recipe["theme_id"], names)
+        name = rng.choice(pool.get(recipe["type_id"], names["monster"]))
         return name, "Printed under a moon that insists it is the sun."
     prompt = ("Invent one original whimsical trading card name and flavor text. Return JSON with string keys name and flavor. "
               "Keep name under 48 characters and flavor under 140 characters. No existing franchise names. "
@@ -127,6 +142,9 @@ def generate_art(design_id, recipe, name):
         "storybook": "hand-painted storybook gouache, charming character detail, warm colors and textured paper",
         "celestial": "luminous astronomical fantasy painting, deep indigo, brass instruments and delicate starlight",
         "absurd": "witty surreal illustration with a clear visual joke, expressive shapes and lush painted texture",
+        "botanical": "luminous botanical fantasy painting, enchanted foliage and warm dawn light",
+        "clockwork": "intricate clockwork fantasy painting, brass mechanisms and observatory light",
+        "maritime": "magical maritime fantasy painting, sea glass, coral, and luminous tides",
     }.get(recipe["theme_id"], recipe.get("theme_description", "original painterly fantasy"))
     subject = {"land": "a wondrous place", "monster": "a distinctive creature", "spell": "a magical event"}.get(recipe["type_id"], recipe.get("type_name", "fantasy subject"))
     motifs = "; ".join(rule["description"] for rule in recipe.get("rules", []))
@@ -207,13 +225,16 @@ def process_job(job_id):
             context["rules"].append({"name": part["name"], "description": part["description"]} if part else {"name": part_id, "description": ""})
     design_id = uid()
     try:
-        creative_context = {key: value for key, value in context.items() if key != "finish_id" and not key.startswith("finish_")}
+        creative_context = {key: value for key, value in context.items()
+                            if key not in {"finish_id", "border_id", "back_id"} and not key.startswith("finish_")}
         name, flavor = generate_text(creative_context)
         art = generate_art(design_id, creative_context, name)
         with transaction() as db:
-            db.execute("INSERT INTO designs VALUES(?,?,?,?,?,?,?,?,?,?)",
+            db.execute("INSERT INTO designs(id,creator_id,type_id,rule_ids,theme_id,finish_id,name,flavor,art_path,created_at,border_id,back_id) "
+                       "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                        (design_id, user_id, recipe["type_id"], json.dumps(recipe["rule_ids"]), recipe["theme_id"],
-                        recipe["finish_id"], name, flavor, art, stamp()))
+                        recipe["finish_id"], name, flavor, art, stamp(),
+                        recipe.get("border_id", "classic"), recipe.get("back_id", "archive")))
             copy_id = mint_copy(db, design_id, user_id)
             db.execute("UPDATE jobs SET status='complete',design_id=?,copy_id=? WHERE id=?",
                        (design_id, copy_id, job_id))

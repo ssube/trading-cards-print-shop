@@ -37,7 +37,7 @@ export function StarterWelcome({ mode, setMode, decks, selectedDeck, setSelected
           </button>
         })}</div> : <p className="starter-deck-loading">The starter folios are being prepared…</p>}
         {chosen && <div className="starter-fan-panel"><div className="starter-fan-heading"><div><span>INSIDE {chosen.name.toUpperCase()}</span><h3>Three cards to begin with</h3></div><div className="starter-fan-arrows"><button type="button" aria-label="Scroll starter cards left" onClick={() => fanRef.current?.scrollBy({ left: -200, behavior: 'smooth' })}>←</button><button type="button" aria-label="Scroll starter cards right" onClick={() => fanRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}>→</button></div></div><div className="starter-fan-track" ref={fanRef} aria-label={`${chosen.name} starter cards`}>
-          {fanCards.map((card, index) => <div className={`starter-fan-card finish-${card.finish_id}`} key={`${card.id}-${card.copy}`}
+          {fanCards.map((card, index) => <div className={`starter-fan-card finish-${card.finish_id} border-${card.border_id}`} key={`${card.id}-${card.copy}`}
             onPointerMove={event => aimFoil(event.currentTarget, event.clientX, event.clientY)} onPointerLeave={event => resetFoil(event.currentTarget)}><div className="starter-fan-card-heading"><span>{card.type_id.toUpperCase()}</span><span>{card.finish_id.toUpperCase()}</span></div><strong>{card.name}</strong><div className="starter-fan-art"><img src={card.art_path} alt="" /></div><p>{card.flavor}</p><small>COPY {index + 1} OF 3</small><div className="foil-shine" /></div>)}
         </div></div>}
       </section>}

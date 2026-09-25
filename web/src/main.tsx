@@ -8,6 +8,7 @@ import './collection-progress.css'
 import './starter-welcome.css'
 import './foil.css'
 import './card-flip.css'
+import './card-styles.css'
 import './progress-page.css'
 import './card-library.css'
 

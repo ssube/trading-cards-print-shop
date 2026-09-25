@@ -3,6 +3,8 @@ import type { CollectionProgress as Progress } from './types'
 const categories: { key: keyof Progress; label: string; detail: string; icon: string }[] = [
   { key: 'rules', label: 'Rules', detail: 'learned', icon: '✧' },
   { key: 'foils', label: 'Foils', detail: 'learned', icon: '◈' },
+  { key: 'borders', label: 'Borders', detail: 'learned', icon: '▣' },
+  { key: 'backs', label: 'Card backs', detail: 'learned', icon: '◇' },
   { key: 'cards', label: 'Unique cards', detail: 'in your box', icon: '▤' },
 ]
 

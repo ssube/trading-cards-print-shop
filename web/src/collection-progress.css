@@ -2,7 +2,7 @@
 .collection-progress-title{display:grid;gap:5px}
 .collection-progress-title span{color:#d2b782;font-size:.58rem;font-weight:700;letter-spacing:.16em}
 .collection-progress-title strong{color:#e8dfcb;font:italic 1rem 'Fraunces',serif}
-.collection-progress-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.collection-progress-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:15px}
 .collection-progress-item{display:flex;gap:10px;align-items:center;min-width:0}
 .collection-progress-icon{color:#d9bd87;font-size:1.35rem;width:26px;text-align:center}
 .collection-progress-copy{min-width:0;flex:1}
@@ -19,5 +19,5 @@
 .player-ledger-row>span{min-width:0}
 .admin-player-progress span{color:#c3b68e;font-size:.57rem;letter-spacing:.04em}
 @media(max-width:1050px){.collection-progress{width:calc(100% - 52px);grid-template-columns:1fr;gap:12px}.collection-progress-title{display:flex;gap:12px;align-items:baseline}.collection-progress-grid{gap:15px}}
-@media(max-width:750px){.collection-progress{width:calc(100% - 32px);margin-top:16px;padding:15px}.collection-progress-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.collection-progress-item{gap:3px}.collection-progress-icon{display:none}.collection-progress-line{display:block}.collection-progress-line strong{font-size:.62rem}.collection-progress-line b{display:block;margin-top:3px}.collection-progress-copy small{font-size:.48rem}}
+@media(max-width:750px){.collection-progress{width:calc(100% - 32px);margin-top:16px;padding:15px}.collection-progress-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.collection-progress-item{gap:3px}.collection-progress-icon{display:none}.collection-progress-line{display:block}.collection-progress-line strong{font-size:.62rem}.collection-progress-line b{display:block;margin-top:3px}.collection-progress-copy small{font-size:.48rem}}
 @media(max-width:420px){.collection-progress-title strong{display:none}.collection-progress-grid{gap:7px}.collection-progress-line strong{white-space:normal}}

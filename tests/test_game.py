@@ -163,15 +163,17 @@ def test_collection_progress_counts_designs_once(world):
     with db.connect() as conn:
         initial = game.collection_progress(conn, alice)
         assert initial["cards"]["collected"] == 3
-        assert initial["cards"]["total"] == 8
+        assert initial["cards"]["total"] == 11
         assert initial["foils"]["collected"] == 2
+        assert initial["borders"] == {"collected": 1, "total": 3, "percent": 33}
+        assert initial["backs"] == {"collected": 1, "total": 3, "percent": 33}
         assert initial["rules"]["collected"] == 2
 
     printed = new_card(alice, "progress-print-123")
     with db.transaction() as conn:
         game.reprint(conn, alice, printed)
         after = game.collection_progress(conn, alice)
-        assert after["cards"] == {"collected": 4, "total": 9, "percent": 44}
+        assert after["cards"] == {"collected": 4, "total": 12, "percent": 33}
         assert game.collection_progress(conn, bob)["cards"]["collected"] == 3
         conn.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (alice, "holo"))
         assert game.collection_progress(conn, alice)["foils"]["collected"] == 3
@@ -186,17 +188,80 @@ def test_starter_decks_are_pre_generated_and_unlock_their_parts(world, monkeypat
     with db.transaction() as conn:
         starlit = game.create_user(conn, "stargazer", "long-password-123", starter_deck_id="starlit")
         velvet = game.create_user(conn, "foxkeeper", "long-password-123", starter_deck_id="velvet")
-        for user_id, featured_ids in ((world[0], {"starter-press-cat", "starter-press-cat-foil"}),
-                                      (starlit, {"npc-starlit-map", "npc-starlit-map-foil"}),
-                                      (velvet, {"npc-foil-fox", "npc-foil-fox-standard"})):
+        for user_id, featured_ids, style in ((world[0], {"starter-press-cat", "starter-press-cat-foil"}, ("classic", "archive")),
+                                             (starlit, {"npc-starlit-map", "npc-starlit-map-foil"}, ("starlit", "atlas")),
+                                             (velvet, {"npc-foil-fox", "npc-foil-fox-standard"}, ("velvet", "mischief"))):
             cards = game.library(conn, user_id)
             assert len(cards) == 3
             assert {card["design_id"] for card in cards} == featured_ids | {"starter-paper-sprite"}
             assert sum(card["finish_id"] != "standard" for card in cards) == 1
+            assert all((card["border_id"], card["back_id"]) == style for card in cards if card["design_id"] in featured_ids)
             assert any(card["design_id"] == "starter-paper-sprite" for card in cards)
             assert all(card["art_path"].endswith(".png") for card in cards)
         for deck in game.starter_decks(conn):
             assert sum(card["copies"] for card in deck["cards"] if card["finish_id"] != "standard") == 1
         learned = {row[0] for row in conn.execute("SELECT part_id FROM learned WHERE user_id=?", (velvet,))}
-        assert {"spell", "monster", "absurd", "shimmer", "sleeved", "echo"} <= learned
+        assert {"spell", "monster", "absurd", "shimmer", "sleeved", "echo", "velvet", "mischief"} <= learned
         assert conn.execute("SELECT starter_deck_id FROM users WHERE id=?", (starlit,)).fetchone()[0] == "starlit"
+
+
+def test_border_and_back_are_learned_printed_and_reprinted(world):
+    alice, _ = world
+    recipe = {"type_id": "monster", "rule_ids": ["arrival", "draw"], "theme_id": "storybook",
+              "finish_id": "standard", "border_id": "starlit", "back_id": "atlas"}
+    with db.transaction() as conn:
+        assert {"classic", "archive"} <= {row[0] for row in conn.execute(
+            "SELECT part_id FROM learned WHERE user_id=?", (alice,))}
+        with pytest.raises(game.GameError, match="not learned"):
+            game.validate_recipe(conn, alice, recipe)
+        map_copy = game.mint_copy(conn, "npc-starlit-map", alice)
+        assert {"starlit", "atlas"} <= set(game.study(conn, alice, map_copy))
+        assert game.collection_progress(conn, alice)["borders"]["collected"] == 2
+        assert game.collection_progress(conn, alice)["backs"]["collected"] == 2
+        assert game.validate_recipe(conn, alice, recipe)["border_id"] == "starlit"
+        job = game.create_print_job(conn, alice, recipe, "styled-print-123")
+    providers.process_job(job["id"])
+    with db.transaction() as conn:
+        printed = conn.execute("SELECT copy_id FROM jobs WHERE id=?", (job["id"],)).fetchone()[0]
+        assert printed
+        assert (game.copy_detail(conn, printed)["border_id"], game.copy_detail(conn, printed)["back_id"]) == ("starlit", "atlas")
+        reprint = game.reprint(conn, alice, printed)
+        assert (game.copy_detail(conn, reprint)["border_id"], game.copy_detail(conn, reprint)["back_id"]) == ("starlit", "atlas")
+
+
+def test_seed_restores_starter_styles_for_existing_players(world):
+    with db.transaction() as conn:
+        starlit = game.create_user(conn, "oldstargazer", "long-password-123", starter_deck_id="starlit")
+        conn.execute("DELETE FROM learned WHERE part_id IN ('classic','archive','starlit','atlas')")
+    game.seed()
+    with db.connect() as conn:
+        alice_styles = {row[0] for row in conn.execute("SELECT part_id FROM learned WHERE user_id=?", (world[0],))}
+        starlit_styles = {row[0] for row in conn.execute("SELECT part_id FROM learned WHERE user_id=?", (starlit,))}
+        assert {"classic", "archive"} <= alice_styles
+        assert {"classic", "archive", "starlit", "atlas"} <= starlit_styles
+
+
+def test_new_premade_cards_have_bundled_art_and_teach_playable_rules(world):
+    alice, _ = world
+    expected = {
+        "borrowed-dawn": ("npc-borrowed-dawn", "botanical", {"dawn", "if_land", "mend"}),
+        "clockwork-heron": ("npc-clockwork-heron", "clockwork", {"on_draw", "if_monster", "glimpse"}),
+        "tideglass-portal": ("npc-tideglass-portal", "maritime", {"arrival", "if_spell", "return"}),
+    }
+    with db.transaction() as conn:
+        game.adjust_resources(conn, alice, {"paper": 10, "ink": 10, "foil": 3})
+        for offer_id, (design_id, theme, rules) in expected.items():
+            reward = game.npc_trade(conn, alice, offer_id)
+            card = game.copy_detail(conn, reward["copy_id"], alice)
+            assert card["design_id"] == design_id
+            assert card["art_path"].endswith(f"{design_id}.png")
+            assert set(card["rule_ids"]) == rules
+            assert len(card["rule_names"]) == 3
+            assert all("_" not in name for name in card["rule_names"])
+            assert theme in game.study(conn, alice, card["id"])
+            learned = {row[0] for row in conn.execute("SELECT part_id FROM learned WHERE user_id=?", (alice,))}
+            assert rules <= learned
+            assert game.validate_recipe(conn, alice, {
+                "type_id": card["type_id"], "rule_ids": card["rule_ids"],
+                "theme_id": theme, "finish_id": card["finish_id"],
+                "border_id": card["border_id"], "back_id": card["back_id"]})

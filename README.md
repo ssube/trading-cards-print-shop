@@ -26,12 +26,16 @@ The CLI supports `--help` on every command. Admin mutations share the same servi
 
 ## Design notes
 
-The server owns inventory, learning, grading, condition, and trades. A design is immutable once printed; copies have their own print defects and wear. All daily boundaries use UTC. Seed cards include bundled painted art; demo generated designs use local SVG art, while configured image providers store raster art. The UI waits for the complete design and loaded artwork before showing the CMYK and foil printing sequence. Foil is a post effect and does not influence image or text generation. The card battle and resource minigames are extension points for later releases.
+The server owns inventory, learning, grading, condition, and trades. A design is immutable once printed; copies have their own print defects and wear. All daily boundaries use UTC. Seed cards include bundled painted art; demo generated designs use local SVG art, while configured image providers store raster art. The UI waits for the complete design and loaded artwork before showing the CMYK and foil printing sequence. Foil, border, and card back are visual parts and do not influence image or text generation. The card battle and resource minigames are extension points for later releases.
 
 The Finish Gallery previews every known finish on blank stock or any standard copy in your library. You can inspect and rotate the specimen, compare finishes, and send a learned finish to the press without changing or spending a card.
 Foil highlights follow pointer and card rotation, with only a faint ambient reflection while the card is still.
 
-Collection completion shows each player's learned rules, learned foils, and distinct card designs currently in their box. Its card count uses designs rather than physical copies, and the world total includes every existing design.
+Collection completion shows each player's learned rules, foils, borders, and backs, plus distinct card designs currently in their box. Its card count uses designs rather than physical copies, and the world total includes every existing design.
 The Progress page expands that summary into learned and missing parts across every category, daily print usage, and the distinct designs currently in the player's box.
 
 New players choose a named, themed starter deck during registration. Each deck contains three pre-generated cards: one standard and one foil version of its featured card, plus a shared Paper Sprite practice card. The selection unlocks the parts on those cards and is saved on the player account. The signup screen shows the deck art and a scrollable fan of all three cards; signup never calls a generation provider.
+
+Borders and card backs are learnable design parts. The Press offers the styles learned from a starter deck or by studying other cards. Classic Gilt and Archive Seal are the original styles; Starlit Filigree with Atlas Compass and Velvet Scrollwork with Fox Masquerade appear on their themed cards. Exact reprints keep the original border and back.
+
+Premade cards also explore Botanical, Clockwork, and Maritime art directions. The Orchard of Borrowed Dawn, Clockwork Heron, and Tideglass Portal each have bundled artwork and new rule combinations. NPC trades make these cards available so players can study their rules and themes, then use them at the Press.

@@ -33,7 +33,7 @@ def transaction():
 def init():
     with transaction() as db:
         version = db.execute("PRAGMA user_version").fetchone()[0]
-        if version >= 4:
+        if version >= 5:
             return
         if version == 0:
             db.executescript("""
@@ -91,3 +91,7 @@ def init():
         if version <= 3:
             db.execute("ALTER TABLE users ADD COLUMN starter_deck_id TEXT")
             db.execute("PRAGMA user_version=4")
+        if version <= 4:
+            db.execute("ALTER TABLE designs ADD COLUMN border_id TEXT NOT NULL DEFAULT 'classic'")
+            db.execute("ALTER TABLE designs ADD COLUMN back_id TEXT NOT NULL DEFAULT 'archive'")
+            db.execute("PRAGMA user_version=5")
