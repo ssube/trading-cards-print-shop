@@ -1,0 +1,8 @@
+/* Keep modal dismissal clear of the card and safe areas. */
+.modal-close{z-index:5;display:grid;place-items:center;min-width:44px;min-height:44px;border:1px solid #d9bc82;border-radius:50%;background:#152124f2;line-height:1;box-shadow:0 3px 14px #0008}
+.modal-close:focus-visible{outline:3px solid #f7d692;outline-offset:3px}
+.inspect-card .card-perspective{touch-action:none}
+@media(max-width:750px){
+  .inspect-modal{padding-top:calc(65px + env(safe-area-inset-top));gap:32px}
+  .modal-close{top:calc(10px + env(safe-area-inset-top));right:12px}
+}

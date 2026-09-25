@@ -132,6 +132,12 @@ function App() {
     ...(user?.is_admin ? [{ key: 'admin' as Tab, label: 'Admin', icon: '⚙' }] : []),
   ]
   const selectedGrade = selected?.slab_grade !== null ? `${selected?.slab_grade} ${selected?.grade_name}` : selected?.estimated_grade
+  useEffect(() => {
+    if (!selected) return
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setSelected(null) }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [selected])
 
   if (loading) return <div className="loading-screen">Warming the press <span>✦</span></div>
   if (!user) return <StarterWelcome mode={authMode} setMode={setAuthMode} decks={starterDecks} selectedDeck={starterDeckId} setSelectedDeck={setStarterDeckId} username={username} setUsername={setUsername} password={password} setPassword={setPassword} message={message} busy={authBusy} onSubmit={authenticate} offline={offline} onTryDemo={() => { window.location.search = '?demo=1' }} onResetDemo={() => { if (window.confirm('Reset this browser’s offline collection? This cannot be undone.')) { try { resetOfflineDemo(); setMessage('Offline collection cleared. Choose a starter deck to begin again.') } catch (error) { setMessage((error as Error).message) } } }} />

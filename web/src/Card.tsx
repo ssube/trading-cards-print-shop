@@ -13,6 +13,11 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
     const rect = event.currentTarget.getBoundingClientRect()
     setTilt({ x: ((event.clientX - rect.left) / rect.width - .5) * 13, y: ((event.clientY - rect.top) / rect.height - .5) * -13 })
   }
+  function beginTouch(event: PointerEvent<HTMLDivElement>) {
+    if (!interactive || event.pointerType !== 'touch') return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    move(event)
+  }
   function rotate(amount: number) {
     const next = { x: tilt.x + amount, y: tilt.y }
     setTilt(next)
@@ -27,7 +32,7 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
   return <div className={`card-frame ${large ? 'card-large' : ''} ${card.slab_grade !== null ? 'slabbed' : ''}`}>
     {card.slab_grade !== null && <div className="slab-label"><strong>THE ARCHIVIST</strong><span>{card.slab_grade} · {card.grade_name}</span></div>}
     <div ref={perspective} className="card-perspective" style={{ transform: `scale(${zoom}) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)` }}
-      onPointerMove={move} onPointerLeave={event => { setTilt({ x: 0, y: 0 }); resetFoil(event.currentTarget) }} onClick={onClick}
+      onPointerDown={beginTouch} onPointerMove={move} onPointerLeave={event => { setTilt({ x: 0, y: 0 }); resetFoil(event.currentTarget) }} onPointerUp={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId) }} onClick={onClick}
       role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={e => { if (onClick && (e.key === 'Enter' || e.key === ' ')) onClick() }}
       aria-label={onClick ? `Inspect ${card.name}` : undefined}>
       <div className={`card-flipper ${flipped ? 'is-flipped' : ''}`}>
