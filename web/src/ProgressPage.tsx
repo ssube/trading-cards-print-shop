@@ -10,12 +10,17 @@ function percent(found: number, total: number) {
   return total ? Math.round(found * 100 / total) : 0
 }
 
-export function ProgressPage({ state, onOpenCard, onNavigate, offline = false }: {
+export function ProgressPage({ state, onOpenCard, onNavigate, offline = false, focusKind, focusId }: {
   state: State
   onOpenCard: (card: CardCopy) => void
   onNavigate: (destination: 'workshop' | 'library' | 'trading') => void
   offline?: boolean
+  focusKind?: string
+  focusId?: string
 }) {
+  useEffect(() => {
+    if (focusKind && focusId) document.getElementById(`${focusKind}-${focusId}`)?.scrollIntoView({ block: 'center' })
+  }, [focusKind, focusId])
   const groups = [
     group('Card types', 'The foundations of a design', state.catalog, 'type'),
     group('Triggers', 'When a rule takes effect', state.catalog, 'rule', 'trigger'),
@@ -50,6 +55,9 @@ export function ProgressPage({ state, onOpenCard, onNavigate, offline = false }:
       <div><small>NEW EDITIONS TODAY</small><strong>{state.generation_count}<span> / {state.generation_limit}</span></strong><p>Your daily print allowance</p></div>
     </div>
 
+    <div className="progress-section-heading"><div><p className="eyebrow">MATERIALS ON HAND</p><h2>Workshop resources</h2></div></div>
+    <div className="progress-resources">{Object.entries(state.resources).sort(([a], [b]) => a.localeCompare(b)).map(([kind, amount]) => <a id={`resource-${kind}`} key={kind} href={routeUrl('progress', 'resource', kind)} className={`progress-resource ${focusKind === 'resource' && focusId === kind ? 'focused' : ''}`}><strong>{amount}</strong><span>{kind}</span></a>)}</div>
+
     <div className="progress-activity" aria-label="Today's activity">
       <div><span>✦</span><div><strong>{state.allowance_claimed ? 'Collected' : 'Ready to collect'}</strong><small>Daily supplies</small></div></div>
       {offline ? <><div><span>▤</span><div><strong>{state.library.filter(card => card.design_id.startsWith('offline-')).length}</strong><small>Locally printed editions</small></div></div><div><span>✧</span><div><strong>{state.library.filter(card => card.creator === null && !card.design_id.startsWith('starter-')).length}</strong><small>Archive and discovery copies</small></div></div></> : <><div><span>▤</span><div><strong>{completedCommissions} / {state.commissions.length}</strong><small>Commissions started today</small></div></div><div><span>⇄</span><div><strong>{completedTrades} / {state.npcs.length}</strong><small>Available NPC trades made today</small></div></div></>}
@@ -61,9 +69,9 @@ export function ProgressPage({ state, onOpenCard, onNavigate, offline = false }:
       return <section className="progress-group" key={section.title} aria-label={section.title}>
         <div className="progress-group-head"><div><h3>{section.title}</h3><p>{section.detail}</p></div><strong>{found} / {section.parts.length}</strong></div>
         <progress value={found} max={Math.max(1, section.parts.length)} aria-label={`${section.title} learned`} />
-        <div className="progress-part-list">{section.parts.map(part => <div className={`progress-part ${part.learned ? 'learned' : 'missing'}`} key={part.id}>
+        <div className="progress-part-list">{section.parts.map(part => <a id={`part-${part.id}`} href={routeUrl('progress', 'part', part.id)} className={`progress-part ${part.learned ? 'learned' : 'missing'} ${focusKind === 'part' && focusId === part.id ? 'focused' : ''}`} key={part.id}>
           <span className="progress-part-mark" aria-hidden="true">{part.learned ? '✦' : '◇'}</span><div><strong>{part.name}</strong><small>{part.description}</small></div><span className="progress-part-state">{part.learned ? 'LEARNED' : 'TO FIND'}</span>
-        </div>)}</div>
+        </a>)}</div>
       </section>
     })}</div>
 
@@ -74,3 +82,5 @@ export function ProgressPage({ state, onOpenCard, onNavigate, offline = false }:
     <p className="progress-footnote">{offline ? 'Card progress counts distinct local and premade designs in this browser. Print new cards to discover archive samples, then study them to learn new parts.' : 'Card progress counts distinct designs currently in your box. Trading away the last copy of a design changes this count.'}</p>
   </section>
 }
+import { useEffect } from 'react'
+import { routeUrl } from './routes'

@@ -16,16 +16,17 @@ function foilCost(finish: Part) {
   catch { return 0 }
 }
 
-export function FinishGallery({ catalog, library, onUseFinish, offline = false }: {
+export function FinishGallery({ catalog, library, onUseFinish, offline = false, finishId, onSelectFinish }: {
   catalog: Part[]
   library: CardCopy[]
   onUseFinish: (finishId: string) => void
   offline?: boolean
+  finishId: string
+  onSelectFinish: (id: string) => void
 }) {
   const finishes = catalog.filter(part => part.kind === 'finish')
   const standardCards = library.filter(card => card.finish_id === 'standard')
   const [sourceId, setSourceId] = useState('')
-  const [finishId, setFinishId] = useState('standard')
   const source = standardCards.find(card => card.id === sourceId)
   const selectedFinish = finishes.find(finish => finish.id === finishId) || finishes[0]
   const specimen = (id: string) => ({ ...(source || blankStock), finish_id: id, slab_grade: null, sleeved: 0 })
@@ -58,7 +59,7 @@ export function FinishGallery({ catalog, library, onUseFinish, offline = false }
           <h2>Light, layered on paper</h2>
           <div className="finish-options">
             {finishes.map(finish => <button key={finish.id} type="button" className={`finish-option ${selectedFinish?.id === finish.id ? 'selected' : ''}`}
-              aria-pressed={selectedFinish?.id === finish.id} onClick={() => setFinishId(finish.id)}>
+              aria-pressed={selectedFinish?.id === finish.id} onClick={() => onSelectFinish(finish.id)}>
               <span className="finish-option-card"><Card card={specimen(finish.id)} blank={!source} /></span>
               <span className="finish-option-copy"><strong>{finish.name}</strong><small>{finish.description}</small><span>{finish.learned ? 'LEARNED' : 'UNDISCOVERED'} · {foilCost(finish) ? `${foilCost(finish)} FOIL` : 'NO FOIL'}</span></span>
               <span className="finish-option-arrow">↗</span>

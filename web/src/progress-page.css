@@ -48,3 +48,8 @@
 @media(max-width:900px){.progress-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:700px){.progress-hero{grid-template-columns:1fr}.progress-activity{grid-template-columns:1fr}.progress-groups{grid-template-columns:1fr}.progress-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.progress-section-heading h2{font-size:1.35rem}}
 @media(max-width:470px){.progress-section-heading{align-items:start;flex-direction:column}.progress-card-grid{grid-template-columns:1fr 1fr}.progress-card img{height:120px}.progress-empty{align-items:start;flex-direction:column}}
+.progress-resources{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 30px}
+.progress-resource{display:flex;align-items:baseline;gap:8px;padding:12px 18px;border:1px solid #b99e6944;border-radius:8px;background:#ffffff08;color:#eee2c8;text-decoration:none;text-transform:capitalize}
+.progress-resource strong{font-size:1.4rem;color:#f6e2b5}
+.progress-resource:hover,.progress-resource.focused,.progress-part:hover,.progress-part.focused{outline:1px solid #deb976;background:#c3a66f23}
+.progress-part{text-decoration:none}

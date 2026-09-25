@@ -25,3 +25,12 @@
 .builder-fields select:hover{border-color:#d9bc80;background-color:#203033}
 .builder-fields select:focus-visible{outline:2px solid #d9bc80;outline-offset:2px}
 .builder-fields select option{background-color:#172427;color:#e9e2d3}
+.sidebar nav a{background:none;border:1px solid transparent;color:#aeb8af;text-align:left;padding:13px 15px;border-radius:7px;display:flex;gap:14px;align-items:center;font-size:.84rem;font-weight:600;text-decoration:none}
+.sidebar nav a span{font-size:1.18rem;font-weight:400;width:20px;text-align:center;color:#bea77b}
+.sidebar nav a:hover,.sidebar nav a.active{background:linear-gradient(90deg,#c3a66f23,#c3a66f0b);border-color:#b99e6944;color:#f1e8d5}
+.sidebar nav a.active{box-shadow:inset 2px 0 #deb976}
+.resource-pill{text-decoration:none}
+.resource-pill:hover{border-color:#deb976;color:#f6e2b5}
+@media(max-width:750px){.sidebar nav a{white-space:nowrap;padding:8px;font-size:.7rem}.sidebar nav a span{font-size:.9rem;width:auto}}
+.detail-link{color:inherit;text-decoration:none}
+.detail-link:hover{text-decoration:underline;text-decoration-color:#deb976}

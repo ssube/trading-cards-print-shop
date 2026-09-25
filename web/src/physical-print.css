@@ -39,3 +39,6 @@
 @media(max-width:950px){.physical-print-grid{grid-template-columns:1fr}.physical-preview{overflow:hidden}}
 
 .physical-deck-preset{padding:10px 12px;border:1px solid #c6ab7280;border-radius:5px;background:#af8a4530;color:#e8d5ac;font-size:.75rem;line-height:1.5}.physical-deck-preset strong{color:#fff0c7}
+
+.physical-placement .card-body{transform:none!important;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+.physical-placement .card-body:after{display:none}

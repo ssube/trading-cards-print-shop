@@ -8,8 +8,69 @@ async function startDemo(page: Page) {
   await expect(page.locator('.offline-banner')).toBeVisible()
 }
 async function navigate(page: Page, name: string) {
-  await page.locator('.sidebar nav').getByRole('button', { name }).click()
+  await page.locator('.sidebar nav').getByRole('link', { name }).click()
 }
+
+test('pages and nested views survive reload, history, and direct links', async ({ page }) => {
+  await startDemo(page)
+  await navigate(page, 'Card Library')
+  await expect(page).toHaveURL(/#\/library$/)
+  await page.getByRole('group', { name: 'Filter cards by type' }).getByRole('button', { name: /SPELL/ }).click()
+  await expect(page).toHaveURL(/#\/library\/type\/spell$/)
+  await page.reload()
+  await expect(page.locator('.boxed-card')).toHaveCount(1)
+  await page.getByRole('button', { name: /Inspect Paper Sprite/ }).click()
+  const cardUrl = page.url()
+  await expect(page).toHaveURL(/#\/library\/card\//)
+  await page.reload()
+  await expect(page.locator('.inspect-info h2')).toContainText('Paper Sprite')
+  await page.getByRole('button', { name: 'Close inspection' }).click()
+  await page.goBack()
+  await expect(page.locator('.inspect-info h2')).toContainText('Paper Sprite')
+  await page.goto(cardUrl)
+  await expect(page.locator('.inspect-info h2')).toContainText('Paper Sprite')
+  await page.getByRole('button', { name: 'Close inspection' }).click()
+  await navigate(page, 'Decks')
+  await page.locator('.deck-box summary').filter({ hasText: 'The Starlit Atlas' }).click()
+  await expect(page).toHaveURL(/#\/decks\/deck\/starlit$/)
+  await page.reload()
+  await expect(page.locator('.deck-box').filter({ hasText: 'The Starlit Atlas' })).toHaveAttribute('open', '')
+  await navigate(page, 'Finish Gallery')
+  await page.locator('.finish-option').nth(1).click()
+  await expect(page).toHaveURL(/#\/finishes\/finish\//)
+  await navigate(page, 'Games')
+  await page.getByRole('button', { name: 'Play ↗' }).first().click()
+  await expect(page).toHaveURL(/#\/games\/game\/fishing$/)
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'All games' })).toBeVisible()
+  await page.locator('.resource-pill').filter({ hasText: 'paper' }).click()
+  await expect(page).toHaveURL(/#\/progress\/resource\/paper$/)
+  await expect(page.locator('#resource-paper')).toHaveClass(/focused/)
+  await page.locator('.progress-part').first().click()
+  await expect(page).toHaveURL(/#\/progress\/part\//)
+})
+
+test('sleeves and slabs tilt with their cards as one layer', async ({ page }) => {
+  await startDemo(page)
+  await page.evaluate(() => {
+    const key = 'cards-the-printing.offline-demo.v1'
+    const save = JSON.parse(localStorage.getItem(key)!)
+    save.library[0].slab_grade = 8
+    save.library[1].sleeved = 1
+    localStorage.setItem(key, JSON.stringify(save))
+  })
+  await page.reload()
+  await navigate(page, 'Card Library')
+  await expect(page.locator('.boxed-card .card-body.slabbed')).toHaveCount(1)
+  await expect(page.locator('.boxed-card .card-body.sleeved')).toHaveCount(1)
+  await expect(page.locator('.boxed-card .card-frame.slabbed')).toHaveCount(0)
+  await page.locator('.boxed-card .card-body.slabbed .card-perspective').click()
+  const body = page.locator('.inspect-modal .card-body.slabbed')
+  await body.hover({ position: { x: 60, y: 60 } })
+  await expect(body).toHaveAttribute('style', /rotateY\([^0]/)
+  await expect(body.locator('.slab-label')).toBeVisible()
+  await expect(body.locator('.slab-base-marker')).toBeVisible()
+})
 
 test('starter choice opens a persistent offline workshop with online tabs disabled', async ({ page }) => {
   await startDemo(page)

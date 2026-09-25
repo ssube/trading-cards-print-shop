@@ -8,11 +8,13 @@ function counts(values: Record<string, number>) {
   return entries.length ? entries.map(([key, value]) => `${key} ${value}`).join(' · ') : 'None yet'
 }
 
-export function DecksPage({ state, onOpenCard, onChanged, onPrintDeck }: {
+export function DecksPage({ state, onOpenCard, onChanged, onPrintDeck, selectedDeckId, onSelectDeck }: {
   state: State
   onOpenCard: (card: CardCopy) => void
   onChanged: () => Promise<void>
   onPrintDeck: (deck: Deck) => void
+  selectedDeckId?: string
+  onSelectDeck: (id?: string) => void
 }) {
   const [decks, setDecks] = useState<Deck[]>([])
   const [loading, setLoading] = useState(true)
@@ -56,22 +58,23 @@ export function DecksPage({ state, onOpenCard, onChanged, onPrintDeck }: {
     {notice && <p className="deck-message" role="status">{notice}</p>}
     {loading ? <p className="deck-loading">Opening the deck cabinet…</p> : <>
       <div className="deck-section-title"><div><p className="eyebrow">THE ARCHIVE'S CHALLENGES</p><h2>Curated decks</h2></div><span>COMPLETE ONCE · CLAIM ONCE</span></div>
-      <div className="deck-shelf">{curated.map(deck => <DeckBox key={deck.id} deck={deck} themeName={themeNames.get(deck.theme) || deck.theme} busy={busy} onOpenCard={onOpenCard} onPrint={() => onPrintDeck(deck)} onClaim={() => void change(() => api(`/decks/${deck.id}/claim`, 'POST'), `${deck.title} reward collected.`)} />)}</div>
+      <div className="deck-shelf">{curated.map(deck => <DeckBox key={deck.id} deck={deck} themeName={themeNames.get(deck.theme) || deck.theme} busy={busy} onOpenCard={onOpenCard} onPrint={() => onPrintDeck(deck)} open={selectedDeckId === deck.id || !selectedDeckId && deck.id === 'pressroom'} onToggle={() => onSelectDeck(selectedDeckId === deck.id ? undefined : deck.id)} onClaim={() => void change(() => api(`/decks/${deck.id}/claim`, 'POST'), `${deck.title} reward collected.`)} />)}</div>
       <div className="deck-section-title"><div><p className="eyebrow">YOUR OWN FOLIOS</p><h2>Custom decks</h2></div><span>ONE LAND · ONE MONSTER · ONE SPELL</span></div>
       <form id="custom-deck-form" className="deck-create" onSubmit={submit}><div><h3>{editing ? 'Edit your deck' : 'Start a custom deck'}</h3><p>Choose an art direction. Any three owned cards of that theme—one of each type—complete your deck.</p></div><label>Deck title<input required maxLength={64} value={title} onChange={event => setTitle(event.target.value)} placeholder="The Moonlit Menagerie" /></label><label>Theme<select value={theme} onChange={event => setTheme(event.target.value)}>{themes.map(part => <option key={part.id} value={part.id}>{part.name}</option>)}</select></label><div className="deck-form-actions"><button className="primary" type="submit" disabled={busy || !title.trim() || custom.length >= 20 && !editing}>{editing ? 'Save deck ↗' : 'Create deck ↗'}</button>{editing && <button className="secondary" type="button" onClick={() => { setEditing(null); setTitle(''); setTheme('storybook') }}>Cancel</button>}</div></form>
-      {custom.length ? <div className="deck-shelf">{custom.map(deck => <DeckBox key={deck.id} deck={deck} themeName={themeNames.get(deck.theme) || deck.theme} busy={busy} onOpenCard={onOpenCard} onPrint={() => onPrintDeck(deck)} onEdit={() => edit(deck)} onDelete={() => { if (window.confirm(`Delete ${deck.title}?`)) void change(() => api(`/decks/${deck.id}`, 'DELETE'), 'Custom deck deleted.') }} />)}</div> : <p className="deck-empty">Your custom shelf is waiting for its first deck.</p>}
+      {custom.length ? <div className="deck-shelf">{custom.map(deck => <DeckBox key={deck.id} deck={deck} themeName={themeNames.get(deck.theme) || deck.theme} busy={busy} onOpenCard={onOpenCard} onPrint={() => onPrintDeck(deck)} open={selectedDeckId === deck.id} onToggle={() => onSelectDeck(selectedDeckId === deck.id ? undefined : deck.id)} onEdit={() => edit(deck)} onDelete={() => { if (window.confirm(`Delete ${deck.title}?`)) void change(() => api(`/decks/${deck.id}`, 'DELETE'), 'Custom deck deleted.') }} />)}</div> : <p className="deck-empty">Your custom shelf is waiting for its first deck.</p>}
     </>}
   </section>
 }
 
-function DeckBox({ deck, themeName, busy, onOpenCard, onPrint, onClaim, onEdit, onDelete }: {
+function DeckBox({ deck, themeName, busy, onOpenCard, onPrint, onClaim, onEdit, onDelete, open, onToggle }: {
   deck: Deck; themeName: string; busy: boolean; onOpenCard: (card: CardCopy) => void
   onPrint: () => void; onClaim?: () => void; onEdit?: () => void; onDelete?: () => void
+  open: boolean; onToggle: () => void
 }) {
   const complete = deck.filled === deck.total
   const reward = deck.reward
-  return <details className={`deck-box deck-${deck.accent}`} open={deck.kind === 'curated' && deck.id === 'pressroom'}>
-    <summary className="deck-cover"><span className="deck-cover-art" aria-hidden="true">{deck.slots.find(slot => slot.card)?.card ? <img src={deck.slots.find(slot => slot.card)!.card!.art_path} alt="" /> : '✧'}</span><span className="deck-cover-copy"><small>{deck.kind === 'curated' ? 'ARCHIVE FOLIO' : 'YOUR FOLIO'} · {themeName.toUpperCase()}</small><strong>{deck.title}</strong><span>{deck.description}</span></span><span className="deck-cover-progress"><b>{deck.filled} / {deck.total}</b><small>{complete ? deck.claimed ? 'REWARD CLAIMED' : 'COMPLETE' : 'COLLECTING'}</small><progress value={deck.filled} max={deck.total} aria-label={`${deck.title} completion`} /></span></summary>
+  return <details className={`deck-box deck-${deck.accent}`} open={open}>
+    <summary className="deck-cover" onClick={event => { event.preventDefault(); onToggle() }}><span className="deck-cover-art" aria-hidden="true">{deck.slots.find(slot => slot.card)?.card ? <img src={deck.slots.find(slot => slot.card)!.card!.art_path} alt="" /> : '✧'}</span><span className="deck-cover-copy"><small>{deck.kind === 'curated' ? 'ARCHIVE FOLIO' : 'YOUR FOLIO'} · {themeName.toUpperCase()}</small><strong>{deck.title}</strong><span>{deck.description}</span></span><span className="deck-cover-progress"><b>{deck.filled} / {deck.total}</b><small>{complete ? deck.claimed ? 'REWARD CLAIMED' : 'COMPLETE' : 'COLLECTING'}</small><progress value={deck.filled} max={deck.total} aria-label={`${deck.title} completion`} /></span></summary>
     <div className="deck-interior"><div className="deck-slots">{deck.slots.map(slot => <div className={`deck-slot ${slot.card ? 'filled' : 'missing'}`} key={slot.key}>{slot.card ? <Card card={slot.card} onClick={() => onOpenCard(slot.card!)} /> : <div className="deck-missing-card"><span>◇</span><small>MISSING CARD</small></div>}<div className="deck-slot-label"><strong>{slot.label}</strong><small>{slot.card ? `${slot.card.finish_id} · grade ${slot.card.grade}` : 'Still to find'}</small></div></div>)}</div>
       <div className="deck-print-action"><span>{complete ? 'Ready for a three-card photo or sticker sheet.' : `${deck.filled} owned ${deck.filled === 1 ? 'card' : 'cards'} ready for a sheet.`}</span><button className="secondary" disabled={!deck.filled} onClick={onPrint}>{complete ? 'Print this deck ↗' : 'Print owned cards ↗'}</button></div>
       <div className="deck-detail-row"><div className="deck-analysis"><h3>Deck analysis</h3><div><span>Types</span><strong>{counts(deck.analysis.type_counts)}</strong></div><div><span>Finishes</span><strong>{counts(deck.analysis.finish_counts)}</strong></div><div><span>Average grade</span><strong>{deck.analysis.average_grade || '—'}</strong></div><div><span>Total rule power</span><strong>{deck.analysis.total_power}</strong></div><div><span>Rules</span><strong>{counts(deck.analysis.rule_counts)}</strong></div><div><span>Protected copies</span><strong>{deck.analysis.protected} / {deck.filled}</strong></div></div>
