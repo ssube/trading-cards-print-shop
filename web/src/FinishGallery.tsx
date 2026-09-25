@@ -58,7 +58,7 @@ export function FinishGallery({ catalog, library, onUseFinish, offline = false, 
         <div className="finish-options-panel">
           <p className="eyebrow">02 / EXPLORE THE FINISHES</p>
           <h2>Light, layered on paper</h2>
-          <div className="finish-options">
+          <div className="finish-options" role="region" aria-label="Finishes" tabIndex={0}>
             {finishes.map(finish => <button key={finish.id} type="button" className={`finish-option ${selectedFinish?.id === finish.id ? 'selected' : ''}`}
               aria-pressed={selectedFinish?.id === finish.id} onClick={() => { onSelectFinish(finish.id); setPreviewZoom(1) }}>
               <span className="finish-option-card"><Card card={specimen(finish.id)} blank={!source} /></span>

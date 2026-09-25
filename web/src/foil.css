@@ -27,8 +27,9 @@
 }
 .finish-starfield .foil-shine{
   opacity:.78;mix-blend-mode:normal;
-  background-image:radial-gradient(circle at var(--foil-x) var(--foil-y),#fff8d84a,transparent 40%),url('./foil-starfield.svg');
-  background-size:100% 100%,100% 100%;background-repeat:no-repeat;
+  background-image:radial-gradient(circle at var(--foil-x) var(--foil-y),#fff8d84a,transparent 40%),url('./foil-starfield-streaks.svg'),url('./foil-starfield.svg');
+  background-size:100% 100%,100% 100%,100% 100%;background-repeat:no-repeat;
+  background-position:center,calc(50% + var(--foil-streak-x,0px)) calc(50% + var(--foil-streak-y,0px)),center;
 }
 .finish-confetti .foil-shine{
   opacity:.82;mix-blend-mode:normal;
@@ -47,8 +48,8 @@
   background-size:100% 100%;background-repeat:no-repeat;
 }
 .finish-spooky .foil-shine{
-  opacity:.43;mix-blend-mode:screen;
-  background:radial-gradient(ellipse at var(--foil-x) var(--foil-y),#d8f8f0b3,transparent 50%),radial-gradient(ellipse at 26% 38%,#c6aff28c,transparent 29%),radial-gradient(ellipse at 76% 67%,#91d9d177,transparent 32%);
+  opacity:.53;mix-blend-mode:normal;
+  background:radial-gradient(ellipse 75% 55% at 28% 37%,#5f30b5b0,transparent 80%),radial-gradient(ellipse 72% 60% at 74% 68%,#214caeba,transparent 82%),radial-gradient(ellipse 55% 45% at var(--foil-x) var(--foil-y),#b59de287,transparent 83%),linear-gradient(175deg,transparent 20%,#5141a042 65%,#1852a74a 95%);
 }
 .finish-spooky .foil-shine:before{
   content:'';position:absolute;inset:0;
@@ -64,7 +65,7 @@
   background-repeat:no-repeat;
 }
 .finish-crashout .foil-shine{
-  opacity:.72;mix-blend-mode:normal;
+  opacity:.59;mix-blend-mode:normal;
   background-image:radial-gradient(ellipse 48% 37% at var(--foil-x) var(--foil-y),#fffaf0a8,#ff55c280 37%,transparent 77%),radial-gradient(ellipse 75% 65% at 35% 44%,#f62daf86,transparent 72%),linear-gradient(120deg,transparent 12%,#fb229c83 30%,#ff8ee08c 44%,#58deea50 54%,#ffdf5868 64%,#f333ae54 75%,transparent 88%),url('./foil-crashout.svg');
   background-size:100% 100%,100% 100%,175% 175%,100% 100%;
   background-position:center,center,var(--foil-x) var(--foil-y),center;
@@ -76,10 +77,10 @@
 .card-perspective:hover .finish-aurora .foil-shine{opacity:.46}
 .card-perspective:hover .finish-starfield .foil-shine{opacity:.9}
 .card-perspective:hover .finish-glitter .foil-shine{opacity:.84}
-.card-perspective:hover .finish-spooky .foil-shine{opacity:.55}
+.card-perspective:hover .finish-spooky .foil-shine{opacity:.62}
 .card-perspective:hover .finish-confetti .foil-shine{opacity:.9}
 .card-perspective:hover .finish-pumpkin .foil-shine{opacity:.88}
-.card-perspective:hover .finish-crashout .foil-shine{opacity:.82}
+.card-perspective:hover .finish-crashout .foil-shine{opacity:.69}
 .blank-finish-card.finish-shimmer .foil-shine{opacity:.28}
 .blank-finish-card.finish-holo .foil-shine{opacity:.4}
 .blank-finish-card.finish-etched .foil-shine{opacity:.48}
@@ -89,7 +90,7 @@
 .blank-finish-card.finish-spooky .foil-shine{opacity:.5}
 .blank-finish-card.finish-confetti .foil-shine{opacity:.86}
 .blank-finish-card.finish-pumpkin .foil-shine{opacity:.76}
-.blank-finish-card.finish-crashout .foil-shine{opacity:.74}
+.blank-finish-card.finish-crashout .foil-shine{opacity:.62}
 .card-perspective:hover .blank-finish-card.finish-shimmer .foil-shine{opacity:.51}
 .card-perspective:hover .blank-finish-card.finish-holo .foil-shine{opacity:.64}
 .foil-shine:after{

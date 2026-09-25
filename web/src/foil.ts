@@ -8,6 +8,8 @@ export function aimFoil(element: HTMLElement, clientX: number, clientY: number) 
   element.style.setProperty('--foil-y', `${y}%`)
   element.style.setProperty('--foil-dx', `${((x - 50) * .12).toFixed(1)}px`)
   element.style.setProperty('--foil-dy', `${((y - 50) * .12).toFixed(1)}px`)
+  element.style.setProperty('--foil-streak-x', `${((x - 50) * .24).toFixed(1)}px`)
+  element.style.setProperty('--foil-streak-y', `${((y - 50) * .18).toFixed(1)}px`)
 }
 
 export function resetFoil(element: HTMLElement) {
@@ -15,6 +17,8 @@ export function resetFoil(element: HTMLElement) {
   element.style.setProperty('--foil-y', '50%')
   element.style.setProperty('--foil-dx', '0px')
   element.style.setProperty('--foil-dy', '0px')
+  element.style.setProperty('--foil-streak-x', '0px')
+  element.style.setProperty('--foil-streak-y', '0px')
 }
 
 export function aimFoilFromTilt(element: HTMLElement | null, x: number, y: number) {
@@ -23,4 +27,6 @@ export function aimFoilFromTilt(element: HTMLElement | null, x: number, y: numbe
   element.style.setProperty('--foil-y', `${Math.max(0, Math.min(100, 50 - y * 2))}%`)
   element.style.setProperty('--foil-dx', `${(x * .24).toFixed(1)}px`)
   element.style.setProperty('--foil-dy', `${(-y * .24).toFixed(1)}px`)
+  element.style.setProperty('--foil-streak-x', `${(x * .48).toFixed(1)}px`)
+  element.style.setProperty('--foil-streak-y', `${(-y * .36).toFixed(1)}px`)
 }

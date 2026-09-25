@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 500">
+  <defs>
+    <linearGradient id="trail" x1="0" y1="1" x2="1" y2="0">
+      <stop stop-color="#a9dcff" stop-opacity="0"/>
+      <stop offset=".55" stop-color="#c3e9ff" stop-opacity=".4"/>
+      <stop offset="1" stop-color="#fff9dc" stop-opacity=".95"/>
+    </linearGradient>
+    <radialGradient id="head"><stop stop-color="#fffef0"/><stop offset=".4" stop-color="#e2f6ff"/><stop offset="1" stop-color="#b7ddff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g stroke="url(#trail)" stroke-linecap="round">
+    <path d="M19 80l15-13M91 41l11-10M218 62l17-15M297 115l13-11M69 158l19-16M172 126l12-10M269 207l17-15M36 258l14-12M136 226l21-18M218 291l16-14M307 337l18-16M66 364l17-14M154 428l16-13M248 397l23-20M290 463l13-11" stroke-width="1.8"/>
+    <path d="M120 72l8-7M326 45l9-8M184 194l10-9M318 258l8-7M107 307l9-8M204 362l8-7M42 447l11-10M217 478l8-7" stroke-width="1.1"/>
+  </g>
+  <g fill="url(#head)"><circle cx="34" cy="67" r="4"/><circle cx="235" cy="47" r="3.5"/><circle cx="88" cy="142" r="4.5"/><circle cx="157" cy="208" r="4"/><circle cx="286" cy="192" r="4"/><circle cx="234" cy="277" r="3.5"/><circle cx="325" cy="321" r="4"/><circle cx="83" cy="350" r="3.5"/><circle cx="271" cy="377" r="4.5"/><circle cx="170" cy="415" r="3.5"/><circle cx="53" cy="437" r="3"/></g>
+</svg>

@@ -138,6 +138,21 @@ test('confetti flecks shift slightly with the light', async ({ page }) => {
   await expect(page.locator('.finish-showcase .foil-shine')).toHaveCSS('background-image', /foil-confetti-near/)
 })
 
+test('starfield streaks travel farther than confetti flecks', async ({ page }) => {
+  await startDemo(page)
+  await navigate(page, 'Finish Gallery')
+  await page.locator('.finish-option').filter({ hasText: 'Starfield' }).click()
+  await page.locator('.finish-showcase').scrollIntoViewIfNeeded()
+  const foil = page.locator('.finish-showcase .card-perspective')
+  await expect(foil).toBeVisible()
+  const box = await foil.boundingBox()
+  expect(box).not.toBeNull()
+  await page.mouse.move(box!.x + box!.width * .8, box!.y + box!.height * .3)
+  await expect(foil).toHaveCSS('--foil-streak-x', '7.2px')
+  await expect(foil).toHaveCSS('--foil-streak-y', '-3.6px')
+  await expect(page.locator('.finish-showcase .foil-shine')).toHaveCSS('background-position', /7\.2px/)
+})
+
 test('sleeves and slabs tilt with their cards as one layer', async ({ page }) => {
   await startDemo(page)
   await page.evaluate(() => {
@@ -286,6 +301,20 @@ test('finish gallery and games hub open', async ({ page }) => {
   await expect(page.locator('.finish-option').filter({ hasText: 'Etched Silver' })).toContainText('3 FOIL')
   await expect(page.locator('.finish-option').filter({ hasText: 'Aurora' })).toContainText('3 FOIL')
   await expect(page.locator('.finish-option').filter({ hasText: 'Crashout' })).toContainText('3 FOIL')
+  const finishes = page.getByRole('region', { name: 'Finishes' })
+  const { visible, scrollable } = await finishes.evaluate(element => {
+    const box = element.getBoundingClientRect()
+    const visible = [...element.querySelectorAll('.finish-option')].filter(option => {
+      const rect = option.getBoundingClientRect()
+      return rect.top >= box.top && rect.bottom <= box.bottom
+    }).length
+    return { visible, scrollable: element.scrollHeight > element.clientHeight }
+  })
+  expect(visible).toBeGreaterThanOrEqual(4)
+  expect(visible).toBeLessThanOrEqual(5)
+  expect(scrollable).toBe(true)
+  await page.locator('.finish-option').filter({ hasText: 'Crashout' }).click()
+  expect(await finishes.evaluate(element => element.scrollTop)).toBeGreaterThan(0)
   await navigate(page, 'Games')
   await expect(page.locator('.game-stub')).toHaveCount(4)
   await expect(page.getByRole('heading', { name: 'Feline Papermill' })).toBeVisible()
