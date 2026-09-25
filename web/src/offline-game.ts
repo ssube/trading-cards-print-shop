@@ -190,9 +190,10 @@ function action(save: Save, copyId: string, operation: string) {
   if (operation === 'study') {
     if (item.slab_grade !== null) fail('Break the slab before studying')
     if (item.condition <= 0) fail('This copy is too worn to study')
-    const learned = [item.type_id, item.theme_id, item.finish_id, item.border_id, item.back_id, ...item.rule_ids].filter(part => !save.learned.includes(part))
+    const learned = [...new Set([item.type_id, item.theme_id, item.finish_id, item.border_id, item.back_id, ...item.rule_ids])].filter(part => !save.learned.includes(part))
+    if (!learned.length) fail('You have already learned everything on this card')
     save.learned.push(...learned)
-    if (!item.sleeved) item.condition = Math.max(0, item.condition - 2)
+    item.condition = Math.max(0, item.condition - Math.ceil(item.condition / 10))
     updateGrade(item)
     return { learned }
   }

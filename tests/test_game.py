@@ -75,6 +75,7 @@ def test_trade_study_reprint_and_admin_audit(world):
         game.accept_offer(conn, alice, offer)
         assert game.copy_detail(conn, alice_card)["owner_id"] == bob
         assert game.copy_detail(conn, bob_card)["owner_id"] == alice
+        conn.execute("DELETE FROM learned WHERE user_id=? AND part_id='storybook'", (bob,))
         game.study(conn, bob, alice_card)
         reprint = game.reprint(conn, bob, alice_card)
         assert game.copy_detail(conn, reprint)["origin_id"] == alice_card
@@ -124,6 +125,20 @@ def test_npc_copy_unlocks_parts_and_commission_consumes(world, monkeypatch):
         claim = game.commission_claim(conn, alice, "first-edition", fox_copy)
         assert claim["paper"] == 3
         assert game.copy_detail(conn, fox_copy)["owner_id"] is None
+
+
+def test_study_costs_ten_percent_and_rejects_fully_learned_card(world):
+    alice, _ = world
+    with db.transaction() as conn:
+        copy_id = game.mint_copy(conn, "npc-foil-fox", alice)
+        conn.execute("UPDATE copies SET condition=73 WHERE id=?", (copy_id,))
+        game.adjust_resources(conn, alice, {"sleeve": 1})
+        game.sleeve(conn, alice, copy_id)
+        assert game.study(conn, alice, copy_id)
+        assert game.copy_detail(conn, copy_id, alice)["condition"] == 65
+        with pytest.raises(game.GameError, match="already learned everything"):
+            game.study(conn, alice, copy_id)
+        assert game.copy_detail(conn, copy_id, alice)["condition"] == 65
 
 
 def test_daily_allowance_is_unique(world):

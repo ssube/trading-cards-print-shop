@@ -560,12 +560,13 @@ def study(db, user_id, copy_id):
     need(card["condition"] > 0, "This copy is too worn to study")
     parts = [card["type_id"], card["theme_id"], card["finish_id"],
              card["border_id"], card["back_id"]] + card["rule_ids"]
-    new = []
-    for part in parts:
-        cur = db.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (user_id, part))
-        if cur.rowcount:
-            new.append(part)
-    wear(db, copy_id, 2)
+    new = list(dict.fromkeys(part for part in parts if not db.execute(
+        "SELECT 1 FROM learned WHERE user_id=? AND part_id=?", (user_id, part)).fetchone()))
+    need(new, "You have already learned everything on this card")
+    for part in new:
+        db.execute("INSERT INTO learned VALUES(?,?)", (user_id, part))
+    db.execute("UPDATE copies SET condition=max(0,condition-?) WHERE id=?",
+               (math.ceil(card["condition"] / 10), copy_id))
     return new
 
 

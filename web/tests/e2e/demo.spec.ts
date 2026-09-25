@@ -38,6 +38,23 @@ test('library filters and card inspection work on mobile', async ({ page }) => {
   await expect(page.locator('.boxed-card')).toHaveCount(3)
 })
 
+test('studying a copy costs condition and stops when its parts are known', async ({ page }) => {
+  await startDemo(page)
+  await page.evaluate(() => {
+    const key = 'cards-the-printing.offline-demo.v1'
+    const save = JSON.parse(localStorage.getItem(key)!)
+    save.learned = save.learned.filter((part: string) => part !== save.library[0].type_id)
+    save.library[0].condition = 73
+    localStorage.setItem(key, JSON.stringify(save))
+  })
+  await page.reload()
+  await navigate(page, 'Card Library')
+  await page.getByRole('button', { name: /Inspect Apprentice Press Cat/ }).first().click()
+  await page.getByRole('button', { name: 'Study parts · −8 condition' }).click()
+  await expect(page.locator('.inspect-info .detail-grid')).toContainText('65%')
+  await expect(page.getByRole('button', { name: 'All parts learned' })).toBeDisabled()
+})
+
 test('deck reward, custom deck, print preset, and progress work', async ({ page }) => {
   await startDemo(page)
   await navigate(page, 'Decks')
