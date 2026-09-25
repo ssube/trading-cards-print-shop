@@ -1,0 +1,33 @@
+/* The foil follows the card; room lighting adds only a faint, slow reflection. */
+.card-perspective,.starter-fan-card{--foil-x:50%;--foil-y:50%}
+.foil-shine{overflow:hidden;transition:opacity .22s ease;animation:none}
+.finish-shimmer .foil-shine{
+  opacity:.2;
+  background-image:radial-gradient(circle at var(--foil-x) var(--foil-y),#fffbe4b5 0%,#dcf6ef65 13%,transparent 44%),linear-gradient(115deg,transparent 16%,#6fa6b0 36%,#e6b4df 43%,#f5e3aa 51%,transparent 70%);
+  background-size:100% 100%,210% 210%;
+  background-position:center,var(--foil-x) var(--foil-y);
+  animation:none;
+}
+.finish-holo .foil-shine{
+  opacity:.34;
+  background-image:radial-gradient(circle at var(--foil-x) var(--foil-y),#fffef4d9 0%,#e8c7f68c 12%,transparent 43%),repeating-linear-gradient(125deg,#eb8cb5 0%,#edce88 9%,#8ac6d6 18%,#a7a4df 27%,#eb8cb5 36%);
+  background-size:100% 100%,170% 170%;
+  background-position:center,var(--foil-x) var(--foil-y);
+  animation:none;
+}
+.card-perspective:hover .finish-shimmer .foil-shine,.starter-fan-card.finish-shimmer:hover .foil-shine{opacity:.43}
+.card-perspective:hover .finish-holo .foil-shine,.starter-fan-card.finish-holo:hover .foil-shine{opacity:.59}
+.blank-finish-card.finish-shimmer .foil-shine{opacity:.28}
+.blank-finish-card.finish-holo .foil-shine{opacity:.4}
+.card-perspective:hover .blank-finish-card.finish-shimmer .foil-shine{opacity:.51}
+.card-perspective:hover .blank-finish-card.finish-holo .foil-shine{opacity:.64}
+.foil-shine:after{
+  content:'';position:absolute;inset:-3%;pointer-events:none;
+  background:radial-gradient(ellipse at 30% 24%,#fff8d87a,transparent 48%);
+  opacity:.08;animation:room-light 18s ease-in-out infinite alternate;
+}
+@keyframes room-light{
+  from{opacity:.06;transform:translate(-1.5%,-1%)}
+  to{opacity:.14;transform:translate(1.5%,1%)}
+}
+@media(prefers-reduced-motion:reduce){.foil-shine,.foil-shine:after{animation:none;transition:none}}

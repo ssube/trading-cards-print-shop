@@ -1,14 +1,22 @@
-import { useState, type PointerEvent } from 'react'
+import { useRef, useState, type PointerEvent } from 'react'
+import { aimFoil, aimFoilFromTilt, resetFoil } from './foil'
 import type { CardCopy } from './types'
 
 export function Card({ card, interactive = false, onClick, large = false, blank = false }: { card: CardCopy; interactive?: boolean; onClick?: () => void; large?: boolean; blank?: boolean }) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [flipped, setFlipped] = useState(false)
+  const perspective = useRef<HTMLDivElement>(null)
   function move(event: PointerEvent<HTMLDivElement>) {
+    aimFoil(event.currentTarget, event.clientX, event.clientY)
     if (!interactive || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const rect = event.currentTarget.getBoundingClientRect()
     setTilt({ x: ((event.clientX - rect.left) / rect.width - .5) * 13, y: ((event.clientY - rect.top) / rect.height - .5) * -13 })
+  }
+  function rotate(amount: number) {
+    const next = { x: tilt.x + amount, y: tilt.y }
+    setTilt(next)
+    aimFoilFromTilt(perspective.current, next.x, next.y)
   }
   const artStyle = {
     '--cx': `${card.centering_x * 2.3}px`, '--cy': `${card.centering_y * 2.3}px`,
@@ -18,8 +26,8 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
   } as React.CSSProperties
   return <div className={`card-frame ${large ? 'card-large' : ''} ${card.slab_grade !== null ? 'slabbed' : ''}`}>
     {card.slab_grade !== null && <div className="slab-label"><strong>THE ARCHIVIST</strong><span>{card.slab_grade} · {card.grade_name}</span></div>}
-    <div className="card-perspective" style={{ transform: `scale(${zoom}) rotateY(${flipped ? 180 + tilt.x : tilt.x}deg) rotateX(${tilt.y}deg)` }}
-      onPointerMove={move} onPointerLeave={() => setTilt({ x: 0, y: 0 })} onClick={onClick}
+    <div ref={perspective} className="card-perspective" style={{ transform: `scale(${zoom}) rotateY(${flipped ? 180 + tilt.x : tilt.x}deg) rotateX(${tilt.y}deg)` }}
+      onPointerMove={move} onPointerLeave={event => { setTilt({ x: 0, y: 0 }); resetFoil(event.currentTarget) }} onClick={onClick}
       role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={e => { if (onClick && (e.key === 'Enter' || e.key === ' ')) onClick() }}
       aria-label={onClick ? `Inspect ${card.name}` : undefined}>
       <article className={`trading-card finish-${card.finish_id} effect-${card.color_effect} ${flipped ? 'is-flipped' : ''} ${blank ? 'blank-finish-card' : ''}`} style={artStyle}>
@@ -45,6 +53,6 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
       </article>
     </div>
     {card.sleeved === 1 && <span className="sleeve-badge">SLEEVED</span>}
-    {interactive && <div className="card-controls"><button onClick={() => setFlipped(!flipped)}>{flipped ? 'Show front' : 'Flip card'}</button><label>Zoom <input type="range" min="1" max="1.6" step="0.05" value={zoom} onChange={e => setZoom(Number(e.target.value))} /></label><button onClick={() => setTilt({ x: tilt.x - 10, y: tilt.y })} aria-label="Rotate left">↶</button><button onClick={() => setTilt({ x: tilt.x + 10, y: tilt.y })} aria-label="Rotate right">↷</button></div>}
+    {interactive && <div className="card-controls"><button onClick={() => setFlipped(!flipped)}>{flipped ? 'Show front' : 'Flip card'}</button><label>Zoom <input type="range" min="1" max="1.6" step="0.05" value={zoom} onChange={e => setZoom(Number(e.target.value))} /></label><button onClick={() => rotate(-10)} aria-label="Rotate left">↶</button><button onClick={() => rotate(10)} aria-label="Rotate right">↷</button></div>}
   </div>
 }
