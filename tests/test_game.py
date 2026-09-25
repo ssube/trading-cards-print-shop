@@ -163,7 +163,7 @@ def test_collection_progress_counts_designs_once(world):
     with db.connect() as conn:
         initial = game.collection_progress(conn, alice)
         assert initial["cards"]["collected"] == 3
-        assert initial["cards"]["total"] == 16
+        assert initial["cards"]["total"] == 24
         assert initial["foils"]["collected"] == 2
         assert initial["borders"] == {"collected": 1, "total": 3, "percent": 33}
         assert initial["backs"] == {"collected": 1, "total": 3, "percent": 33}
@@ -173,7 +173,7 @@ def test_collection_progress_counts_designs_once(world):
     with db.transaction() as conn:
         game.reprint(conn, alice, printed)
         after = game.collection_progress(conn, alice)
-        assert after["cards"] == {"collected": 4, "total": 17, "percent": 24}
+        assert after["cards"] == {"collected": 4, "total": 25, "percent": 16}
         assert game.collection_progress(conn, bob)["cards"]["collected"] == 3
         conn.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (alice, "holo"))
         assert game.collection_progress(conn, alice)["foils"]["collected"] == 3

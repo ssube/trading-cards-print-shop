@@ -33,7 +33,7 @@ def transaction():
 def init():
     with transaction() as db:
         version = db.execute("PRAGMA user_version").fetchone()[0]
-        if version >= 7:
+        if version >= 8:
             return
         if version == 0:
             db.executescript("""
@@ -104,3 +104,8 @@ def init():
         if version <= 6:
             db.execute("CREATE TABLE papermills(user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, pulp INTEGER NOT NULL DEFAULT 0, cats INTEGER NOT NULL DEFAULT 0, roller INTEGER NOT NULL DEFAULT 0, ink_vat INTEGER NOT NULL DEFAULT 0, seconds_credit INTEGER NOT NULL DEFAULT 0, last_at TEXT NOT NULL, day TEXT NOT NULL, paper_today INTEGER NOT NULL DEFAULT 0, ink_today INTEGER NOT NULL DEFAULT 0, last_tap_at TEXT)")
             db.execute("PRAGMA user_version=7")
+
+        if version <= 7:
+            db.execute("CREATE TABLE fishing_casts(id TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, day TEXT NOT NULL, created_at TEXT NOT NULL, target_ms INTEGER NOT NULL, tolerance_ms INTEGER NOT NULL, prize_kind TEXT NOT NULL, prize_value TEXT NOT NULL, resolved_at TEXT, success INTEGER, reward_json TEXT)")
+            db.execute("CREATE INDEX fishing_casts_user_day ON fishing_casts(user_id,day)")
+            db.execute("PRAGMA user_version=8")

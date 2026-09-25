@@ -24,6 +24,7 @@ type Save = {
   exports?: Record<string, { signature: string; cards: number; sheets: number }>
   custom_decks?: SavedCustomDeck[]; deck_claims?: string[]
   papermill?: { pulp: number; cats: number; roller: boolean; ink_vat: boolean; seconds_credit: number; last_at: string; day: string; paper_today: number; ink_today: number; last_tap_at: string | null }
+  fishing_casts?: { id: string; day: string; created_at: string; target_ms: number; tolerance_ms: number; prize_kind: 'card' | 'resource'; prize_value: string; resolved_at: string | null; success: boolean | null; reward: { resources?: Record<string, number>; card?: { design_id: string; copy_id: string } } }[]
 }
 
 function today() { return new Date().toISOString().slice(0, 10) }
@@ -212,6 +213,48 @@ export function resetOfflineDemo() {
   catch { fail('The offline collection could not be cleared from browser storage.') }
 }
 
+function fishingState(save: Save) {
+  save.fishing_casts ||= []
+  const casts = save.fishing_casts.filter(item => item.day === today())
+  const pending = casts.find(item => item.resolved_at === null)
+  const elapsed = pending ? Date.now() - Date.parse(pending.created_at) : 0
+  if (pending && elapsed >= 30000) { pending.resolved_at = new Date().toISOString(); pending.success = false; pending.reward = {} }
+  return { day: today(), used: casts.length, limit: 5, catches: casts.filter(item => item.success).length,
+    pending: pending && pending.resolved_at === null ? { cast_id: pending.id, target_ms: pending.target_ms, tolerance_ms: pending.tolerance_ms, elapsed_ms: elapsed } : null }
+}
+function fishingCast(save: Save) {
+  const current = fishingState(save)
+  if (current.pending) return current
+  if (current.used >= 5) fail('All five casts are spent for today')
+  const fish = ['fish-lanternfin', 'fish-inkscale', 'fish-moonkoi']
+  const resources = ['paper', 'ink', 'paper', 'ink', 'paper', 'ink', 'foil']
+  const cardPrize = Math.random() < .1
+  save.fishing_casts!.push({ id: id(), day: today(), created_at: new Date().toISOString(), target_ms: 1400 + Math.floor(Math.random() * 1101), tolerance_ms: 375,
+    prize_kind: cardPrize ? 'card' : 'resource', prize_value: cardPrize ? fish[Math.floor(Math.random() * fish.length)] : resources[Math.floor(Math.random() * resources.length)],
+    resolved_at: null, success: null, reward: {} })
+  save.fishing_casts = save.fishing_casts!.filter(item => item.day === today())
+  return fishingState(save)
+}
+function fishingReel(save: Save, castId: unknown) {
+  if (typeof castId !== 'string' || castId.length > 64) fail('Invalid cast')
+  const cast = save.fishing_casts?.find(item => item.id === castId) || fail('Cast not found')
+  if (cast.resolved_at !== null) return { cast_id: cast.id, success: Boolean(cast.success), reward: cast.reward }
+  const elapsed = Date.now() - Date.parse(cast.created_at)
+  const success = Math.abs(elapsed - cast.target_ms) <= cast.tolerance_ms && elapsed < 30000
+  cast.success = success; cast.resolved_at = new Date().toISOString()
+  if (success && cast.prize_kind === 'card') {
+    const design = offlineDesigns().find(item => item.id === cast.prize_value) || fail('Fish card not found')
+    const copy = copyOf({ ...design, design_id: design.id }, 88)
+    save.library.unshift(copy)
+    cast.reward = { card: { design_id: design.id, copy_id: copy.id } }
+  } else if (success) {
+    const amount = cast.prize_value === 'foil' ? 1 : 2
+    balance(save, { [cast.prize_value]: amount })
+    cast.reward = { resources: { [cast.prize_value]: amount } }
+  }
+  return { cast_id: cast.id, success, reward: cast.reward }
+}
+
 function millState(save: Save) {
   const now = new Date()
   const todayUtc = today()
@@ -273,6 +316,9 @@ export async function offlineApi<T>(path: string, method = 'GET', body?: unknown
     return state(save) as T
   }
   if (path === '/market' && method === 'GET') return [] as T
+  if (path === '/games/fishing' && method === 'GET') return mutate(current => fishingState(current)) as T
+  if (path === '/games/fishing/cast' && method === 'POST') return mutate(current => fishingCast(current)) as T
+  if (path === '/games/fishing/reel' && method === 'POST') return mutate(current => fishingReel(current, (body as { cast_id?: unknown })?.cast_id)) as T
   if (path === '/games/papermill' && method === 'GET') return mutate(current => millState(current)) as T
   if (path === '/games/papermill/tap' && method === 'POST') return mutate(current => millAction(current, 'tap')) as T
   if (path === '/games/papermill/hire' && method === 'POST') return mutate(current => millAction(current, 'hire')) as T

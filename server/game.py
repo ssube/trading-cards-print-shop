@@ -147,6 +147,12 @@ def seed():
              "land", ["dusk", "grow"], "clockwork", "shimmer"),
             ("mill-master", "Master of the Midnight Mill", "A spotless apron is the surest sign of management.",
              "monster", ["sleeved", "echo"], "storybook", "standard"),
+            ("fish-lanternfin", "Lanternfin", "Its light arrives a moment before the fish does.",
+             "monster", ["arrival", "glimpse"], "maritime", "standard"),
+            ("fish-inkscale", "Inkscale", "Every ripple writes a new sentence.",
+             "monster", ["on_draw", "draw"], "maritime", "shimmer"),
+            ("fish-moonkoi", "Moon Koi", "The pond insists the moon is one of its fish.",
+             "monster", ["dusk", "grow"], "maritime", "standard"),
         ]
         # Finish variants share their featured card's artwork and text.
         variants = {"starter-press-cat": ("starter-press-cat-foil", "shimmer"),

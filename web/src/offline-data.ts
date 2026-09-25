@@ -46,6 +46,11 @@ export const offlineCatalog: Part[] = [
 ]
 
 function art(id: string) {
+  if (id.startsWith('fish-')) {
+    const color = id === 'fish-inkscale' ? '#687bd3' : id === 'fish-moonkoi' ? '#e6bca0' : '#b7dca3'
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560"><rect width="400" height="560" fill="#123a4c"/><circle cx="200" cy="250" r="155" fill="#3a8195" opacity=".3"/><path d="M60 175q140-80 280 0M50 335q150 90 300 0" fill="none" stroke="#9cdddd" stroke-width="4" opacity=".5"/><path d="M90 280q105-130 230 0-125 130-230 0l-55-85v170z" fill="${color}" stroke="#ecedd8" stroke-width="7"/><circle cx="242" cy="258" r="12" fill="#183b43"/><circle cx="246" cy="254" r="3" fill="#fff"/><path d="M165 280h-45m55 28h-42" stroke="#ffffff" stroke-width="6" opacity=".5"/></svg>`
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`
+  }
   if (id.startsWith('mill-')) {
     const hue = id === 'mill-roller' ? '#85b7c5' : id === 'mill-master' ? '#f0b988' : '#dcc27e'
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560"><rect width="400" height="560" fill="#213a36"/><circle cx="200" cy="220" r="140" fill="${hue}" opacity=".2"/><path d="M100 420V200l45-70 50 40 60-40 45 70v220Z" fill="${hue}" stroke="#f8eac5" stroke-width="7"/><circle cx="165" cy="245" r="9" fill="#25342f"/><circle cx="235" cy="245" r="9" fill="#25342f"/><path d="M185 286q15 20 30 0M65 440h270v60H65z" fill="none" stroke="#25342f" stroke-width="9"/><path d="M75 445h250v55H75z" fill="#efe5c8"/><path d="M140 470h120" stroke="#a89574" stroke-width="5"/></svg>`
@@ -77,12 +82,16 @@ export function offlineDesigns(): Design[] {
     design('mill-apprentice', 'The Pulp Apprentice', 'Her first proof has only three paw prints.', 'monster', ['arrival', 'draw'], 'storybook'),
     design('mill-roller', 'The Moonlit Roller', 'All night it turns; by morning, every page is softer.', 'land', ['dusk', 'grow'], 'clockwork', 'shimmer'),
     design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['sleeved', 'echo'], 'storybook'),
+    design('fish-lanternfin', 'Lanternfin', 'Its light arrives a moment before the fish does.', 'monster', ['arrival', 'glimpse'], 'maritime'),
+    design('fish-inkscale', 'Inkscale', 'Every ripple writes a new sentence.', 'monster', ['on_draw', 'draw'], 'maritime', 'shimmer'),
+    design('fish-moonkoi', 'Moon Koi', 'The pond insists the moon is one of its fish.', 'monster', ['dusk', 'grow'], 'maritime'),
     { ...cat, id: 'reward-press-cat-holo', finish_id: 'holo' },
     { ...map, id: 'reward-starlit-map-holo', finish_id: 'holo' },
     { ...fox, id: 'reward-foil-fox-holo', finish_id: 'holo' },
     { ...design('npc-borrowed-dawn', 'The Orchard of Borrowed Dawn', 'The fruit ripens only when someone needs another morning.', 'land', ['dawn', 'if_land', 'mend'], 'botanical'), id: 'reward-borrowed-dawn-holo', finish_id: 'holo' },
     { ...design('npc-clockwork-heron', 'The Clockwork Heron', "It remembers tomorrow's stars better than yesterday's roads.", 'monster', ['on_draw', 'if_monster', 'glimpse'], 'clockwork', 'shimmer', 'starlit', 'atlas'), id: 'reward-clockwork-heron-holo', finish_id: 'holo' },
     { ...design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['sleeved', 'echo'], 'storybook'), id: 'reward-mill-master-holo', finish_id: 'holo' },
+    { ...design('fish-moonkoi', 'Moon Koi', 'The pond insists the moon is one of its fish.', 'monster', ['dusk', 'grow'], 'maritime'), id: 'reward-moonkoi-holo', finish_id: 'holo' },
   ]
 }
 

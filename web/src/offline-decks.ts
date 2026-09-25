@@ -12,6 +12,7 @@ export const curatedDecks: Definition[] = [
   { id: 'clockwork', title: 'The Clockwork Almanac', theme: 'clockwork', description: 'A heron keeps the hours while the heavens lose count.', accent: 'blue', designs: ['npc-clockwork-heron', 'npc-starlit-map', 'npc-sunlit-note'], reward: { design_id: 'reward-clockwork-heron-holo', slab_grade: 8, resources: {} } },
   { id: 'tideglass', title: 'The Tideglass Expedition', theme: 'maritime', description: 'Find a door, draw a map, and let the fox navigate.', accent: 'teal', designs: ['npc-tideglass-portal', 'npc-starlit-map', 'npc-foil-fox'], reward: { resources: { foil: 3, sleeve: 2 } } },
   { id: 'papermill', title: 'The Feline Papermill', theme: 'storybook', description: 'Three shifts, six cats, and absolutely no accounting questions.', accent: 'amber', designs: ['mill-apprentice', 'mill-roller', 'mill-master'], reward: { design_id: 'reward-mill-master-holo', resources: { sleeve: 1 } } },
+  { id: 'fish', title: 'The Curious Catch', theme: 'maritime', description: 'Three rare fish from the pond behind the press.', accent: 'teal', designs: ['fish-lanternfin', 'fish-inkscale', 'fish-moonkoi'], reward: { design_id: 'reward-moonkoi-holo', resources: { foil: 1 } } },
 ]
 
 export function validateCustomDeck(title: unknown, theme: unknown) {
