@@ -1,6 +1,6 @@
 const games = [
   { icon: '♧', title: 'Fishing', description: 'Every gacha game needs a fishing minigame. The fish are still reviewing their contracts.' },
-  { icon: '◉', title: 'Kitten Scientists', description: 'Click cookies. Hire kittens. Watch them invent a machine that clicks cookies for more kittens.' },
+  { icon: '◉', title: 'Feline Papermill', description: 'Hire cats to make paper. Spend the paper hiring cats. The mill has no questions.' },
   { icon: '▤', title: 'The Trading Card Game', description: 'Wait, you can play with these cards?' },
   { icon: '✧', title: 'Doom', description: 'It does run Doom. The printing press just needs a few more upgrades.' },
 ]
