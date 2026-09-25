@@ -24,3 +24,4 @@
 .public-link-action[aria-disabled="true"]{opacity:.5;pointer-events:none}
 .public-link-manual{width:100%;font-size:.65rem;color:#cbb682}
 .public-link-manual input{margin-top:6px;font-size:.7rem}
+.grade-cost-note{margin:9px 0 0;color:#bfc6b8;font-size:.68rem;line-height:1.5}

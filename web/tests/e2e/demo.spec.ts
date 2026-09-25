@@ -164,6 +164,34 @@ test('studying a copy costs condition and stops when its parts are known', async
   await expect(page.getByRole('button', { name: 'All parts learned' })).toBeDisabled()
 })
 
+test('grading shows its material cost and accepts an existing sleeve', async ({ page }) => {
+  await startDemo(page)
+  await page.evaluate(() => {
+    const key = 'cards-the-printing.offline-demo.v1'
+    const save = JSON.parse(localStorage.getItem(key)!)
+    save.resources.ink = 2
+    save.resources.sleeve = 0
+    save.library[0].sleeved = 0
+    localStorage.setItem(key, JSON.stringify(save))
+  })
+  await page.reload()
+  await navigate(page, 'Card Library')
+  await page.getByRole('button', { name: /Inspect Apprentice Press Cat/ }).first().click()
+  await expect(page.getByRole('button', { name: 'Grade & slab' })).toBeDisabled()
+  await expect(page.locator('.grade-cost-note')).toContainText('Need a sleeve to grade this copy')
+  await page.evaluate(() => {
+    const key = 'cards-the-printing.offline-demo.v1'
+    const save = JSON.parse(localStorage.getItem(key)!)
+    save.library[0].sleeved = 1
+    localStorage.setItem(key, JSON.stringify(save))
+  })
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Grade & slab' })).toBeEnabled()
+  await expect(page.locator('.grade-cost-note')).toContainText('already has a sleeve')
+  await page.getByRole('button', { name: 'Grade & slab' }).click()
+  await expect(page.getByRole('button', { name: 'Break slab' })).toBeVisible()
+})
+
 test('deck reward, custom deck, print preset, and progress work', async ({ page }) => {
   await startDemo(page)
   await navigate(page, 'Decks')
