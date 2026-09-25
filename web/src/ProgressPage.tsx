@@ -36,11 +36,12 @@ export function ProgressPage({ state, onOpenCard, onNavigate, offline = false }:
   }
   const cards = [...distinct.values()]
   const cardProgress = state.collection_progress.cards
+  const complete = cardProgress.total > 0 && cardProgress.collected >= cardProgress.total
   const completedCommissions = state.commissions.filter(brief => brief.claimed > 0).length
   const completedTrades = state.npcs.filter(offer => offer.claimed).length
 
   return <section className="page progress-page">
-    <div className="page-intro progress-intro"><p className="eyebrow">THE COLLECTOR'S RECORD</p><h1>Your collection, <em>in progress.</em></h1>
+    <div className="page-intro progress-intro"><p className="eyebrow">THE COLLECTOR'S RECORD</p><h1>Your collection, <em>{complete ? 'completed.' : 'in progress.'}</em></h1>
       <p>Discover parts by studying cards. Each new design you keep in your box adds to your collection.</p></div>
 
     <div className="progress-hero" aria-label="Progress overview">

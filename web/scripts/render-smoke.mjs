@@ -52,7 +52,12 @@ const cardMarkup = renderToStaticMarkup(createElement(Card, { card: sample }))
 const mixedCards = [sample, { ...sample, id: 'spell-copy', type_id: 'spell', name: 'Paper Sprite' }]
 const libraryMarkup = renderToStaticMarkup(createElement(CardLibrary, {
   cards: mixedCards,
+  cardProgress: { collected: 2, total: 4, percent: 50 },
   catalog: [{ id: 'land', kind: 'type', name: 'Land' }, { id: 'monster', kind: 'type', name: 'Monster' }, { id: 'spell', kind: 'type', name: 'Spell' }],
+  onOpenCard: () => {}, onVisitPress: () => {},
+}))
+const completedLibraryMarkup = renderToStaticMarkup(createElement(CardLibrary, {
+  cards: mixedCards, catalog: [], cardProgress: { collected: 4, total: 4, percent: 100 },
   onOpenCard: () => {}, onVisitPress: () => {},
 }))
 const galleryMarkup = renderToStaticMarkup(createElement(FinishGallery, {
@@ -84,6 +89,10 @@ const pageMarkup = renderToStaticMarkup(createElement(ProgressPage, {
   },
   onOpenCard: () => {}, onNavigate: () => {},
 }))
+const completedPageMarkup = renderToStaticMarkup(createElement(ProgressPage, {
+  state: { library: mixedCards, catalog: [], collection_progress: { cards: { collected: 4, total: 4, percent: 100 } }, generation_count: 0, generation_limit: 5, commissions: [], npcs: [], allowance_claimed: false },
+  onOpenCard: () => {}, onNavigate: () => {},
+}))
 const welcomeMarkup = renderToStaticMarkup(createElement(StarterWelcome, {
   mode: 'register', setMode: () => {}, decks: [{ id: 'pressroom', name: 'The Pressroom Parade', theme: 'Storybook workshop',
     description: 'A practice deck', accent: 'amber', featured: 'starter-press-cat',
@@ -97,10 +106,10 @@ const welcomeMarkup = renderToStaticMarkup(createElement(StarterWelcome, {
 if (!gamesMarkup.includes('Every gacha game needs a fishing minigame') || !gamesMarkup.includes('Wait, you can play with these cards?') || !gamesMarkup.includes('It does run Doom') || (gamesMarkup.match(/COMING SOON/g) || []).length !== 4 || !printMarkup.includes('Show simulated foil finish') || !printMarkup.includes('Show print defects and paper wear') || !appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window') || !cardMarkup.includes('TC') || !cardMarkup.includes('PRINT SHOP') ||
     filterLibraryCards(mixedCards, 'spell').map(card => card.id).join() !== 'spell-copy' ||
     filterLibraryCards(mixedCards, 'land').length !== 0 || filterLibraryCards(mixedCards, 'all').length !== 2 ||
-    !libraryMarkup.includes('Filter cards by type') || !libraryMarkup.includes('LAND <b>0</b>') || !libraryMarkup.includes('SPELL <b>1</b>') ||
+    !completedLibraryMarkup.includes('Your collection, <em>completed.</em>') || !libraryMarkup.includes('Filter cards by type') || !libraryMarkup.includes('LAND <b>0</b>') || !libraryMarkup.includes('SPELL <b>1</b>') ||
     !galleryMarkup.includes('Blank print stock') || !galleryMarkup.includes('Apprentice Press Cat') || !galleryMarkup.includes('Holo') ||
     !progressMarkup.includes('Unique cards') || !progressMarkup.includes('33%') || !progressMarkup.includes('1 / 4 in your box') ||
-    !pageMarkup.includes('Learned and still to find') || !pageMarkup.includes('TO FIND') || !pageMarkup.includes('2 copies') ||
+    !completedPageMarkup.includes('Your collection, <em>completed.</em>') || !pageMarkup.includes('Learned and still to find') || !pageMarkup.includes('TO FIND') || !pageMarkup.includes('2 copies') ||
     !welcomeMarkup.includes('Trading Cards:') || !welcomeMarkup.includes('Print Shop') || !welcomeMarkup.includes('The Pressroom Parade') || !welcomeMarkup.includes('Three cards to begin with') || !welcomeMarkup.includes('COPY 3 OF 3')) {
   throw new Error('Render smoke test failed')
 }
