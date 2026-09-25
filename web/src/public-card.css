@@ -1,0 +1,20 @@
+.public-card-page{min-height:100vh;background:radial-gradient(circle at 55% 5%,#304144,#11191d 68%);color:#e9e1d2}
+.public-card-header{max-width:1160px;margin:auto;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #a7a2803b;color:#cbb682;font-size:.65rem;font-weight:700;letter-spacing:.16em}
+.public-card-brand{display:flex;align-items:center;gap:12px;color:#eee2c8;text-decoration:none;letter-spacing:0}
+.public-card-brand .brand-seal{display:grid;place-items:center;flex:none}
+.public-card-brand strong,.public-card-brand small{display:block;font-family:'Fraunces',serif}
+.public-card-brand strong{font-size:1.15rem}.public-card-brand small{font-size:.82rem;color:#d4b981}
+.public-card-content{max-width:1060px;margin:0 auto;padding:78px 28px 95px;display:grid;grid-template-columns:minmax(260px,350px) minmax(300px,1fr);gap:75px;align-items:center}
+.public-card-art{width:100%;filter:drop-shadow(0 22px 28px #0009)}
+.public-card-art .card-controls{top:calc(100% + 12px)}
+.public-card-details h1{font-size:clamp(2.6rem,5vw,4.5rem);line-height:1.08;margin:0 0 20px}
+.public-card-flavor{color:#d5bb8e;font:italic 1.2rem/1.6 'Fraunces',serif;margin-bottom:32px}
+.public-card-details dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px 25px;border-top:1px solid #aa9e734b;border-bottom:1px solid #aa9e734b;padding:23px 0;margin:0 0 24px}
+.public-card-details dt{color:#a6b1a5;font-size:.61rem;letter-spacing:.16em;font-weight:700}
+.public-card-details dd{margin:5px 0 0;text-transform:capitalize;color:#f0dcaf;font-size:.91rem}
+.public-card-rules{color:#d5dbce;line-height:1.65}
+.public-card-note{color:#a6b1a5;font-size:.74rem;margin:20px 0 30px}
+.public-card-entry{display:inline-block;text-decoration:none}
+.public-card-loading{grid-column:1/-1;text-align:center;min-height:40vh;display:grid;place-content:center;color:#f0dcaf;font:1.2rem 'Fraunces',serif}
+.public-card-loading a{color:#f0dcaf}
+@media(max-width:750px){.public-card-content{grid-template-columns:1fr;justify-items:center;gap:70px;padding:48px 20px 65px}.public-card-art{max-width:320px}.public-card-details{width:100%}.public-card-header{padding:15px 20px}}

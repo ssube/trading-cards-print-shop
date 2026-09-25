@@ -1,4 +1,4 @@
-export const pages = ['workshop', 'library', 'decks', 'print', 'games', 'progress', 'finishes', 'commissions', 'trading', 'admin'] as const
+export const pages = ['workshop', 'library', 'decks', 'print', 'games', 'progress', 'finishes', 'commissions', 'trading', 'admin', 'card'] as const
 export type Page = typeof pages[number]
 export type Route = { page: Page; kind?: string; id?: string }
 

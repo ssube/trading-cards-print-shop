@@ -351,6 +351,14 @@ async def copy_detail(copy_id: str, user=Depends(auth)):
         return game.copy_detail(db, copy_id, user["id"])
 
 
+@app.get("/api/public/cards/{copy_id}")
+async def public_card(copy_id: str):
+    with transaction() as db:
+        card = game.copy_detail(db, copy_id, None)
+    card["owner_id"] = None
+    return card
+
+
 class PrintPayload(BaseModel):
     hint: str = Field(default="", max_length=254)
     type_id: str

@@ -1,5 +1,24 @@
 import { expect, test, type Page } from '@playwright/test'
 
+test('a public card link opens in another browser without the offline collection', async ({ page, browser }) => {
+  await startDemo(page)
+  await navigate(page, 'Card Library')
+  await page.getByRole('button', { name: /Inspect Apprentice Press Cat/ }).first().click()
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.getByRole('button', { name: 'Copy public link' }).click()
+  await expect(page.getByRole('status')).toContainText('Public card link copied')
+  const link = await page.evaluate(() => navigator.clipboard.readText())
+  expect(link).toContain('#/card/snapshot/')
+  const guest = await browser.newContext()
+  const publicPage = await guest.newPage()
+  await publicPage.goto(link)
+  await expect(publicPage.getByRole('heading', { name: 'Apprentice Press Cat', level: 1 })).toBeVisible()
+  await expect(publicPage.locator('.public-card-art .trading-card')).toBeVisible()
+  await expect(publicPage.getByText('This is a view-only card.')).toBeVisible()
+  await expect(publicPage.locator('.inspect-actions')).toHaveCount(0)
+  await guest.close()
+})
+
 async function startDemo(page: Page) {
   await page.goto('/?demo=1')
   await expect(page.getByRole('button', { name: 'Choose a deck to begin' })).toBeVisible()
@@ -139,12 +158,21 @@ test('deck reward, custom deck, print preset, and progress work', async ({ page 
   await expect(page.getByRole('region', { name: 'Card backs' })).toBeVisible()
 })
 
-test('the press accepts a hint and saves the printed card', async ({ page }) => {
+test('the press accepts a hint and saves the printed card', async ({ page, browser }) => {
   await startDemo(page)
   await page.getByRole('textbox', { name: /Title or theme hint/ }).fill('A fox in a moonlit bookshop')
   await page.getByRole('button', { name: /Pull the lever & print/ }).click()
   await expect(page.getByRole('button', { name: 'Close inspection' })).toBeVisible({ timeout: 20_000 })
   await expect(page.locator('.inspect-info h2')).toHaveText('A fox in a moonlit bookshop')
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.getByRole('button', { name: 'Copy public link' }).click()
+  await expect(page.getByRole('status')).toContainText('Public card link copied')
+  const guest = await browser.newContext()
+  const publicPage = await guest.newPage()
+  await publicPage.goto(await page.evaluate(() => navigator.clipboard.readText()))
+  await expect(publicPage.getByRole('heading', { name: 'A fox in a moonlit bookshop', level: 1 })).toBeVisible()
+  await expect.poll(() => publicPage.locator('.public-card-art img.art-base').evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0)
+  await guest.close()
   await page.getByRole('button', { name: 'Close inspection' }).click()
   await navigate(page, 'Card Library')
   await expect(page.locator('.boxed-card')).toHaveCount(5)

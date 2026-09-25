@@ -45,6 +45,14 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
             assert job["status"] == "complete", job
             printed = (await client.get(f"/api/copies/{job['copy_id']}")).json()
             assert (printed["border_id"], printed["back_id"]) == ("starlit", "atlas")
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as guest:
+                assert (await guest.get(f"/api/copies/{job['copy_id']}")).status_code == 401
+                shared = (await guest.get(f"/api/public/cards/{job['copy_id']}")).json()
+                assert shared["id"] == printed["id"]
+                assert shared["name"] == printed["name"]
+                assert shared["owner_id"] is None
+                assert shared["exact_grade_visible"] is False
+                assert (await guest.get("/api/public/cards/unknown-copy")).status_code == 404
             library = (await client.get("/api/state")).json()["library"]
             assert len(library) == 4
             assert {card["design_id"] for card in library} >= {"npc-starlit-map", "starter-paper-sprite"}
