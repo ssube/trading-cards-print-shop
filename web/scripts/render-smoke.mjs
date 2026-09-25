@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 const output = resolve('node_modules/.cache/cards-render')
 mkdirSync(output, { recursive: true })
 await build({
-  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/FinishGallery.tsx', 'src/CollectionProgress.tsx'],
+  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/FinishGallery.tsx', 'src/CollectionProgress.tsx', 'src/StarterWelcome.tsx'],
   outdir: output,
   bundle: true,
   platform: 'node',
@@ -21,6 +21,7 @@ const { default: App } = require(resolve(output, 'App.js'))
 const { Card } = require(resolve(output, 'Card.js'))
 const { FinishGallery } = require(resolve(output, 'FinishGallery.js'))
 const { CollectionProgress } = require(resolve(output, 'CollectionProgress.js'))
+const { StarterWelcome } = require(resolve(output, 'StarterWelcome.js'))
 const sample = {
   id: 'test-copy-12345678', design_id: 'starter-press-cat', owner_id: 1, creator: null,
   origin_id: null, type_id: 'monster', rule_ids: ['arrival', 'draw'],
@@ -46,9 +47,20 @@ const progressMarkup = renderToStaticMarkup(createElement(CollectionProgress, { 
   foils: { collected: 1, total: 3, percent: 33 },
   cards: { collected: 1, total: 4, percent: 25 },
 } }))
+const welcomeMarkup = renderToStaticMarkup(createElement(StarterWelcome, {
+  mode: 'register', setMode: () => {}, decks: [{ id: 'pressroom', name: 'The Pressroom Parade', theme: 'Storybook workshop',
+    description: 'A practice deck', accent: 'amber', featured: 'starter-press-cat',
+    cards: [{ id: 'starter-press-cat', name: 'Apprentice Press Cat', flavor: 'One more paw print.', type_id: 'monster',
+      rule_ids: ['arrival', 'draw'], theme_id: 'storybook', finish_id: 'standard', art_path: '/assets/starter-press-cat.png', copies: 2 },
+    { id: 'starter-paper-sprite', name: 'Paper Sprite', flavor: 'A little ink.', type_id: 'spell',
+      rule_ids: ['arrival', 'draw'], theme_id: 'storybook', finish_id: 'standard', art_path: '/assets/starter-paper-sprite.png', copies: 1 }] }],
+  selectedDeck: 'pressroom', setSelectedDeck: () => {}, username: '', setUsername: () => {}, password: '', setPassword: () => {},
+  message: '', busy: false, onSubmit: () => {},
+}))
 if (!appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window') ||
     !galleryMarkup.includes('Blank print stock') || !galleryMarkup.includes('Apprentice Press Cat') || !galleryMarkup.includes('Holo') ||
-    !progressMarkup.includes('Unique cards') || !progressMarkup.includes('33%') || !progressMarkup.includes('1 / 4 in your box')) {
+    !progressMarkup.includes('Unique cards') || !progressMarkup.includes('33%') || !progressMarkup.includes('1 / 4 in your box') ||
+    !welcomeMarkup.includes('The Pressroom Parade') || !welcomeMarkup.includes('Three cards to begin with') || !welcomeMarkup.includes('COPY 3 OF 3')) {
   throw new Error('Render smoke test failed')
 }
-console.log('App shell, card, finish gallery, and collection progress render successfully')
+console.log('App shell, card, finish gallery, collection progress, and starter selection render successfully')

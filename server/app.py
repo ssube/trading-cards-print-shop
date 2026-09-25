@@ -55,7 +55,7 @@ def session_user(request: Request, mutate=False, admin=False):
         raise HTTPException(401, "Sign in required")
     digest = hashlib.sha256(token.encode()).hexdigest()
     with connect() as db:
-        row = db.execute("SELECT u.id,u.username,u.is_admin,s.csrf FROM sessions s JOIN users u ON u.id=s.user_id "
+        row = db.execute("SELECT u.id,u.username,u.is_admin,u.starter_deck_id,s.csrf FROM sessions s JOIN users u ON u.id=s.user_id "
                          "WHERE s.token_hash=? AND s.expires_at>?", (digest, game.stamp())).fetchone()
     if not row:
         raise HTTPException(401, "Session expired")
@@ -84,22 +84,32 @@ class Credentials(BaseModel):
     password: str
 
 
+class Registration(Credentials):
+    starter_deck_id: str
+
+
 def start_session(response: Response, user_id):
     token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(24)
     expiry = (game.now() + timedelta(days=14)).isoformat()
     with transaction() as db:
         db.execute("INSERT INTO sessions VALUES(?,?,?,?)", (hashlib.sha256(token.encode()).hexdigest(), user_id, csrf, expiry))
-        user = db.execute("SELECT id,username,is_admin FROM users WHERE id=?", (user_id,)).fetchone()
+        user = db.execute("SELECT id,username,is_admin,starter_deck_id FROM users WHERE id=?", (user_id,)).fetchone()
     response.set_cookie("cards_session", token, httponly=True, secure=os.getenv("COOKIE_SECURE", "false").lower() == "true",
                         samesite="lax", max_age=14*86400)
     return {**dict(user), "csrf": csrf}
 
 
+@app.get("/api/starter-decks")
+async def starter_decks():
+    with connect() as db:
+        return game.starter_decks(db)
+
+
 @app.post("/api/auth/register")
-async def register(payload: Credentials, request: Request, response: Response):
+async def register(payload: Registration, request: Request, response: Response):
     rate_limit("register:" + request.client.host, 5, 3600)
     with transaction() as db:
-        user_id = game.create_user(db, payload.username, payload.password)
+        user_id = game.create_user(db, payload.username, payload.password, starter_deck_id=payload.starter_deck_id)
     return start_session(response, user_id)
 
 

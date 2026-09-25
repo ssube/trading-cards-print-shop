@@ -162,8 +162,8 @@ def test_collection_progress_counts_designs_once(world):
     alice, bob = world
     with db.connect() as conn:
         initial = game.collection_progress(conn, alice)
-        assert initial["cards"]["collected"] == 1
-        assert initial["cards"]["total"] == 4
+        assert initial["cards"]["collected"] == 2
+        assert initial["cards"]["total"] == 5
         assert initial["foils"]["collected"] == 1
         assert initial["rules"]["collected"] == 2
 
@@ -171,7 +171,27 @@ def test_collection_progress_counts_designs_once(world):
     with db.transaction() as conn:
         game.reprint(conn, alice, printed)
         after = game.collection_progress(conn, alice)
-        assert after["cards"] == {"collected": 2, "total": 5, "percent": 40}
-        assert game.collection_progress(conn, bob)["cards"]["collected"] == 1
+        assert after["cards"] == {"collected": 3, "total": 6, "percent": 50}
+        assert game.collection_progress(conn, bob)["cards"]["collected"] == 2
         conn.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (alice, "shimmer"))
         assert game.collection_progress(conn, alice)["foils"]["collected"] == 2
+
+
+def test_starter_decks_are_pre_generated_and_unlock_their_parts(world, monkeypatch):
+    def never_generate(*_args, **_kwargs):
+        raise AssertionError("Starter registration must not generate content")
+
+    monkeypatch.setattr(providers, "generate_text", never_generate)
+    monkeypatch.setattr(providers, "generate_art", never_generate)
+    with db.transaction() as conn:
+        starlit = game.create_user(conn, "stargazer", "long-password-123", starter_deck_id="starlit")
+        velvet = game.create_user(conn, "foxkeeper", "long-password-123", starter_deck_id="velvet")
+        for user_id, featured in ((starlit, "npc-starlit-map"), (velvet, "npc-foil-fox")):
+            cards = game.library(conn, user_id)
+            assert len(cards) == 3
+            assert sum(card["design_id"] == featured for card in cards) == 2
+            assert any(card["design_id"] == "starter-paper-sprite" for card in cards)
+            assert all(card["art_path"].endswith(".png") for card in cards)
+        learned = {row[0] for row in conn.execute("SELECT part_id FROM learned WHERE user_id=?", (velvet,))}
+        assert {"spell", "monster", "absurd", "shimmer", "sleeved", "echo"} <= learned
+        assert conn.execute("SELECT starter_deck_id FROM users WHERE id=?", (starlit,)).fetchone()[0] == "starlit"

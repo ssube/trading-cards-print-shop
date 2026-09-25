@@ -31,3 +31,5 @@ The server owns inventory, learning, grading, condition, and trades. A design is
 The Finish Gallery previews every known finish on blank stock or any standard copy in your library. You can inspect and rotate the specimen, compare finishes, and send a learned finish to the press without changing or spending a card.
 
 Collection completion shows each player's learned rules, learned foils, and distinct card designs currently in their box. Its card count uses designs rather than physical copies, and the world total includes every existing design.
+
+New players choose a named, themed starter deck during registration. Each deck contains three pre-generated copies: two of its featured card and one shared Paper Sprite practice card. The selection unlocks the parts on those cards and is saved on the player account. The signup screen shows the deck art and a scrollable fan of all three cards; signup never calls a generation provider.

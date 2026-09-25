@@ -59,7 +59,23 @@ PARTS = [
     ("shimmer", "finish", "Shimmer", "A narrow, shifting foil gleam.", 0),
     ("holo", "finish", "Full Holo", "An extravagant prismatic surface.", 0),
 ]
-STARTER = {"land", "monster", "arrival", "draw", "storybook", "standard"}
+STARTER_DECKS = {
+    "pressroom": {
+        "name": "The Pressroom Parade", "theme": "Storybook workshop", "accent": "amber",
+        "description": "A cheerful crew of paper and ink learns the craft one impression at a time.",
+        "featured": "starter-press-cat", "cards": {"starter-press-cat": 2, "starter-paper-sprite": 1},
+    },
+    "starlit": {
+        "name": "The Starlit Atlas", "theme": "Celestial cartography", "accent": "blue",
+        "description": "Follow unfinished constellations and print places that should not fit on a map.",
+        "featured": "npc-starlit-map", "cards": {"npc-starlit-map": 2, "starter-paper-sprite": 1},
+    },
+    "velvet": {
+        "name": "The Velvet Mischief", "theme": "Absurdist foil", "accent": "rose",
+        "description": "A sly fox proves that a little mischief looks even better under foil.",
+        "featured": "npc-foil-fox", "cards": {"npc-foil-fox": 2, "starter-paper-sprite": 1},
+    },
+}
 RESOURCE_KINDS = {"paper", "ink", "sleeve", "foil"}
 FINISH_COST = {"standard": 0, "shimmer": 1, "holo": 3}
 RULE_SLOTS = {"arrival": "trigger", "dusk": "trigger", "sleeved": "trigger", "if_land": "condition",
@@ -78,6 +94,8 @@ def seed():
         npc_designs = [
             ("starter-press-cat", "Apprentice Press Cat", "He insists every proof needs one more paw print.",
              "monster", ["arrival", "draw"], "storybook", "standard"),
+            ("starter-paper-sprite", "Paper Sprite's First Drop", "Every great edition begins with a borrowed drop.",
+             "spell", ["arrival", "draw"], "storybook", "standard"),
             ("npc-starlit-map", "The Map of Unfinished Constellations", "A place for every star, except the one you're looking for.",
              "land", ["dusk", "grow"], "celestial", "standard"),
             ("npc-foil-fox", "The Foil Fox", "The trick was never the shine. It was where you looked.",
@@ -134,20 +152,40 @@ def verify_password(password, encoded):
         return False
 
 
-def create_user(db, username, password, admin=False):
+def starter_decks(db):
+    decks = []
+    for deck_id, deck in STARTER_DECKS.items():
+        cards = []
+        for design_id, copies in deck["cards"].items():
+            row = db.execute("SELECT id,name,flavor,type_id,rule_ids,theme_id,finish_id,art_path FROM designs WHERE id=?",
+                             (design_id,)).fetchone()
+            need(row is not None, "Starter deck content is unavailable", 500)
+            cards.append({**dict(row), "rule_ids": json.loads(row["rule_ids"]), "copies": copies})
+        decks.append({"id": deck_id, "name": deck["name"], "theme": deck["theme"],
+                      "description": deck["description"], "accent": deck["accent"],
+                      "featured": deck["featured"], "cards": cards})
+    return decks
+
+
+def create_user(db, username, password, admin=False, starter_deck_id="pressroom"):
     username = username.strip()
     need(3 <= len(username) <= 24 and username.replace("_", "").isalnum(), "Invalid username")
+    need(starter_deck_id in STARTER_DECKS, "Unknown starter deck")
     try:
-        cur = db.execute("INSERT INTO users(username,password_hash,is_admin,created_at) VALUES(?,?,?,?)",
-                         (username, hash_password(password), int(admin), stamp()))
+        cur = db.execute("INSERT INTO users(username,password_hash,is_admin,created_at,starter_deck_id) VALUES(?,?,?,?,?)",
+                         (username, hash_password(password), int(admin), stamp(), starter_deck_id))
     except sqlite3.IntegrityError:
         raise GameError("Username is already taken", 409)
     user_id = cur.lastrowid
     for kind, amount in {"paper": 8, "ink": 8, "sleeve": 1, "foil": 0}.items():
         db.execute("INSERT INTO resources VALUES(?,?,?)", (user_id, kind, amount))
-    for part in STARTER:
-        db.execute("INSERT INTO learned VALUES(?,?)", (user_id, part))
-    mint_copy(db, "starter-press-cat", user_id, quality_override=88)
+    for design_id, copies in STARTER_DECKS[starter_deck_id]["cards"].items():
+        design = db.execute("SELECT type_id,rule_ids,theme_id,finish_id FROM designs WHERE id=?", (design_id,)).fetchone()
+        need(design is not None, "Starter deck content is unavailable", 500)
+        for part in {design["type_id"], design["theme_id"], design["finish_id"], *json.loads(design["rule_ids"])}:
+            db.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (user_id, part))
+        for _ in range(copies):
+            mint_copy(db, design_id, user_id, quality_override=88)
     return user_id
 
 
@@ -512,7 +550,8 @@ def admin_action(db, actor_id, action, payload, reason):
     need(reason and reason.strip(), "An audit reason is required")
     target = str(payload.get("user_id") or payload.get("username") or payload.get("copy_id") or payload.get("design_id") or action)
     if action == "create-player":
-        result = {"user_id": create_user(db, payload["username"], payload["password"], bool(payload.get("is_admin")))}
+        result = {"user_id": create_user(db, payload["username"], payload["password"], bool(payload.get("is_admin")),
+                                          payload.get("starter_deck_id", "pressroom"))}
     elif action == "grant-resource":
         adjust_resources(db, int(payload["user_id"]), {payload["kind"]: int(payload["amount"])})
         result = {"balance": resource_balance(db, int(payload["user_id"]))}

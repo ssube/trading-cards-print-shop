@@ -14,4 +14,6 @@ export type ProgressCount = { collected: number; total: number; percent: number 
 export type CollectionProgress = { rules: ProgressCount; foils: ProgressCount; cards: ProgressCount }
 export type State = { resources: Record<string, number>; library: CardCopy[]; catalog: Part[]; commissions: Commission[]; npcs: NpcOffer[]; collection_progress: CollectionProgress; generation_count: number; generation_limit: number; allowance_claimed: boolean }
 export type Listing = { id: string; seller_id: number; seller: string; copy_id: string; wish: string; card: CardCopy; offers: { id: string; status: string; cards: CardCopy[] }[] }
-export type User = { id: number; username: string; is_admin: number; csrf: string }
+export type StarterCard = { id: string; name: string; flavor: string; type_id: string; rule_ids: string[]; theme_id: string; finish_id: string; art_path: string; copies: number }
+export type StarterDeck = { id: string; name: string; theme: string; description: string; accent: string; featured: string; cards: StarterCard[] }
+export type User = { id: number; username: string; is_admin: number; csrf: string; starter_deck_id: string | null }

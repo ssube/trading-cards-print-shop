@@ -17,10 +17,17 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
     async def scenario():
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
             assert (await client.get("/api/state")).status_code == 401
-            registration = await client.post("/api/auth/register", json={"username": "player", "password": "long-password-123"})
+            decks = (await client.get("/api/starter-decks")).json()
+            assert {deck["id"] for deck in decks} == {"pressroom", "starlit", "velvet"}
+            assert all(sum(card["copies"] for card in deck["cards"]) == 3 for deck in decks)
+            assert (await client.post("/api/auth/register", json={"username": "invalid", "password": "long-password-123",
+                                                                   "starter_deck_id": "unknown"})).status_code == 400
+            registration = await client.post("/api/auth/register", json={"username": "player", "password": "long-password-123",
+                                                                     "starter_deck_id": "starlit"})
             assert registration.status_code == 200
+            assert registration.json()["starter_deck_id"] == "starlit"
             csrf = registration.json()["csrf"]
-            recipe = {"type_id": "monster", "rule_ids": ["arrival", "draw"], "theme_id": "storybook", "finish_id": "standard"}
+            recipe = {"type_id": "land", "rule_ids": ["dusk", "grow"], "theme_id": "celestial", "finish_id": "standard"}
             assert (await client.post("/api/prints", json=recipe, headers={"Idempotency-Key": "http-print-123"})).status_code == 403
             assert (await client.post("/api/admin/actions", json={"action": "grant-resource", "payload": {"user_id": 1, "kind": "paper", "amount": 5}, "reason": "test"},
                                       headers={"X-CSRF-Token": csrf})).status_code == 403
@@ -34,9 +41,10 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
                 await asyncio.sleep(.02)
             assert job["status"] == "complete", job
             library = (await client.get("/api/state")).json()["library"]
-            assert len(library) == 2
+            assert len(library) == 4
+            assert {card["design_id"] for card in library} >= {"npc-starlit-map", "starter-paper-sprite"}
             assert all(card["art_path"].startswith("/assets/") for card in library)
             progress = (await client.get("/api/state")).json()["collection_progress"]
-            assert progress["cards"] == {"collected": 2, "total": 5, "percent": 40}
+            assert progress["cards"] == {"collected": 3, "total": 6, "percent": 50}
 
     asyncio.run(scenario())
