@@ -25,9 +25,13 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
     aimFoilFromTilt(perspective.current, next.x, next.y)
   }
   const artStyle = {
-    '--cx': `${(showQuality ? card.centering_x : 0) * 2.3}px`, '--cy': `${(showQuality ? card.centering_y : 0) * 2.3}px`,
-    '--sc': `${(showQuality ? card.shift_c : 0) * 2}px`, '--sm': `${(showQuality ? card.shift_m : 0) * 2}px`,
-    '--sy': `${(showQuality ? card.shift_y : 0) * 2}px`, '--sk': `${(showQuality ? card.shift_k : 0) * 2}px`,
+    '--cx': `${(showQuality ? card.centering_x : 0) * 2}%`, '--cy': `${(showQuality ? card.centering_y : 0) * 2}%`,
+    '--sc': `${(showQuality ? card.shift_c : 0) * 2.4}%`, '--sm': `${(showQuality ? card.shift_m : 0) * 2.4}%`,
+    '--sy': `${(showQuality ? card.shift_y : 0) * 2.4}%`, '--sk': `${(showQuality ? card.shift_k : 0) * 2.4}%`,
+    '--oc': String(showQuality ? Math.min(.24, Math.abs(card.shift_c) * .4) : 0),
+    '--om': String(showQuality ? Math.min(.24, Math.abs(card.shift_m) * .4) : 0),
+    '--oy': String(showQuality ? Math.min(.24, Math.abs(card.shift_y) * .4) : 0),
+    '--ok': String(showQuality ? Math.min(.14, Math.abs(card.shift_k) * .23) : 0),
     '--surface': String(showQuality ? card.surface : 0), '--edge': String(showQuality ? card.edge : 0),
   } as React.CSSProperties
   return <div className={`card-frame ${large ? 'card-large' : ''} ${card.slab_grade !== null ? 'slabbed' : ''} ${physical ? 'physical-card' : ''}`}>
@@ -39,7 +43,7 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
       <div className={`card-flipper ${flipped ? 'is-flipped' : ''}`}>
       <article className={`trading-card finish-${card.finish_id} border-${card.border_id || 'classic'} effect-${showQuality ? card.color_effect : 'none'} ${showFoil ? '' : 'print-no-foil'} ${blank ? 'blank-finish-card' : ''}`} style={artStyle} aria-hidden={flipped}>
           {blank ? <div className="blank-card-stock"><span className="blank-card-corner">TC<span>:</span>PS</span><span className="blank-card-emblem">✧</span><span className="blank-card-rule" /><span className="blank-card-caption">AWAITING IMPRESSION</span></div> : <>
-          <div className="card-heading"><span className="card-type">{card.type_id}</span><span className="card-finish">{card.finish_id === 'standard' ? 'FIRST PRINT' : card.finish_id.toUpperCase()}</span></div>
+          <div className="card-ink"><div className="card-heading"><span className="card-type">{card.type_id}</span><span className="card-finish">{card.finish_id === 'standard' ? 'FIRST PRINT' : card.finish_id.toUpperCase()}</span></div>
           <h3>{card.name}</h3>
           <div className="art-window">
             <div className="art-registration">
@@ -52,7 +56,7 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
           </div>
           <div className="card-rules"><div className="rule-title">{card.rule_names.join(' · ')}</div><p>{card.rule_text.join(' · ')}</p></div>
           <p className="card-flavor">“{card.flavor}”</p>
-          <div className="card-foot"><span>№ {card.id.slice(0, 8).toUpperCase()}</span><span>{card.creator ? `by ${card.creator}` : 'Archive edition'}</span></div>
+          <div className="card-foot"><span>№ {card.id.slice(0, 8).toUpperCase()}</span><span>{card.creator ? `by ${card.creator}` : 'Archive edition'}</span></div></div>
           </>}
           <div className="foil-shine" />{showQuality && <div className="wear-overlay" style={{ opacity: wearOpacity(card.condition), backgroundImage: wearTexture(card.id, card.condition) }} />}
       </article>

@@ -106,3 +106,52 @@ test('print sheet download charges paper and card condition once', async ({ page
   const unchanged = await page.evaluate(() => JSON.parse(localStorage.getItem('cards-the-printing.offline-demo.v1')!))
   expect(unchanged.resources.paper).toBe(after.resources.paper)
 })
+
+test('recorded centering and ink registration match inspection and print quality toggle', async ({ page }) => {
+  await startDemo(page)
+  await page.evaluate(() => {
+    const key = 'cards-the-printing.offline-demo.v1'
+    const save = JSON.parse(localStorage.getItem(key)!)
+    Object.assign(save.library[0], {
+      centering_x: -0.24, centering_y: 0.6,
+      shift_c: 0.35, shift_m: 0.28, shift_y: 0.06, shift_k: -0.37,
+      color_effect: 'none',
+    })
+    localStorage.setItem(key, JSON.stringify(save))
+  })
+  await page.reload()
+  await navigate(page, 'Card Library')
+  await page.getByRole('button', { name: /Inspect Apprentice Press Cat/ }).first().click()
+  await expect(page.locator('.defect-note')).toContainText('centering -0.24x / +0.6y')
+  const ink = await page.locator('.inspect-modal .trading-card').evaluate(card => {
+    const offset = (selector: string) => new DOMMatrix(getComputedStyle(card.querySelector(selector)!).transform)
+    return {
+      faceX: offset('.card-ink').m41, faceY: offset('.card-ink').m42,
+      cyanX: offset('.channel-c').m41, blackX: offset('.channel-k').m41,
+      cyanOpacity: Number(getComputedStyle(card.querySelector('.channel-c')!).opacity),
+      baseFilter: getComputedStyle(card.querySelector('.art-base')!).filter,
+    }
+  })
+  expect(ink.faceX).toBeLessThan(0)
+  expect(ink.faceY).toBeGreaterThan(0)
+  expect(ink.cyanX).toBeGreaterThan(0)
+  expect(ink.blackX).toBeLessThan(0)
+  expect(ink.cyanOpacity).toBeGreaterThan(0)
+  expect(ink.baseFilter).toBe('none')
+  await page.getByRole('button', { name: 'Close inspection' }).click()
+  await navigate(page, 'Print Sheets')
+  await page.locator('.physical-card-choice').first().getByRole('button', { name: /Add Apprentice Press Cat/ }).click()
+  const before = await page.locator('.physical-sheet .trading-card').evaluate(card => new DOMMatrix(getComputedStyle(card.querySelector('.card-ink')!).transform).m42)
+  expect(before).toBeGreaterThan(0)
+  await page.getByRole('checkbox', { name: 'Show print defects and paper wear' }).uncheck()
+  const clean = await page.locator('.physical-sheet .trading-card').evaluate(card => ({
+    faceX: new DOMMatrix(getComputedStyle(card.querySelector('.card-ink')!).transform).m41,
+    faceY: new DOMMatrix(getComputedStyle(card.querySelector('.card-ink')!).transform).m42,
+    cyan: getComputedStyle(card.querySelector('.channel-c')!).opacity,
+    black: getComputedStyle(card.querySelector('.channel-k')!).opacity,
+  }))
+  expect(clean.faceX).toBe(0)
+  expect(clean.faceY).toBe(0)
+  expect(clean.cyan).toBe('0')
+  expect(clean.black).toBe('0')
+})

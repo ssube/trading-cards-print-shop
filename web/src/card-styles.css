@@ -40,3 +40,12 @@
 }
 .card-back.back-mischief .back-mark{border-radius:28%;font-size:4rem;transform:rotate(12deg);background:#49263b99}
 .card-back.back-archive .back-mark{font-size:1.5rem;letter-spacing:-.06em}
+
+/* The inked face moves inside the fixed paper border; values are normalized offsets. */
+.trading-card .card-ink{display:flex;flex-direction:column;height:100%;min-height:0;transform:translate(var(--cx),var(--cy))}
+.trading-card .art-registration{transform:none}
+/* Registration is horizontal, matching the single signed offset recorded per ink. */
+.trading-card .channel-c{transform:translateX(var(--sc));opacity:var(--oc)}
+.trading-card .channel-m{transform:translateX(var(--sm));opacity:var(--om)}
+.trading-card .channel-y{transform:translateX(var(--sy));opacity:var(--oy)}
+.trading-card .channel-k{transform:translateX(var(--sk));opacity:var(--ok)}
