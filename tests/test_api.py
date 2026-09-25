@@ -52,5 +52,18 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
             assert all(card["art_path"].startswith("/assets/") for card in library)
             progress = (await client.get("/api/state")).json()["collection_progress"]
             assert progress["cards"] == {"collected": 4, "total": 17, "percent": 24}
+            deck_list = (await client.get("/api/decks")).json()
+            assert len(deck_list) == 6
+            assert next(deck for deck in deck_list if deck["id"] == "starlit")["filled"] == 3
+            assert (await client.post("/api/decks", json={"title": "Star Friends", "theme": "celestial"})).status_code == 403
+            custom = await client.post("/api/decks", json={"title": "Star Friends", "theme": "celestial"}, headers={"X-CSRF-Token": csrf})
+            assert custom.status_code == 200
+            custom_id = custom.json()["id"]
+            assert (await client.put(f"/api/decks/{custom_id}", json={"title": "New Stars", "theme": "storybook"}, headers={"X-CSRF-Token": csrf})).status_code == 200
+            assert (await client.delete(f"/api/decks/{custom_id}", headers={"X-CSRF-Token": csrf})).status_code == 200
+            claimed = await client.post("/api/decks/starlit/claim", headers={"X-CSRF-Token": csrf})
+            assert claimed.status_code == 200
+            assert (await client.get(f"/api/copies/{claimed.json()['copy_id']}")).json()["design_id"] == "reward-starlit-map-holo"
+            assert (await client.post("/api/decks/starlit/claim", headers={"X-CSRF-Token": csrf})).status_code == 409
 
     asyncio.run(scenario())

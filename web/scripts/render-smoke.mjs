@@ -25,7 +25,7 @@ const { FinishGallery } = require(resolve(output, 'FinishGallery.js'))
 const { CollectionProgress } = require(resolve(output, 'CollectionProgress.js'))
 const { ProgressPage } = require(resolve(output, 'ProgressPage.js'))
 const { StarterWelcome } = require(resolve(output, 'StarterWelcome.js'))
-const { PhysicalPrint, layoutSheet } = require(resolve(output, 'PhysicalPrint.js'))
+const { PhysicalPrint, layoutSheet, presetQuantities } = require(resolve(output, 'PhysicalPrint.js'))
 const { GamesHub } = require(resolve(output, 'GamesHub.js'))
 const sample = {
   id: 'test-copy-12345678', design_id: 'starter-press-cat', owner_id: 1, creator: null,
@@ -39,7 +39,8 @@ const sample = {
 }
 const appMarkup = renderToStaticMarkup(createElement(App))
 const gamesMarkup = renderToStaticMarkup(createElement(GamesHub))
-const printMarkup = renderToStaticMarkup(createElement(PhysicalPrint, { cards: [sample], paper: 8, onCharged: async () => {} }))
+const printMarkup = renderToStaticMarkup(createElement(PhysicalPrint, { cards: [sample], paper: 8, onCharged: async () => {}, preset: { title: 'Cat Parade', copyIds: [sample.id] } }))
+assert.deepEqual(presetQuantities([sample], { title: 'Cat Parade', copyIds: [sample.id, sample.id, 'missing'] }), { [sample.id]: 2 })
 for (const count of [1, 5, 7, 8, 9]) {
   const placements = layoutSheet(Array.from({ length: count }, (_, index) => ({ ...sample, id: `copy-${index}` })))
   assert.equal(placements.length, count)
@@ -103,7 +104,7 @@ const welcomeMarkup = renderToStaticMarkup(createElement(StarterWelcome, {
   selectedDeck: 'pressroom', setSelectedDeck: () => {}, username: '', setUsername: () => {}, password: '', setPassword: () => {},
   message: '', busy: false, onSubmit: () => {},
 }))
-if (!gamesMarkup.includes('Every gacha game needs a fishing minigame') || !gamesMarkup.includes('Wait, you can play with these cards?') || !gamesMarkup.includes('It does run Doom') || (gamesMarkup.match(/COMING SOON/g) || []).length !== 4 || !printMarkup.includes('Show simulated foil finish') || !printMarkup.includes('Show print defects and paper wear') || !appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window') || !cardMarkup.includes('TC') || !cardMarkup.includes('PRINT SHOP') ||
+if (!gamesMarkup.includes('Feline Papermill') || !gamesMarkup.includes('Every gacha game needs a fishing minigame') || !gamesMarkup.includes('Wait, you can play with these cards?') || !gamesMarkup.includes('It does run Doom') || (gamesMarkup.match(/COMING SOON/g) || []).length !== 4 || !printMarkup.includes('Loaded from') || !printMarkup.includes('1 card placements') || !printMarkup.includes('Show simulated foil finish') || !printMarkup.includes('Show print defects and paper wear') || !appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window') || !cardMarkup.includes('TC') || !cardMarkup.includes('PRINT SHOP') ||
     filterLibraryCards(mixedCards, 'spell').map(card => card.id).join() !== 'spell-copy' ||
     filterLibraryCards(mixedCards, 'land').length !== 0 || filterLibraryCards(mixedCards, 'all').length !== 2 ||
     !completedLibraryMarkup.includes('Your collection, <em>completed.</em>') || !libraryMarkup.includes('Filter cards by type') || !libraryMarkup.includes('LAND <b>0</b>') || !libraryMarkup.includes('SPELL <b>1</b>') ||

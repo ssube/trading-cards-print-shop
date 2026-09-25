@@ -33,3 +33,5 @@
 .physical-sheet-back .card-flipper>.card-back{transform:none;backface-visibility:visible;-webkit-backface-visibility:visible}
 .physical-empty{height:260px;min-width:280px;display:grid;place-items:center;text-align:center;color:#acb8ae;border:1px dashed #a68c5a88;padding:20px}
 @media(max-width:950px){.physical-print-grid{grid-template-columns:1fr}.physical-preview{overflow:hidden}}
+
+.physical-deck-preset{padding:10px 12px;border:1px solid #c6ab7280;border-radius:5px;background:#af8a4530;color:#e8d5ac;font-size:.75rem;line-height:1.5}.physical-deck-preset strong{color:#fff0c7}

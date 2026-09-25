@@ -11,6 +11,15 @@ const MARGIN = 15
 const RATIO = 0.696
 
 type Placement = { card: CardCopy; x: number; y: number; width: number; height: number }
+export type PrintPreset = { title: string; copyIds: string[] }
+
+export function presetQuantities(cards: CardCopy[], preset?: PrintPreset | null) {
+  const available = new Set(cards.map(card => card.id))
+  const result: Record<string, number> = {}
+  for (const id of preset?.copyIds || []) if (available.has(id)) result[id] = (result[id] || 0) + 1
+  return result
+}
+
 
 export function layoutSheet(cards: CardCopy[]): Placement[] {
   if (!cards.length || cards.length > 9) throw new Error('A sheet holds one to nine cards')
@@ -58,8 +67,8 @@ function download(blob: Blob, name: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
-export function PhysicalPrint({ cards, paper, onCharged }: { cards: CardCopy[]; paper: number; onCharged: () => Promise<void> }) {
-  const [quantities, setQuantities] = useState<Record<string, number>>({})
+export function PhysicalPrint({ cards, paper, onCharged, preset }: { cards: CardCopy[]; paper: number; onCharged: () => Promise<void>; preset?: PrintPreset | null }) {
+  const [quantities, setQuantities] = useState<Record<string, number>>(() => presetQuantities(cards, preset))
   const [foil, setFoil] = useState(true)
   const [quality, setQuality] = useState(true)
   const [backs, setBacks] = useState(false)
@@ -127,7 +136,7 @@ export function PhysicalPrint({ cards, paper, onCharged }: { cards: CardCopy[]; 
     finally { setBusy(false) }
   }
   return <section className="page physical-print-page"><div className="page-intro"><p className="eyebrow">FROM SCREEN TO PAPER</p><h1>Print your <em>cards.</em></h1><p>Lay out your own copies on 4×6 photo, sticker, or card stock. Print at actual size; your printer may scale down.</p></div>
-    <div className="physical-print-grid"><div className="builder-panel"><h2>Choose copies</h2><p>Each placement uses one condition unless its copy is protected. Each sheet uses one paper.</p>
+    <div className="physical-print-grid"><div className="builder-panel"><h2>Choose copies</h2>{preset && <p className="physical-deck-preset">Loaded from <strong>{preset.title}</strong>. Adjust quantities before exporting.</p>}<p>Each placement uses one condition unless its copy is protected. Each sheet uses one paper.</p>
       <div className="physical-card-list">{cards.map(card => <div className="physical-card-choice" key={card.id}><div><strong>{card.name}</strong><small>#{card.id.slice(0, 8)} · {card.condition}% condition{card.sleeved || card.slab_grade !== null ? ' · protected' : ''}</small></div><div className="physical-quantity"><button type="button" aria-label={`Remove ${card.name}`} disabled={!quantities[card.id]} onClick={() => changeQuantity(card, -1)}>−</button><span>{quantities[card.id] || 0}</span><button type="button" aria-label={`Add ${card.name}`} disabled={chosen.length >= MAX_CARDS || (!card.sleeved && card.slab_grade === null && (quantities[card.id] || 0) >= card.condition)} onClick={() => changeQuantity(card, 1)}>+</button></div></div>)}</div>
       <h2>Appearance</h2><label className="physical-option"><input type="checkbox" checked={foil} onChange={event => changeOption(() => setFoil(event.target.checked))} /> Show simulated foil finish</label><label className="physical-option"><input type="checkbox" checked={quality} onChange={event => changeOption(() => setQuality(event.target.checked))} /> Show print defects and paper wear</label><label className="physical-option"><input type="checkbox" checked={backs} onChange={event => changeOption(() => setBacks(event.target.checked))} /> Include aligned card backs</label>
       <label className="physical-format">File format<select value={format} onChange={event => changeOption(() => setFormat(event.target.value as 'pdf' | 'png'))}><option value="pdf">PDF · 4×6 inch pages</option><option value="png">PNG · 1200×1800 pixels</option></select></label>
