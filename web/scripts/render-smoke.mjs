@@ -60,10 +60,12 @@ const libraryMarkup = renderToStaticMarkup(createElement(CardLibrary, {
   cardProgress: { collected: 2, total: 4, percent: 50 },
   catalog: [{ id: 'land', kind: 'type', name: 'Land' }, { id: 'monster', kind: 'type', name: 'Monster' }, { id: 'spell', kind: 'type', name: 'Spell' }],
   onOpenCard: () => {}, onVisitPress: () => {},
+  selectedType: 'all', onSelectType: () => {},
 }))
 const completedLibraryMarkup = renderToStaticMarkup(createElement(CardLibrary, {
   cards: mixedCards, catalog: [], cardProgress: { collected: 4, total: 4, percent: 100 },
   onOpenCard: () => {}, onVisitPress: () => {},
+  selectedType: 'all', onSelectType: () => {},
 }))
 const galleryMarkup = renderToStaticMarkup(createElement(FinishGallery, {
   catalog: [
@@ -89,13 +91,13 @@ const pageMarkup = renderToStaticMarkup(createElement(ProgressPage, {
       { id: 'arrival', kind: 'rule', name: 'On arrival', description: 'When this enters play', learned: 1, slot: 'trigger', cost_json: '{}', power: 1 },
     ],
     collection_progress: { cards: { collected: 1, total: 4, percent: 25 } },
-    generation_count: 1, generation_limit: 5,
+    resources: { paper: 4, ink: 3, foil: 1, sleeve: 0 }, generation_count: 1, generation_limit: 5,
     commissions: [], npcs: [], allowance_claimed: false,
   },
   onOpenCard: () => {}, onNavigate: () => {},
 }))
 const completedPageMarkup = renderToStaticMarkup(createElement(ProgressPage, {
-  state: { library: mixedCards, catalog: [], collection_progress: { cards: { collected: 4, total: 4, percent: 100 } }, generation_count: 0, generation_limit: 5, commissions: [], npcs: [], allowance_claimed: false },
+  state: { library: mixedCards, catalog: [], collection_progress: { cards: { collected: 4, total: 4, percent: 100 } }, resources: { paper: 4, ink: 3, foil: 1, sleeve: 0 }, generation_count: 0, generation_limit: 5, commissions: [], npcs: [], allowance_claimed: false },
   onOpenCard: () => {}, onNavigate: () => {},
 }))
 const welcomeMarkup = renderToStaticMarkup(createElement(StarterWelcome, {

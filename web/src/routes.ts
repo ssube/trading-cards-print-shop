@@ -3,6 +3,7 @@ export type Page = typeof pages[number]
 export type Route = { page: Page; kind?: string; id?: string }
 
 export function readRoute(): Route {
+  if (typeof window === 'undefined') return { page: 'workshop' }
   const [page, kind, id] = window.location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent)
   return { page: pages.includes(page as Page) ? page as Page : 'workshop', kind, id }
 }

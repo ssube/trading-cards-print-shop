@@ -59,7 +59,7 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
             assert any(card["border_id"] == "starlit" and card["back_id"] == "atlas" for card in library)
             assert all(card["art_path"].startswith("/assets/") for card in library)
             progress = (await client.get("/api/state")).json()["collection_progress"]
-            assert progress["cards"] == {"collected": 4, "total": 40, "percent": 10}
+            assert progress["cards"] == {"collected": 4, "total": 41, "percent": 10}
             deck_list = (await client.get("/api/decks")).json()
             assert len(deck_list) == 10
             assert next(deck for deck in deck_list if deck["id"] == "starlit")["filled"] == 3

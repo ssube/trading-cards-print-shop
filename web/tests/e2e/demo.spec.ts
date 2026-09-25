@@ -285,6 +285,7 @@ test('finish gallery and games hub open', async ({ page }) => {
   await expect(page.locator('.finish-option').first()).toBeVisible()
   await expect(page.locator('.finish-option').filter({ hasText: 'Etched Silver' })).toContainText('3 FOIL')
   await expect(page.locator('.finish-option').filter({ hasText: 'Aurora' })).toContainText('3 FOIL')
+  await expect(page.locator('.finish-option').filter({ hasText: 'Crashout' })).toContainText('3 FOIL')
   await navigate(page, 'Games')
   await expect(page.locator('.game-stub')).toHaveCount(4)
   await expect(page.getByRole('heading', { name: 'Feline Papermill' })).toBeVisible()

@@ -211,7 +211,7 @@ def test_collection_progress_counts_designs_once(world):
     with db.connect() as conn:
         initial = game.collection_progress(conn, alice)
         assert initial["cards"]["collected"] == 3
-        assert initial["cards"]["total"] == 39
+        assert initial["cards"]["total"] == 40
         assert initial["foils"]["collected"] == 2
         assert initial["borders"] == {"collected": 1, "total": 3, "percent": 33}
         assert initial["backs"] == {"collected": 1, "total": 3, "percent": 33}
@@ -221,7 +221,7 @@ def test_collection_progress_counts_designs_once(world):
     with db.transaction() as conn:
         game.reprint(conn, alice, printed)
         after = game.collection_progress(conn, alice)
-        assert after["cards"] == {"collected": 4, "total": 40, "percent": 10}
+        assert after["cards"] == {"collected": 4, "total": 41, "percent": 10}
         assert game.collection_progress(conn, bob)["cards"]["collected"] == 3
         conn.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (alice, "holo"))
         assert game.collection_progress(conn, alice)["foils"]["collected"] == 3
@@ -229,7 +229,7 @@ def test_collection_progress_counts_designs_once(world):
 
 def test_new_foil_finishes_can_be_collected_and_studied(world):
     alice, _ = world
-    finishes = {"shimmer", "holo", "etched", "starfield", "glitter", "confetti", "aurora", "spooky", "pumpkin"}
+    finishes = {"shimmer", "holo", "etched", "starfield", "glitter", "confetti", "aurora", "spooky", "pumpkin", "crashout"}
     with db.transaction() as conn:
         catalog = {part["id"]: part for part in game.catalogue(conn, alice) if part["kind"] == "finish"}
         assert set(catalog) == finishes | {"standard"}
@@ -249,11 +249,16 @@ def test_regular_prints_use_less_ink_than_foil_editions(world):
         assert game.print_cost(conn, ["arrival", "draw"], "pumpkin") == {"paper": 1, "ink": 3, "foil": 2}
         assert game.print_cost(conn, ["arrival", "draw"], "etched")["foil"] == 3
         assert game.print_cost(conn, ["arrival", "draw"], "aurora")["foil"] == 3
+        assert game.print_cost(conn, ["arrival", "draw"], "crashout")["foil"] == 3
         assert game.print_cost(conn, ["arrival", "if_land", "draw"], "pumpkin")["ink"] == 4
         game.adjust_resources(conn, alice, {"paper": 2, "ink": 2})
         reward = game.npc_trade(conn, alice, "pumpkin-lesson")
         assert game.copy_detail(conn, reward["copy_id"], alice)["finish_id"] == "pumpkin"
         assert "pumpkin" in game.study(conn, alice, reward["copy_id"])
+        game.adjust_resources(conn, alice, {"foil": 3, "ink": 2})
+        reward = game.npc_trade(conn, alice, "crashout-lesson")
+        assert game.copy_detail(conn, reward["copy_id"], alice)["finish_id"] == "crashout"
+        assert "crashout" in game.study(conn, alice, reward["copy_id"])
 
 
 def test_starter_decks_are_pre_generated_and_unlock_their_parts(world, monkeypatch):
