@@ -9,6 +9,7 @@ import './starter-welcome.css'
 import './foil.css'
 import './card-flip.css'
 import './card-styles.css'
+import './card-protection.css'
 import './progress-page.css'
 import './card-library.css'
 

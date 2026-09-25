@@ -21,8 +21,9 @@
 .physical-placement{position:absolute;overflow:hidden}.physical-placement .card-frame{width:100%;height:100%;aspect-ratio:auto}
 .physical-placement .card-perspective{transform:none!important;pointer-events:none}
 .physical-placement .card-flipper{transition:none}
-.physical-placement .card-frame.slabbed{padding:0;border:0;border-radius:0;background:none;box-shadow:none}
-.physical-placement .slab-label,.physical-placement .sleeve-badge{display:none}
+.physical-placement .card-frame.slabbed,.physical-placement .card-frame.sleeved{padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+.physical-placement .card-frame.slabbed:after,.physical-placement .card-frame.sleeved:after{display:none}
+.physical-placement .slab-label,.physical-placement .slab-base-marker,.physical-placement .sleeve-badge{display:none}
 .physical-placement .trading-card,.physical-placement .card-back{box-shadow:none!important}
 .physical-placement .finish-shimmer .foil-shine{opacity:.17!important;mix-blend-mode:soft-light}
 .physical-placement .finish-holo .foil-shine{opacity:.24!important;mix-blend-mode:soft-light}
