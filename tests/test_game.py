@@ -103,7 +103,7 @@ def test_npc_copy_unlocks_parts_and_commission_consumes(world, monkeypatch):
         npc_reward = game.npc_trade(conn, alice, "fox-copy", card_id)
         fox_copy = npc_reward["copy_id"]
         learned = game.study(conn, alice, fox_copy)
-        assert "shimmer" in learned and "absurd" in learned
+        assert {"absurd", "sleeved", "echo"} <= set(learned)
         claim = game.commission_claim(conn, alice, "first-edition", fox_copy)
         assert claim["paper"] == 3
         assert game.copy_detail(conn, fox_copy)["owner_id"] is None
@@ -162,19 +162,19 @@ def test_collection_progress_counts_designs_once(world):
     alice, bob = world
     with db.connect() as conn:
         initial = game.collection_progress(conn, alice)
-        assert initial["cards"]["collected"] == 2
-        assert initial["cards"]["total"] == 5
-        assert initial["foils"]["collected"] == 1
+        assert initial["cards"]["collected"] == 3
+        assert initial["cards"]["total"] == 8
+        assert initial["foils"]["collected"] == 2
         assert initial["rules"]["collected"] == 2
 
     printed = new_card(alice, "progress-print-123")
     with db.transaction() as conn:
         game.reprint(conn, alice, printed)
         after = game.collection_progress(conn, alice)
-        assert after["cards"] == {"collected": 3, "total": 6, "percent": 50}
-        assert game.collection_progress(conn, bob)["cards"]["collected"] == 2
-        conn.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (alice, "shimmer"))
-        assert game.collection_progress(conn, alice)["foils"]["collected"] == 2
+        assert after["cards"] == {"collected": 4, "total": 9, "percent": 44}
+        assert game.collection_progress(conn, bob)["cards"]["collected"] == 3
+        conn.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (alice, "holo"))
+        assert game.collection_progress(conn, alice)["foils"]["collected"] == 3
 
 
 def test_starter_decks_are_pre_generated_and_unlock_their_parts(world, monkeypatch):
@@ -186,12 +186,17 @@ def test_starter_decks_are_pre_generated_and_unlock_their_parts(world, monkeypat
     with db.transaction() as conn:
         starlit = game.create_user(conn, "stargazer", "long-password-123", starter_deck_id="starlit")
         velvet = game.create_user(conn, "foxkeeper", "long-password-123", starter_deck_id="velvet")
-        for user_id, featured in ((starlit, "npc-starlit-map"), (velvet, "npc-foil-fox")):
+        for user_id, featured_ids in ((world[0], {"starter-press-cat", "starter-press-cat-foil"}),
+                                      (starlit, {"npc-starlit-map", "npc-starlit-map-foil"}),
+                                      (velvet, {"npc-foil-fox", "npc-foil-fox-standard"})):
             cards = game.library(conn, user_id)
             assert len(cards) == 3
-            assert sum(card["design_id"] == featured for card in cards) == 2
+            assert {card["design_id"] for card in cards} == featured_ids | {"starter-paper-sprite"}
+            assert sum(card["finish_id"] != "standard" for card in cards) == 1
             assert any(card["design_id"] == "starter-paper-sprite" for card in cards)
             assert all(card["art_path"].endswith(".png") for card in cards)
+        for deck in game.starter_decks(conn):
+            assert sum(card["copies"] for card in deck["cards"] if card["finish_id"] != "standard") == 1
         learned = {row[0] for row in conn.execute("SELECT part_id FROM learned WHERE user_id=?", (velvet,))}
         assert {"spell", "monster", "absurd", "shimmer", "sleeved", "echo"} <= learned
         assert conn.execute("SELECT starter_deck_id FROM users WHERE id=?", (starlit,)).fetchone()[0] == "starlit"

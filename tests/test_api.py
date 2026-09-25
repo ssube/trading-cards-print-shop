@@ -20,6 +20,7 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
             decks = (await client.get("/api/starter-decks")).json()
             assert {deck["id"] for deck in decks} == {"pressroom", "starlit", "velvet"}
             assert all(sum(card["copies"] for card in deck["cards"]) == 3 for deck in decks)
+            assert all(sum(card["copies"] for card in deck["cards"] if card["finish_id"] != "standard") == 1 for deck in decks)
             assert (await client.post("/api/auth/register", json={"username": "invalid", "password": "long-password-123",
                                                                    "starter_deck_id": "unknown"})).status_code == 400
             registration = await client.post("/api/auth/register", json={"username": "player", "password": "long-password-123",
@@ -45,6 +46,6 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
             assert {card["design_id"] for card in library} >= {"npc-starlit-map", "starter-paper-sprite"}
             assert all(card["art_path"].startswith("/assets/") for card in library)
             progress = (await client.get("/api/state")).json()["collection_progress"]
-            assert progress["cards"] == {"collected": 3, "total": 6, "percent": 50}
+            assert progress["cards"] == {"collected": 4, "total": 9, "percent": 44}
 
     asyncio.run(scenario())

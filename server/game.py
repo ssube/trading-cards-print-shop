@@ -63,17 +63,17 @@ STARTER_DECKS = {
     "pressroom": {
         "name": "The Pressroom Parade", "theme": "Storybook workshop", "accent": "amber",
         "description": "A cheerful crew of paper and ink learns the craft one impression at a time.",
-        "featured": "starter-press-cat", "cards": {"starter-press-cat": 2, "starter-paper-sprite": 1},
+        "featured": "starter-press-cat", "cards": {"starter-press-cat": 1, "starter-press-cat-foil": 1, "starter-paper-sprite": 1},
     },
     "starlit": {
         "name": "The Starlit Atlas", "theme": "Celestial cartography", "accent": "blue",
         "description": "Follow unfinished constellations and print places that should not fit on a map.",
-        "featured": "npc-starlit-map", "cards": {"npc-starlit-map": 2, "starter-paper-sprite": 1},
+        "featured": "npc-starlit-map", "cards": {"npc-starlit-map": 1, "npc-starlit-map-foil": 1, "starter-paper-sprite": 1},
     },
     "velvet": {
         "name": "The Velvet Mischief", "theme": "Absurdist foil", "accent": "rose",
         "description": "A sly fox proves that a little mischief looks even better under foil.",
-        "featured": "npc-foil-fox", "cards": {"npc-foil-fox": 2, "starter-paper-sprite": 1},
+        "featured": "npc-foil-fox", "cards": {"npc-foil-fox": 1, "npc-foil-fox-standard": 1, "starter-paper-sprite": 1},
     },
 }
 RESOURCE_KINDS = {"paper", "ink", "sleeve", "foil"}
@@ -103,6 +103,10 @@ def seed():
             ("npc-sunlit-note", "A Note from the Sun", "Please return the moon by Thursday.",
              "spell", ["arrival", "draw"], "celestial", "holo"),
         ]
+        # Finish variants share their featured card's artwork and text.
+        variants = {"starter-press-cat": ("starter-press-cat-foil", "shimmer"),
+                    "npc-starlit-map": ("npc-starlit-map-foil", "shimmer"),
+                    "npc-foil-fox": ("npc-foil-fox-standard", "standard")}
         for did, name, flavor, type_id, rules, theme, finish in npc_designs:
             bundled = bundled_art(did)
             if not db.execute("SELECT 1 FROM designs WHERE id=?", (did,)).fetchone():
@@ -111,6 +115,14 @@ def seed():
                            (did, None, type_id, json.dumps(rules), theme, finish, name, flavor, art, stamp()))
             elif bundled:
                 db.execute("UPDATE designs SET art_path=? WHERE id=?", (bundled, did))
+            if did in variants:
+                variant_id, variant_finish = variants[did]
+                if not db.execute("SELECT 1 FROM designs WHERE id=?", (variant_id,)).fetchone():
+                    db.execute("INSERT INTO designs VALUES(?,?,?,?,?,?,?,?,?,?)",
+                               (variant_id, None, type_id, json.dumps(rules), theme, variant_finish,
+                                name, flavor, bundled or demo_art(did, theme, name), stamp()))
+                elif bundled:
+                    db.execute("UPDATE designs SET art_path=? WHERE id=?", (bundled, variant_id))
         briefs = [
             ("first-edition", "First Edition", "Turn in any freshly printed card.", {"min_grade": 1}, {"paper": 3, "ink": 3}, 1, 1),
             ("land-survey", "The Cartographer", "A Land for the library's wandering map.", {"type": "land", "min_grade": 5}, {"paper": 4, "ink": 3}, 0, 1),
