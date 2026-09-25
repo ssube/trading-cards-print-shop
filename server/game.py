@@ -363,8 +363,11 @@ def validate_recipe(db, user_id, payload):
 
 
 def generation_count(db, user_id):
+    today = day()
+    reset = db.execute("SELECT reset_at FROM generation_resets WHERE user_id=? AND day=?", (user_id, today)).fetchone()
+    since = reset[0] if reset else today
     return db.execute("SELECT COUNT(*) FROM jobs WHERE user_id=? AND kind='design' AND substr(created_at,1,10)=? "
-                      "AND status!='failed'", (user_id, day())).fetchone()[0]
+                      "AND status!='failed' AND created_at>?", (user_id, today, since)).fetchone()[0]
 
 
 def create_print_job(db, user_id, payload, request_key):

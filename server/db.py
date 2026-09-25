@@ -33,7 +33,7 @@ def transaction():
 def init():
     with transaction() as db:
         version = db.execute("PRAGMA user_version").fetchone()[0]
-        if version >= 10:
+        if version >= 11:
             return
         if version == 0:
             db.executescript("""
@@ -119,3 +119,7 @@ def init():
             from . import tabletop
             tabletop.init_tables(db)
             db.execute("PRAGMA user_version=10")
+
+        if version <= 10:
+            db.execute("CREATE TABLE generation_resets(user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, day TEXT NOT NULL, reset_at TEXT NOT NULL, PRIMARY KEY(user_id,day))")
+            db.execute("PRAGMA user_version=11")

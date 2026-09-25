@@ -48,6 +48,23 @@ def test_print_is_idempotent_and_failed_generation_refunds(world, monkeypatch):
         assert game.resource_balance(conn, alice) == before
 
 
+def test_daily_edition_reset_preserves_jobs_and_only_affects_one_player(world):
+    alice, bob = world
+    new_card(alice, "before-reset-alice")
+    new_card(bob, "before-reset-bob")
+    with db.transaction() as conn:
+        assert game.generation_count(conn, alice) == 1
+        assert game.generation_count(conn, bob) == 1
+        conn.execute("INSERT INTO generation_resets(user_id,day,reset_at) VALUES(?,?,?)",
+                     (alice, game.day(), game.stamp()))
+        assert game.generation_count(conn, alice) == 0
+        assert game.generation_count(conn, bob) == 1
+    new_card(alice, "after-reset-alice")
+    with db.connect() as conn:
+        assert game.generation_count(conn, alice) == 1
+        assert conn.execute("SELECT COUNT(*) FROM jobs WHERE user_id=? AND kind='design'", (alice,)).fetchone()[0] == 2
+
+
 def test_trade_study_reprint_and_admin_audit(world):
     alice, bob = world
     alice_card = new_card(alice, "alice-print-123")
