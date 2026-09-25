@@ -1,0 +1,4 @@
+.sidebar nav button:disabled{opacity:.55;cursor:not-allowed;color:#a4aaa1}
+.sidebar nav button:disabled:hover{background:none;border-color:transparent;box-shadow:none}
+.nav-unavailable{margin-left:auto;color:#c9ad76;font-size:.49rem;letter-spacing:.08em;white-space:nowrap}
+@media(max-width:750px){.nav-unavailable{font-size:.42rem;margin-left:2px}}
