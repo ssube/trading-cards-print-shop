@@ -27,3 +27,5 @@ The CLI supports `--help` on every command. Admin mutations share the same servi
 ## Design notes
 
 The server owns inventory, learning, grading, condition, and trades. A design is immutable once printed; copies have their own print defects and wear. All daily boundaries use UTC. Seed cards include bundled painted art; demo generated designs use local SVG art, while configured image providers store raster art. The UI waits for the complete design and loaded artwork before showing the CMYK and foil printing sequence. Foil is a post effect and does not influence image or text generation. The card battle and resource minigames are extension points for later releases.
+
+The Finish Gallery previews every known finish on blank stock or any standard copy in your library. You can inspect and rotate the specimen, compare finishes, and send a learned finish to the press without changing or spending a card.

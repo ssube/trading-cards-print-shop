@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 const output = resolve('node_modules/.cache/cards-render')
 mkdirSync(output, { recursive: true })
 await build({
-  entryPoints: ['src/App.tsx', 'src/Card.tsx'],
+  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/FinishGallery.tsx'],
   outdir: output,
   bundle: true,
   platform: 'node',
@@ -19,6 +19,7 @@ await build({
 const require = createRequire(import.meta.url)
 const { default: App } = require(resolve(output, 'App.js'))
 const { Card } = require(resolve(output, 'Card.js'))
+const { FinishGallery } = require(resolve(output, 'FinishGallery.js'))
 const sample = {
   id: 'test-copy-12345678', design_id: 'starter-press-cat', owner_id: 1, creator: null,
   origin_id: null, type_id: 'monster', rule_ids: ['arrival', 'draw'],
@@ -31,7 +32,16 @@ const sample = {
 }
 const appMarkup = renderToStaticMarkup(createElement(App))
 const cardMarkup = renderToStaticMarkup(createElement(Card, { card: sample }))
-if (!appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window')) {
+const galleryMarkup = renderToStaticMarkup(createElement(FinishGallery, {
+  catalog: [
+    { id: 'standard', kind: 'finish', name: 'Standard', description: 'Soft matte print.', learned: 1, cost_json: '{}', slot: '', power: 0 },
+    { id: 'holo', kind: 'finish', name: 'Holo', description: 'Full spectrum foil.', learned: 0, cost_json: '{"foil":3}', slot: '', power: 0 },
+  ],
+  library: [{ ...sample, finish_id: 'standard' }],
+  onUseFinish: () => {},
+}))
+if (!appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window') ||
+    !galleryMarkup.includes('Blank print stock') || !galleryMarkup.includes('Apprentice Press Cat') || !galleryMarkup.includes('Holo')) {
   throw new Error('Render smoke test failed')
 }
-console.log('App shell and card render successfully')
+console.log('App shell, card, and finish gallery render successfully')

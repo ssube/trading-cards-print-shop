@@ -1,7 +1,7 @@
 import { useState, type PointerEvent } from 'react'
 import type { CardCopy } from './types'
 
-export function Card({ card, interactive = false, onClick, large = false }: { card: CardCopy; interactive?: boolean; onClick?: () => void; large?: boolean }) {
+export function Card({ card, interactive = false, onClick, large = false, blank = false }: { card: CardCopy; interactive?: boolean; onClick?: () => void; large?: boolean; blank?: boolean }) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [flipped, setFlipped] = useState(false)
@@ -22,8 +22,9 @@ export function Card({ card, interactive = false, onClick, large = false }: { ca
       onPointerMove={move} onPointerLeave={() => setTilt({ x: 0, y: 0 })} onClick={onClick}
       role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={e => { if (onClick && (e.key === 'Enter' || e.key === ' ')) onClick() }}
       aria-label={onClick ? `Inspect ${card.name}` : undefined}>
-      <article className={`trading-card finish-${card.finish_id} effect-${card.color_effect} ${flipped ? 'is-flipped' : ''}`} style={artStyle}>
+      <article className={`trading-card finish-${card.finish_id} effect-${card.color_effect} ${flipped ? 'is-flipped' : ''} ${blank ? 'blank-finish-card' : ''}`} style={artStyle}>
         {flipped ? <div className="card-back"><div className="back-mark">C<span>:</span>P</div><p>CARDS<br />THE PRINTING</p><small>AN EDITION OF ONE, AGAIN AND AGAIN</small></div> : <>
+          {blank ? <div className="blank-card-stock"><span className="blank-card-corner">C<span>:</span>P</span><span className="blank-card-emblem">✧</span><span className="blank-card-rule" /><span className="blank-card-caption">AWAITING IMPRESSION</span></div> : <>
           <div className="card-heading"><span className="card-type">{card.type_id}</span><span className="card-finish">{card.finish_id === 'standard' ? 'FIRST PRINT' : card.finish_id.toUpperCase()}</span></div>
           <h3>{card.name}</h3>
           <div className="art-window">
@@ -38,6 +39,7 @@ export function Card({ card, interactive = false, onClick, large = false }: { ca
           <div className="card-rules"><div className="rule-title">{card.rule_ids.join(' · ')}</div><p>{card.rule_text.join(' · ')}</p></div>
           <p className="card-flavor">“{card.flavor}”</p>
           <div className="card-foot"><span>№ {card.id.slice(0, 8).toUpperCase()}</span><span>{card.creator ? `by ${card.creator}` : 'Archive edition'}</span></div>
+          </>}
           <div className="foil-shine" /><div className="wear-overlay" style={{ opacity: Math.max(0, (100 - card.condition) / 190) }} />
         </>}
       </article>
