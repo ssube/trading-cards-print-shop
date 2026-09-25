@@ -2,3 +2,14 @@
 .box-tabs button{flex:0 0 auto;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;font-weight:inherit;padding:0 5px 13px;white-space:nowrap}
 .box-tabs button:hover{color:#e6d3a6}
 .box-tabs button:focus-visible{outline:2px solid #e4c688;outline-offset:-2px}
+
+.card-box .box-inner{display:block;padding:16px 8px 28px}
+.box-type-group+.box-type-group{margin-top:20px}
+.box-type-divider{display:flex;align-items:center;gap:12px;margin:8px 0 22px;color:#d6b77e}
+.box-type-divider:before,.box-type-divider:after{content:'';height:1px;flex:1;background:linear-gradient(90deg,transparent,#bb9c6688)}
+.box-type-divider:after{transform:rotate(180deg)}
+.box-type-divider>span{font-size:.7rem}
+.box-type-divider h2{margin:0;color:#e8d7ae;font-size:1.12rem;white-space:nowrap}
+.box-type-divider small{font-family:'DM Sans',sans-serif;color:#aebbb0;font-size:.57rem;margin-left:5px}
+.box-type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:21px}
+@media(max-width:750px){.box-type-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}.box-type-divider{gap:7px}.box-type-divider h2{font-size:.95rem}}
