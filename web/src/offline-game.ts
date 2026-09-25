@@ -1,4 +1,6 @@
 import { discoveryIds, offlineCatalog, offlineDesigns, offlineStarterDecks } from './offline-data'
+import { curatedDecks, offlineDeckList, validateCustomDeck } from './offline-decks'
+import type { SavedCustomDeck } from './offline-decks'
 import type { CardCopy, CollectionProgress, Part, State, User } from './types'
 
 const STORAGE_KEY = 'cards-the-printing.offline-demo.v1'
@@ -20,6 +22,7 @@ type Save = {
   library: OfflineCard[]; generation_day: string; generation_count: number; allowance_day: string | null
   jobs: Record<string, string>
   exports?: Record<string, { signature: string; cards: number; sheets: number }>
+  custom_decks?: SavedCustomDeck[]; deck_claims?: string[]
 }
 
 function today() { return new Date().toISOString().slice(0, 10) }
@@ -227,6 +230,48 @@ export async function offlineApi<T>(path: string, method = 'GET', body?: unknown
     return state(save) as T
   }
   if (path === '/market' && method === 'GET') return [] as T
+  if (path === '/decks' && method === 'GET') return offlineDeckList(save.library, save.custom_decks || [], save.deck_claims || []) as T
+  if (path === '/decks' && method === 'POST') return mutate(current => {
+    const payload = body as { title?: unknown; theme?: unknown }
+    const valid = validateCustomDeck(payload?.title, payload?.theme)
+    current.custom_decks ||= []
+    if (current.custom_decks.length >= 20) fail('You can keep at most 20 custom decks')
+    const deck = { id: id(), ...valid, created_at: new Date().toISOString() }
+    current.custom_decks.push(deck)
+    return { id: deck.id }
+  }) as T
+  const deckMatch = path.match(/^\/decks\/([^/]+)(?:\/(claim))?$/)
+  if (deckMatch && method === 'PUT' && !deckMatch[2]) return mutate(current => {
+    const deck = current.custom_decks?.find(item => item.id === deckMatch[1]) || fail('Deck not found')
+    const payload = body as { title?: unknown; theme?: unknown }
+    Object.assign(deck, validateCustomDeck(payload?.title, payload?.theme))
+    return { ok: true }
+  }) as T
+  if (deckMatch && method === 'DELETE' && !deckMatch[2]) return mutate(current => {
+    const index = current.custom_decks?.findIndex(item => item.id === deckMatch[1]) ?? -1
+    if (index < 0) fail('Deck not found')
+    current.custom_decks!.splice(index, 1)
+    return { ok: true }
+  }) as T
+  if (deckMatch && method === 'POST' && deckMatch[2] === 'claim') return mutate(current => {
+    const definition = curatedDecks.find(item => item.id === deckMatch[1]) || fail('Curated deck not found')
+    if (current.deck_claims?.includes(definition.id)) fail('Deck reward already claimed')
+    const deck = offlineDeckList(current.library, current.custom_decks || [], current.deck_claims || []).find(item => item.id === definition.id)!
+    if (deck.filled !== 3) fail('Complete this deck before claiming its reward')
+    const reward = definition.reward
+    let copyId: string | null = null
+    if (reward.design_id) {
+      const design = offlineDesigns().find(item => item.id === reward.design_id)!
+      const minted = copyOf({ ...design, design_id: design.id }, reward.slab_grade ? 80 : 88)
+      minted.slab_grade = reward.slab_grade || null
+      current.library.unshift(minted)
+      copyId = minted.id
+    }
+    balance(current, reward.resources)
+    current.deck_claims ||= []
+    current.deck_claims.push(definition.id)
+    return { copy_id: copyId, resources: reward.resources }
+  }) as T
   if (path.startsWith('/copies/') && method === 'GET') return card(save, path.split('/')[2]) as T
   if (path.startsWith('/jobs/') && method === 'GET') {
     const jobId = path.split('/')[2]

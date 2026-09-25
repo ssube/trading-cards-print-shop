@@ -17,3 +17,7 @@ export type Listing = { id: string; seller_id: number; seller: string; copy_id: 
 export type StarterCard = { id: string; name: string; flavor: string; type_id: string; rule_ids: string[]; theme_id: string; finish_id: string; border_id: string; back_id: string; art_path: string; copies: number }
 export type StarterDeck = { id: string; name: string; theme: string; description: string; accent: string; featured: string; cards: StarterCard[] }
 export type User = { id: number; username: string; is_admin: number; csrf: string; starter_deck_id: string | null }
+
+export type DeckAnalysis = { type_counts: Record<string, number>; finish_counts: Record<string, number>; rule_counts: Record<string, number>; total_power: number; average_grade: number; protected: number }
+export type DeckReward = { resources: Record<string, number>; card: { design_id: string; name: string; finish_id: string; slab_grade: number | null } | null }
+export type Deck = { id: string; kind: 'curated' | 'custom'; title: string; theme: string; description: string; accent: string; slots: { key: string; design_id: string | null; type_id: string | null; label: string; card: CardCopy | null }[]; filled: number; total: number; claimed: boolean; reward: DeckReward | null; analysis: DeckAnalysis }

@@ -69,6 +69,11 @@ export function offlineDesigns(): Design[] {
     design('npc-borrowed-dawn', 'The Orchard of Borrowed Dawn', 'The fruit ripens only when someone needs another morning.', 'land', ['dawn', 'if_land', 'mend'], 'botanical'),
     design('npc-clockwork-heron', 'The Clockwork Heron', "It remembers tomorrow's stars better than yesterday's roads.", 'monster', ['on_draw', 'if_monster', 'glimpse'], 'clockwork', 'shimmer', 'starlit', 'atlas'),
     design('npc-tideglass-portal', 'The Tideglass Portal', 'Every shore has a door that the tide remembers.', 'spell', ['arrival', 'if_spell', 'return'], 'maritime', 'standard', 'starlit', 'atlas'),
+    { ...cat, id: 'reward-press-cat-holo', finish_id: 'holo' },
+    { ...map, id: 'reward-starlit-map-holo', finish_id: 'holo' },
+    { ...fox, id: 'reward-foil-fox-holo', finish_id: 'holo' },
+    { ...design('npc-borrowed-dawn', 'The Orchard of Borrowed Dawn', 'The fruit ripens only when someone needs another morning.', 'land', ['dawn', 'if_land', 'mend'], 'botanical'), id: 'reward-borrowed-dawn-holo', finish_id: 'holo' },
+    { ...design('npc-clockwork-heron', 'The Clockwork Heron', "It remembers tomorrow's stars better than yesterday's roads.", 'monster', ['on_draw', 'if_monster', 'glimpse'], 'clockwork', 'shimmer', 'starlit', 'atlas'), id: 'reward-clockwork-heron-holo', finish_id: 'holo' },
   ]
 }
 
@@ -82,4 +87,4 @@ export function offlineStarterDecks(): StarterDeck[] {
   ]
 }
 
-export const discoveryIds = ['npc-starlit-map', 'npc-foil-fox', 'npc-sunlit-note', 'npc-borrowed-dawn', 'npc-clockwork-heron', 'npc-tideglass-portal']
+export const discoveryIds = ['npc-starlit-map', 'npc-foil-fox', 'npc-sunlit-note', 'npc-borrowed-dawn', 'npc-clockwork-heron', 'npc-tideglass-portal', 'starter-press-cat-foil', 'npc-starlit-map-foil', 'npc-foil-fox-standard']
