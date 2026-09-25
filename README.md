@@ -18,7 +18,7 @@ Run `uv run uvicorn server.app:app --reload` and `npm --prefix web run dev` in s
 
 For a local container deployment, run `nerdctl compose up --build` after creating `.env`. The same Compose file works with Docker Compose. GitHub Actions is configured to build the Docker image on pushes and pull requests.
 
-Run tests with `uv run python -m pytest -q`. If `uv sync` cannot reach a package index, the lock file is still valid but the local virtual environment cannot be populated until packages are available.
+Run tests with `uv run python -m pytest -q`. The browser playtest suite covers the offline demo, including onboarding, library filters, deck and progress flows, card printing, and print-sheet export. Install a Chromium browser with `npx --prefix web playwright install chromium`, then run `npm --prefix web run test:e2e`. If Chrome is installed at a custom path, set `PLAYWRIGHT_CHROME_PATH`. The minigames currently receive hub smoke coverage only. If `uv sync` cannot reach a package index, the lock file is still valid but the local virtual environment cannot be populated until packages are available.
 
 ## Offline demo
 

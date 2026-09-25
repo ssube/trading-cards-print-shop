@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "build:demo": "VITE_OFFLINE_DEMO=1 npm run build",
     "test:render": "node scripts/render-smoke.mjs",
-    "test:offline": "node scripts/offline-smoke.mjs"
+    "test:offline": "node scripts/offline-smoke.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "html-to-image": "^1.11.13",
@@ -18,6 +19,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "typescript": "^5.8.0",

@@ -28,6 +28,10 @@ jobs:
         working-directory: web
       - run: npm run build:demo
         working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - run: npm run test:e2e
+        working-directory: web
   docker:
     runs-on: ubuntu-latest
     steps:
