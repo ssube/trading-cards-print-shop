@@ -20,3 +20,4 @@ import './games-hub.css'
 import './decks-page.css'
 
 import './papermill-game.css'
+import './tabletop-game.css'

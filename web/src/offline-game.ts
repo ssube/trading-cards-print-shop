@@ -26,6 +26,7 @@ type Save = {
   papermill?: { pulp: number; cats: number; roller: boolean; ink_vat: boolean; seconds_credit: number; last_at: string; day: string; paper_today: number; ink_today: number; last_tap_at: string | null }
   fishing_casts?: { id: string; day: string; created_at: string; target_ms: number; tolerance_ms: number; prize_kind: 'card' | 'resource'; prize_value: string; resolved_at: string | null; success: boolean | null; reward: { resources?: Record<string, number>; card?: { design_id: string; copy_id: string } } }[]
   shooter_runs?: { id: string; day: string; boss_id: string; started_at: string; kill_mask: number; boss_claimed: boolean; last_kill_at: string | null }[]
+  tabletop_practice?: { step: number; copy_id: string | null }
 }
 
 function today() { return new Date().toISOString().slice(0, 10) }
@@ -214,6 +215,34 @@ export function resetOfflineDemo() {
   catch { fail('The offline collection could not be cleared from browser storage.') }
 }
 
+const practiceRewards = [
+  { action: 'place', design_id: 'tabletop-opening-hand' },
+  { action: 'flip', design_id: 'tabletop-counter-keeper' },
+  { action: 'counter', design_id: 'tabletop-playmaker' },
+]
+function practiceStatus(save: Save) {
+  const practice = save.tabletop_practice || { step: 0, copy_id: null }
+  return { step: practice.step, completed: practiceRewards.slice(0, practice.step).map(item => item.action),
+    next_action: practiceRewards[practice.step]?.action || null, copy_id: practice.copy_id }
+}
+function practiceAction(save: Save, payload: unknown) {
+  const current = practiceStatus(save)
+  if (current.step >= 3) fail('Practice is complete')
+  const request = payload as { action?: string; copy_id?: string }
+  const expected = practiceRewards[current.step]
+  if (request?.action !== expected.action) fail(`Try ${expected.action} next`)
+  if (current.step === 0) {
+    if (!request.copy_id || !save.library.some(card => card.id === request.copy_id && !card.listed)) fail('Choose a card from your box')
+    save.tabletop_practice = { step: 0, copy_id: request.copy_id }
+  }
+  if (!save.tabletop_practice?.copy_id) fail('Place a card first')
+  save.tabletop_practice.step += 1
+  const design = offlineDesigns().find(item => item.id === expected.design_id) || fail('Practice card not found')
+  const copy = copyOf({ ...design, design_id: design.id }, 86, `tabletop-practice:${expected.action}`)
+  save.library.unshift(copy)
+  return { practice: practiceStatus(save), reward_copy_id: copy.id, reward_design_id: design.id }
+}
+
 const shooterBosses = [
   { design_id: 'demon-cinderlord', name: 'Cinderlord of the Press' },
   { design_id: 'demon-ashwarden', name: "Ashwarden's Gate" },
@@ -372,6 +401,8 @@ export async function offlineApi<T>(path: string, method = 'GET', body?: unknown
     return state(save) as T
   }
   if (path === '/market' && method === 'GET') return [] as T
+  if (path === '/tabletop/practice' && method === 'GET') return practiceStatus(save) as T
+  if (path === '/tabletop/practice' && method === 'POST') return mutate(current => practiceAction(current, body)) as T
   if (path === '/games/shooter' && method === 'GET') return shooterStatus(save) as T
   if (path === '/games/shooter/runs' && method === 'POST') return mutate(current => shooterStart(current)) as T
   const shooterMatch = path.match(/^\/games\/shooter\/runs\/([^/]+)\/(kills|boss)$/)

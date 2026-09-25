@@ -160,6 +160,12 @@ def seed():
              "land", ["dusk", "mend"], "infernal", "shimmer"),
             ("demon-pressfiend", "The Pressfiend's Bargain", "Read the fine print. Then read it again.",
              "spell", ["arrival", "return"], "infernal", "standard"),
+            ("tabletop-opening-hand", "The Opening Hand", "A table is an invitation waiting for its first card.",
+             "spell", ["arrival", "draw"], "absurd", "standard"),
+            ("tabletop-counter-keeper", "The Counter Keeper", "Every number is official if you say it confidently.",
+             "monster", ["on_draw", "grow"], "clockwork", "shimmer"),
+            ("tabletop-playmaker", "The Playmaker's Table", "Its oldest rule is to make room for another player.",
+             "land", ["dusk", "mend"], "storybook", "standard"),
         ]
         # Finish variants share their featured card's artwork and text.
         variants = {"starter-press-cat": ("starter-press-cat-foil", "shimmer"),

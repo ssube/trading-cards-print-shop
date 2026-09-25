@@ -14,6 +14,7 @@ let currentTime = '2026-09-25T12:00:00.000Z'
 const NativeDate = Date
 globalThis.Date = class extends NativeDate {
   constructor(...args) { super(...(args.length ? args : [currentTime])) }
+  static now() { return NativeDate.parse(currentTime) }
 }
 globalThis.document = { baseURI: 'https://example.github.io/cards-the-printing/' }
 globalThis.window = {
@@ -38,7 +39,7 @@ let state = await call('/state')
 assert.equal(state.library.length, 3)
 assert.equal(state.resources.ink, 8)
 const deckList = await call('/decks')
-assert.equal(deckList.length, 6)
+assert.equal(deckList.length, 10)
 assert.equal(deckList.find(deck => deck.id === 'pressroom').filled, 3)
 assert.equal(deckList.find(deck => deck.id === 'starlit').filled, 1)
 await assert.rejects(call('/decks/starlit/claim', 'POST'), /Complete this deck/)
@@ -49,7 +50,7 @@ await call(`/decks/${custom.id}`, 'PUT', { title: 'Paper Friends', theme: 'celes
 assert.equal((await call('/decks')).find(deck => deck.id === custom.id).theme, 'celestial')
 await assert.rejects(call('/decks', 'POST', { title: 'Bad', theme: 'unknown' }), /available theme/)
 await call(`/decks/${custom.id}`, 'DELETE')
-assert.equal((await call('/decks')).length, 6)
+assert.equal((await call('/decks')).length, 10)
 const deckReward = await call('/decks/pressroom/claim', 'POST')
 assert.ok(deckReward.copy_id)
 assert.equal((await call(`/copies/${deckReward.copy_id}`)).design_id, 'reward-press-cat-holo')
@@ -114,6 +115,55 @@ assert.equal((await call('/state')).generation_count, 0)
 assert.equal((await call('/state')).allowance_claimed, false)
 await call('/allowance/claim', 'POST')
 assert.equal((await call('/state')).allowance_claimed, true)
+
+// Existing v1 saves acquire optional minigame state without a reset.
+const key = 'cards-the-printing.offline-demo.v1'
+const mill = await call('/games/papermill')
+assert.equal(mill.cats, 0)
+const savedMill = JSON.parse(values.get(key))
+savedMill.papermill.pulp = 200
+values.set(key, JSON.stringify(savedMill))
+for (let index = 0; index < 6; index++) await call('/games/papermill/hire', 'POST')
+assert.equal((await call('/decks')).find(deck => deck.id === 'papermill').filled, 3)
+await call('/decks/papermill/claim', 'POST')
+currentTime = '2026-09-26T14:00:00.000Z'
+const produced = await call('/games/papermill')
+assert.equal(produced.paper_today, 4)
+assert.equal(produced.ink_today, 4)
+const balanceAfterMill = (await call('/state')).resources
+await call('/games/papermill')
+assert.deepEqual((await call('/state')).resources, balanceAfterMill)
+
+const firstFishCast = await call('/games/fishing/cast', 'POST')
+const fishSave = JSON.parse(values.get(key))
+const cast = fishSave.fishing_casts.find(item => item.id === firstFishCast.pending.cast_id)
+cast.prize_kind = 'card'; cast.prize_value = 'fish-lanternfin'
+values.set(key, JSON.stringify(fishSave))
+currentTime = new NativeDate(NativeDate.parse(cast.created_at) + cast.target_ms).toISOString()
+const fishResult = await call('/games/fishing/reel', 'POST', { cast_id: cast.id })
+assert.equal(fishResult.reward.card.design_id, 'fish-lanternfin')
+assert.deepEqual(await call('/games/fishing/reel', 'POST', { cast_id: cast.id }), fishResult)
+
+const practiceCard = (await call('/state')).library[0].id
+await call('/tabletop/practice', 'POST', { action: 'place', copy_id: practiceCard })
+await call('/tabletop/practice', 'POST', { action: 'flip' })
+await call('/tabletop/practice', 'POST', { action: 'counter' })
+assert.equal((await call('/tabletop/practice')).step, 3)
+assert.equal((await call('/decks')).find(deck => deck.id === 'tabletop').filled, 3)
+await call('/decks/tabletop/claim', 'POST')
+await assert.rejects(call('/tabletop/rooms', 'POST', { copy_ids: [] }), /unavailable/)
+
+const run = await call('/games/shooter/runs', 'POST')
+currentTime = new NativeDate(NativeDate.parse(run.started_at) + 12000).toISOString()
+for (let enemy_index = 0; enemy_index < 3; enemy_index++) {
+  const stored = JSON.parse(values.get(key))
+  stored.shooter_runs[0].last_kill_at = null
+  values.set(key, JSON.stringify(stored))
+  await call(`/games/shooter/runs/${run.id}/kills`, 'POST', { enemy_index })
+}
+const boss = await call(`/games/shooter/runs/${run.id}/boss`, 'POST')
+assert.ok(boss.copy_id)
+await assert.rejects(call(`/games/shooter/runs/${run.id}/boss`, 'POST'), /already claimed/)
 
 const beforeFailedSave = (await call('/state')).resources.paper
 failWrites = true

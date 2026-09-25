@@ -33,7 +33,7 @@ def transaction():
 def init():
     with transaction() as db:
         version = db.execute("PRAGMA user_version").fetchone()[0]
-        if version >= 9:
+        if version >= 10:
             return
         if version == 0:
             db.executescript("""
@@ -114,3 +114,8 @@ def init():
             db.execute("CREATE TABLE shooter_runs(id TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, day TEXT NOT NULL, boss_id TEXT NOT NULL, started_at TEXT NOT NULL, kill_mask INTEGER NOT NULL DEFAULT 0, boss_claimed INTEGER NOT NULL DEFAULT 0, last_kill_at TEXT)")
             db.execute("CREATE INDEX shooter_runs_user_day ON shooter_runs(user_id,day)")
             db.execute("PRAGMA user_version=9")
+
+        if version <= 9:
+            from . import tabletop
+            tabletop.init_tables(db)
+            db.execute("PRAGMA user_version=10")

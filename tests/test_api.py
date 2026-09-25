@@ -51,9 +51,9 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
             assert any(card["border_id"] == "starlit" and card["back_id"] == "atlas" for card in library)
             assert all(card["art_path"].startswith("/assets/") for card in library)
             progress = (await client.get("/api/state")).json()["collection_progress"]
-            assert progress["cards"] == {"collected": 4, "total": 17, "percent": 24}
+            assert progress["cards"] == {"collected": 4, "total": 33, "percent": 12}
             deck_list = (await client.get("/api/decks")).json()
-            assert len(deck_list) == 6
+            assert len(deck_list) == 10
             assert next(deck for deck in deck_list if deck["id"] == "starlit")["filled"] == 3
             assert (await client.post("/api/decks", json={"title": "Star Friends", "theme": "celestial"})).status_code == 403
             custom = await client.post("/api/decks", json={"title": "Star Friends", "theme": "celestial"}, headers={"X-CSRF-Token": csrf})
@@ -66,4 +66,40 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
             assert (await client.get(f"/api/copies/{claimed.json()['copy_id']}")).json()["design_id"] == "reward-starlit-map-holo"
             assert (await client.post("/api/decks/starlit/claim", headers={"X-CSRF-Token": csrf})).status_code == 409
 
+    asyncio.run(scenario())
+
+
+def test_minigame_routes_and_private_table(tmp_path, monkeypatch):
+    monkeypatch.setattr(db, "DB_PATH", tmp_path / "minigames.sqlite3")
+    monkeypatch.setattr(providers, "ASSETS", tmp_path / "assets")
+    db.init()
+    game.seed()
+
+    async def scenario():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as alice, \
+                   httpx.AsyncClient(transport=transport, base_url="http://test") as bob:
+            a = (await alice.post("/api/auth/register", json={"username": "game_alice", "password": "long-password-123", "starter_deck_id": "pressroom"})).json()
+            b = (await bob.post("/api/auth/register", json={"username": "game_bob", "password": "long-password-123", "starter_deck_id": "starlit"})).json()
+            ah, bh = {"X-CSRF-Token": a["csrf"]}, {"X-CSRF-Token": b["csrf"]}
+            assert (await alice.post("/api/games/papermill/tap")).status_code == 403
+            assert (await alice.get("/api/games/papermill")).json()["cats"] == 0
+            assert (await alice.get("/api/games/fishing")).json()["limit"] == 5
+            assert (await alice.post("/api/games/fishing/cast", headers=ah)).status_code == 200
+            assert (await alice.get("/api/games/shooter")).json()["run_limit"] == 3
+            assert (await alice.post("/api/games/shooter/runs", headers=ah)).status_code == 200
+            cards_a = [card["id"] for card in (await alice.get("/api/state")).json()["library"]]
+            cards_b = [card["id"] for card in (await bob.get("/api/state")).json()["library"]]
+            practice = await alice.post("/api/tabletop/practice", headers=ah, json={"action": "place", "copy_id": cards_a[0]})
+            assert practice.status_code == 200
+            assert practice.json()["practice"]["step"] == 1
+            room = await alice.post("/api/tabletop/rooms", headers=ah, json={"copy_ids": cards_a})
+            assert room.status_code == 200
+            code = room.json()["code"]
+            assert (await bob.get(f"/api/tabletop/rooms/{code}")).status_code == 403
+            joined = await bob.post(f"/api/tabletop/rooms/{code}/join", headers=bh, json={"copy_ids": cards_b})
+            assert joined.status_code == 200
+            assert all(card["copy_id"] is None for card in joined.json()["cards"] if card["user_id"] == a["id"])
+            assert (await alice.post(f"/api/tabletop/rooms/{code}/actions", json={"expected_revision": 1, "action": "pass"})).status_code == 403
+            assert (await alice.post(f"/api/tabletop/rooms/{code}/actions", headers=ah, json={"expected_revision": 1, "action": "pass"})).status_code == 200
     asyncio.run(scenario())

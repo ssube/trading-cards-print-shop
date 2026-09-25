@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import game, decks, papermill, fishing, shooter
+from . import game, decks, papermill, fishing, shooter, tabletop
 from .db import connect, init, transaction
 from .providers import ASSETS, process_job
 
@@ -208,6 +208,61 @@ async def delete_deck(deck_id: str, user=Depends(mutation)):
 async def claim_deck(deck_id: str, user=Depends(mutation)):
     with transaction() as db:
         return decks.claim_reward(db, user["id"], deck_id)
+
+
+class TabletopPracticePayload(BaseModel):
+    action: str
+    copy_id: str | None = None
+
+
+class TabletopHandPayload(BaseModel):
+    copy_ids: list[str]
+
+
+class TabletopActionPayload(BaseModel):
+    expected_revision: int
+    action: str
+    copy_id: str | None = None
+    x: int | None = None
+    y: int | None = None
+    value: int | None = None
+
+
+@app.get("/api/tabletop/practice")
+async def tabletop_practice_status(user=Depends(auth)):
+    with connect() as db:
+        return tabletop.practice_status(db, user["id"])
+
+
+@app.post("/api/tabletop/practice")
+async def tabletop_practice_action(payload: TabletopPracticePayload, user=Depends(mutation)):
+    with transaction() as db:
+        return tabletop.practice_action(db, user["id"], payload.action, payload.copy_id)
+
+
+@app.post("/api/tabletop/rooms")
+async def tabletop_create_room(payload: TabletopHandPayload, user=Depends(mutation)):
+    with transaction() as db:
+        return tabletop.create_room(db, user["id"], payload.copy_ids)
+
+
+@app.post("/api/tabletop/rooms/{code}/join")
+async def tabletop_join_room(code: str, payload: TabletopHandPayload, user=Depends(mutation)):
+    with transaction() as db:
+        return tabletop.join_room(db, user["id"], code, payload.copy_ids)
+
+
+@app.get("/api/tabletop/rooms/{code}")
+async def tabletop_room_state(code: str, user=Depends(auth)):
+    with connect() as db:
+        return tabletop.room_state(db, user["id"], code)
+
+
+@app.post("/api/tabletop/rooms/{code}/actions")
+async def tabletop_room_action(code: str, payload: TabletopActionPayload, user=Depends(mutation)):
+    with transaction() as db:
+        return tabletop.room_action(db, user["id"], code, payload.expected_revision, payload.action,
+                                    payload.copy_id, payload.x, payload.y, payload.value)
 
 
 class ShooterKillPayload(BaseModel):

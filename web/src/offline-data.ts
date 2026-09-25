@@ -47,6 +47,11 @@ export const offlineCatalog: Part[] = [
 ]
 
 function art(id: string) {
+  if (id.startsWith('tabletop-')) {
+    const color = id === 'tabletop-counter-keeper' ? '#c5a1db' : id === 'tabletop-playmaker' ? '#9ac7ba' : '#dfc38d'
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560"><rect width="400" height="560" fill="#24333e"/><path d="M52 360l148-100 148 100-148 100z" fill="#815e4a" stroke="#ecd2a0" stroke-width="9"/><path d="M109 168l88-43 90 43v135l-90 42-88-42z" fill="${color}" stroke="#f5e7ce" stroke-width="7"/><circle cx="197" cy="220" r="31" fill="#324454"/><path d="M130 289l65 32 67-32" fill="none" stroke="#324454" stroke-width="7"/><path d="M83 435v55m234-55v55" stroke="#bc926b" stroke-width="16"/></svg>`
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`
+  }
   if (id.startsWith('demon-')) {
     const color = id === 'demon-ashwarden' ? '#c88a72' : id === 'demon-pressfiend' ? '#aa72a2' : '#eaa45d'
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560"><rect width="400" height="560" fill="#251821"/><circle cx="200" cy="280" r="160" fill="#9a4238" opacity=".4"/><path d="M105 432Q77 240 138 173L90 90l98 65 48 0 78-65-50 99q63 78 31 243Z" fill="${color}" stroke="#f3c68b" stroke-width="8"/><path d="M146 248l42 20m68-20-42 20" stroke="#361923" stroke-width="16"/><path d="M142 355q58 40 116 0" fill="none" stroke="#361923" stroke-width="10"/><path d="M70 489h260" stroke="#e18b58" stroke-width="13"/></svg>`
@@ -94,6 +99,9 @@ export function offlineDesigns(): Design[] {
     design('demon-cinderlord', 'Cinderlord of the Press', 'Even the furnace asks for a day off.', 'monster', ['arrival', 'grow'], 'infernal'),
     design('demon-ashwarden', "Ashwarden's Gate", "Its hinges were cast from yesterday's excuses.", 'land', ['dusk', 'mend'], 'infernal', 'shimmer'),
     design('demon-pressfiend', "The Pressfiend's Bargain", 'Read the fine print. Then read it again.', 'spell', ['arrival', 'return'], 'infernal'),
+    design('tabletop-opening-hand', 'The Opening Hand', 'A table is an invitation waiting for its first card.', 'spell', ['arrival', 'draw'], 'absurd'),
+    design('tabletop-counter-keeper', 'The Counter Keeper', 'Every number is official if you say it confidently.', 'monster', ['on_draw', 'grow'], 'clockwork', 'shimmer'),
+    design('tabletop-playmaker', "The Playmaker's Table", 'Its oldest rule is to make room for another player.', 'land', ['dusk', 'mend'], 'storybook'),
     { ...cat, id: 'reward-press-cat-holo', finish_id: 'holo' },
     { ...map, id: 'reward-starlit-map-holo', finish_id: 'holo' },
     { ...fox, id: 'reward-foil-fox-holo', finish_id: 'holo' },
@@ -102,6 +110,7 @@ export function offlineDesigns(): Design[] {
     { ...design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['sleeved', 'echo'], 'storybook'), id: 'reward-mill-master-holo', finish_id: 'holo' },
     { ...design('fish-moonkoi', 'Moon Koi', 'The pond insists the moon is one of its fish.', 'monster', ['dusk', 'grow'], 'maritime'), id: 'reward-moonkoi-holo', finish_id: 'holo' },
     { ...design('demon-pressfiend', "The Pressfiend's Bargain", 'Read the fine print. Then read it again.', 'spell', ['arrival', 'return'], 'infernal'), id: 'reward-pressfiend-holo', finish_id: 'holo' },
+    { ...design('tabletop-playmaker', "The Playmaker's Table", 'Its oldest rule is to make room for another player.', 'land', ['dusk', 'mend'], 'storybook'), id: 'reward-playmaker-holo', finish_id: 'holo' },
   ]
 }
 
