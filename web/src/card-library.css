@@ -1,0 +1,4 @@
+.box-tabs{overflow-x:auto;scrollbar-width:thin;scrollbar-color:#a99a6b transparent}
+.box-tabs button{flex:0 0 auto;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;font-weight:inherit;padding:0 5px 13px;white-space:nowrap}
+.box-tabs button:hover{color:#e6d3a6}
+.box-tabs button:focus-visible{outline:2px solid #e4c688;outline-offset:-2px}

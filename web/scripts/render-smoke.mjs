@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 const output = resolve('node_modules/.cache/cards-render')
 mkdirSync(output, { recursive: true })
 await build({
-  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/FinishGallery.tsx', 'src/CollectionProgress.tsx', 'src/StarterWelcome.tsx'],
+  entryPoints: ['src/App.tsx', 'src/Card.tsx', 'src/CardLibrary.tsx', 'src/FinishGallery.tsx', 'src/CollectionProgress.tsx', 'src/StarterWelcome.tsx'],
   outdir: output,
   bundle: true,
   platform: 'node',
@@ -19,6 +19,7 @@ await build({
 const require = createRequire(import.meta.url)
 const { default: App } = require(resolve(output, 'App.js'))
 const { Card } = require(resolve(output, 'Card.js'))
+const { CardLibrary, filterLibraryCards } = require(resolve(output, 'CardLibrary.js'))
 const { FinishGallery } = require(resolve(output, 'FinishGallery.js'))
 const { CollectionProgress } = require(resolve(output, 'CollectionProgress.js'))
 const { StarterWelcome } = require(resolve(output, 'StarterWelcome.js'))
@@ -34,6 +35,12 @@ const sample = {
 }
 const appMarkup = renderToStaticMarkup(createElement(App))
 const cardMarkup = renderToStaticMarkup(createElement(Card, { card: sample }))
+const mixedCards = [sample, { ...sample, id: 'spell-copy', type_id: 'spell', name: 'Paper Sprite' }]
+const libraryMarkup = renderToStaticMarkup(createElement(CardLibrary, {
+  cards: mixedCards,
+  catalog: [{ id: 'land', kind: 'type', name: 'Land' }, { id: 'monster', kind: 'type', name: 'Monster' }, { id: 'spell', kind: 'type', name: 'Spell' }],
+  onOpenCard: () => {}, onVisitPress: () => {},
+}))
 const galleryMarkup = renderToStaticMarkup(createElement(FinishGallery, {
   catalog: [
     { id: 'standard', kind: 'finish', name: 'Standard', description: 'Soft matte print.', learned: 1, cost_json: '{}', slot: '', power: 0 },
@@ -58,9 +65,12 @@ const welcomeMarkup = renderToStaticMarkup(createElement(StarterWelcome, {
   message: '', busy: false, onSubmit: () => {},
 }))
 if (!appMarkup.includes('Warming the press') || !cardMarkup.includes('Apprentice Press Cat') || !cardMarkup.includes('art-window') ||
+    filterLibraryCards(mixedCards, 'spell').map(card => card.id).join() !== 'spell-copy' ||
+    filterLibraryCards(mixedCards, 'land').length !== 0 || filterLibraryCards(mixedCards, 'all').length !== 2 ||
+    !libraryMarkup.includes('Filter cards by type') || !libraryMarkup.includes('LAND <b>0</b>') || !libraryMarkup.includes('SPELL <b>1</b>') ||
     !galleryMarkup.includes('Blank print stock') || !galleryMarkup.includes('Apprentice Press Cat') || !galleryMarkup.includes('Holo') ||
     !progressMarkup.includes('Unique cards') || !progressMarkup.includes('33%') || !progressMarkup.includes('1 / 4 in your box') ||
     !welcomeMarkup.includes('The Pressroom Parade') || !welcomeMarkup.includes('Three cards to begin with') || !welcomeMarkup.includes('COPY 3 OF 3')) {
   throw new Error('Render smoke test failed')
 }
-console.log('App shell, card, finish gallery, collection progress, and starter selection render successfully')
+console.log('App shell, card library filters, finish gallery, collection progress, and starter selection render successfully')
