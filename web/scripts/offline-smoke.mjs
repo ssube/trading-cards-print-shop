@@ -26,9 +26,10 @@ globalThis.window = {
   },
 }
 
-const { offlineApi, isOfflineDemo, resetOfflineDemo } = await import(pathToFileURL(resolve(output, 'offline-game.mjs')).href)
+const { offlineApi, isOfflineDemo, resetOfflineDemo, dailySleeveBonus } = await import(pathToFileURL(resolve(output, 'offline-game.mjs')).href)
 const call = (path, method = 'GET', body, extra) => offlineApi(path, method, body, extra)
 assert.equal(isOfflineDemo(), true)
+assert.deepEqual([0, 1, 2, 3].map(amount => Array.from({ length: 100 }, (_, roll) => dailySleeveBonus(roll)).filter(value => value === amount).length), [55, 25, 15, 5])
 const decks = await call('/starter-decks')
 assert.equal(decks.length, 3)
 for (const deck of decks) assert.equal(deck.cards.filter(card => card.finish_id !== 'standard').length, 1)
@@ -71,7 +72,12 @@ assert.equal(state.library.find(card => card.id === source.id).condition, initia
 await assert.rejects(call('/physical-prints', 'POST', { items: [{ copy_id: source.id, quantity: 1 }] }, { 'Idempotency-Key': 'physical-smoke-one' }), /different cards/)
 assert.equal((await call('/market')).length, 0)
 assert.equal(state.catalog.find(part => part.id === 'starlit').learned, 0)
-await call('/allowance/claim', 'POST')
+const sleevesBeforeAllowance = state.resources.sleeve
+const nativeRandom = Math.random
+Math.random = () => .04
+assert.deepEqual((await call('/allowance/claim', 'POST')).reward, { paper: 10, ink: 10, sleeve: 3 })
+Math.random = nativeRandom
+assert.equal((await call('/state')).resources.sleeve, sleevesBeforeAllowance + 3)
 await assert.rejects(call('/allowance/claim', 'POST'), /already collected/)
 
 const recipe = { type_id: 'monster', rule_ids: ['arrival', 'draw'], theme_id: 'storybook', finish_id: 'standard', border_id: 'classic', back_id: 'archive' }
@@ -114,7 +120,9 @@ assert.ok(state.collection_progress.cards.collected >= 8)
 currentTime = '2026-09-26T12:00:00.000Z'
 assert.equal((await call('/state')).generation_count, 0)
 assert.equal((await call('/state')).allowance_claimed, false)
-await call('/allowance/claim', 'POST')
+Math.random = () => .99
+assert.deepEqual((await call('/allowance/claim', 'POST')).reward, { paper: 10, ink: 10 })
+Math.random = nativeRandom
 assert.equal((await call('/state')).allowance_claimed, true)
 
 // Existing v1 saves acquire optional minigame state without a reset.

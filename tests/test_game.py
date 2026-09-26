@@ -1,4 +1,5 @@
 import json
+from collections import Counter
 
 import pytest
 
@@ -141,15 +142,21 @@ def test_study_costs_ten_percent_and_rejects_fully_learned_card(world):
         assert game.copy_detail(conn, copy_id, alice)["condition"] == 65
 
 
-def test_daily_allowance_is_unique(world):
+def test_daily_sleeve_bonus_distribution():
+    assert Counter(game.daily_sleeve_bonus(roll) for roll in range(100)) == {0: 55, 1: 25, 2: 15, 3: 5}
+
+
+def test_daily_allowance_is_unique(world, monkeypatch):
     alice, _ = world
+    monkeypatch.setattr(game.secrets, "randbelow", lambda upper: 4)
     with db.transaction() as conn:
         before = game.resource_balance(conn, alice)
-        assert game.claim_daily_allowance(conn, alice) == {"paper": 10, "ink": 10}
+        assert game.claim_daily_allowance(conn, alice) == {"paper": 10, "ink": 10, "sleeve": 3}
         assert game.daily_allowance_claimed(conn, alice)
         with pytest.raises(game.GameError):
             game.claim_daily_allowance(conn, alice)
         assert game.resource_balance(conn, alice)["paper"] == before["paper"] + 10
+        assert game.resource_balance(conn, alice)["sleeve"] == before["sleeve"] + 3
     available = [oid for oid in game.ROTATING_NPC_CARDS if game.npc_offer_available(oid, alice)]
     assert len(available) == 1
 

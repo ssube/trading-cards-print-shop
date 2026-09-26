@@ -630,9 +630,23 @@ def daily_allowance_claimed(db, user_id):
                            (user_id, day())).fetchone())
 
 
+def daily_sleeve_bonus(roll):
+    if roll < 5:
+        return 3
+    if roll < 20:
+        return 2
+    if roll < 45:
+        return 1
+    return 0
+
+
 def claim_daily_allowance(db, user_id):
-    award_activity(db, user_id, "allowance", day(), {"paper": 10, "ink": 10})
-    return {"paper": 10, "ink": 10}
+    rewards = {"paper": 10, "ink": 10}
+    sleeves = daily_sleeve_bonus(secrets.randbelow(100))
+    if sleeves:
+        rewards["sleeve"] = sleeves
+    award_activity(db, user_id, "allowance", day(), rewards)
+    return rewards
 
 
 ROTATING_NPC_CARDS = ("starlit-map", "fox-copy", "sunlit-note")

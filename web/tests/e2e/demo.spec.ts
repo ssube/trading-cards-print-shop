@@ -62,6 +62,15 @@ async function navigate(page: Page, name: string) {
   await page.locator('.sidebar nav').getByRole('link', { name }).click()
 }
 
+test('daily supplies show the sleeve bonus that was awarded', async ({ page }) => {
+  await startDemo(page)
+  await page.evaluate(() => { Math.random = () => .1 })
+  await page.getByRole('button', { name: 'Collect daily supplies' }).click()
+  await expect(page.getByRole('status')).toContainText('10 paper, 10 ink, and 2 sleeves')
+  await expect(page.locator('.resource-pill').filter({ hasText: 'sleeves' })).toContainText('3')
+  await expect(page.getByRole('button', { name: 'Collect daily supplies' })).toHaveCount(0)
+})
+
 test('back foil changes the press cost while Fox keeps its own foil', async ({ page }) => {
   await startDemo(page)
   await page.getByRole('combobox', { name: 'Finish', exact: true }).selectOption('shimmer')

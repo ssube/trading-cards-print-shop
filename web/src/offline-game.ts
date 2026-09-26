@@ -31,6 +31,7 @@ type Save = {
 }
 
 function today() { return new Date().toISOString().slice(0, 10) }
+export function dailySleeveBonus(roll: number) { return roll < 5 ? 3 : roll < 20 ? 2 : roll < 45 ? 1 : 0 }
 function id() { return uniqueId() }
 function fail(message: string): never { throw new Error(message) }
 function storage() {
@@ -528,8 +529,10 @@ export async function offlineApi<T>(path: string, method = 'GET', body?: unknown
   if (path === '/allowance/claim' && method === 'POST') return mutate(current => {
     if (current.allowance_day === today()) fail('Daily supplies already collected')
     current.allowance_day = today()
-    balance(current, { paper: 10, ink: 10 })
-    return { reward: { paper: 10, ink: 10 } }
+    const sleeves = dailySleeveBonus(Math.floor(Math.random() * 100))
+    const reward = { paper: 10, ink: 10, ...(sleeves ? { sleeve: sleeves } : {}) }
+    balance(current, reward)
+    return { reward }
   }) as T
   const actionMatch = path.match(/^\/copies\/([^/]+)\/(study|reprint|sleeve|certify|crack)$/)
   if (actionMatch && method === 'POST') return mutate(current => action(current, actionMatch[1], actionMatch[2])) as T
