@@ -21,6 +21,7 @@ import './physical-print.css'
 import './public-card.css'
 import './games-hub.css'
 import './decks-page.css'
+import './card-lightbox.css'
 
 import './papermill-game.css'
 import './tabletop-game.css'

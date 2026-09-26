@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Card } from './Card'
+import { CardLightbox } from './CardLightbox'
 import type { CardCopy, Part } from './types'
 
 const blankStock: CardCopy = {
@@ -28,6 +29,7 @@ export function FinishGallery({ catalog, library, onUseFinish, offline = false, 
   const standardCards = library.filter(card => card.finish_id === 'standard')
   const [sourceId, setSourceId] = useState('')
   const [previewZoom, setPreviewZoom] = useState(1)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
   const source = standardCards.find(card => card.id === sourceId)
   const selectedFinish = finishes.find(finish => finish.id === finishId) || finishes[0]
   const specimen = (id: string) => ({ ...(source || blankStock), finish_id: id, slab_grade: null, sleeved: 0 })
@@ -41,7 +43,7 @@ export function FinishGallery({ catalog, library, onUseFinish, offline = false, 
     <div className="finish-gallery-layout">
       <div className="finish-showcase" style={{ '--zoom-clearance': `${Math.ceil((previewZoom - 1) * 252)}px`, '--zoom-card-max': `calc(${100 / previewZoom}vw - ${72 / previewZoom}px)` } as React.CSSProperties}>
         <div className="finish-showcase-top"><span>✦ &nbsp; LIVE SPECIMEN</span><span>MOVE TO CATCH THE LIGHT</span></div>
-        <div className="finish-showcase-card"><Card key={`${source?.id || 'blank'}-${selectedFinish?.id || 'standard'}`} card={specimen(selectedFinish?.id || 'standard')} blank={!source} large interactive onZoomChange={setPreviewZoom} /></div>
+        <div className="finish-showcase-card"><Card key={`${source?.id || 'blank'}-${selectedFinish?.id || 'standard'}`} card={specimen(selectedFinish?.id || 'standard')} blank={!source} large interactive onZoomChange={setPreviewZoom} onOpenLightbox={() => setLightboxOpen(true)} /></div>
         <div className="finish-showcase-bottom"><span>{source ? source.name : 'Blank print stock'}</span><strong>{selectedFinish?.name || 'Standard'}</strong></div>
       </div>
       <div className="finish-gallery-controls">
@@ -70,5 +72,6 @@ export function FinishGallery({ catalog, library, onUseFinish, offline = false, 
         {selectedFinish && <div className="finish-gallery-action"><p><strong>{selectedFinish.name}</strong> · {selectedFinish.description}</p><button className="primary" type="button" disabled={!selectedFinish.learned} onClick={() => onUseFinish(selectedFinish.id)}>{selectedFinish.learned ? 'Use at the press ↗' : offline ? 'Learn from a discovery card' : 'Learn through trading'}</button></div>}
       </div>
     </div>
+    {lightboxOpen && <CardLightbox card={specimen(selectedFinish?.id || 'standard')} blank={!source} onClose={() => setLightboxOpen(false)} />}
   </section>
 }

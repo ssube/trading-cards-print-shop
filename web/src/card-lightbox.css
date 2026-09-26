@@ -1,0 +1,42 @@
+.lightbox{position:fixed;inset:0;z-index:1000;background:#090e11;color:#f1e8d6}
+.lightbox-dialog{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.lightbox-header{position:relative;z-index:3;flex:none;min-height:61px;padding:10px max(18px,env(safe-area-inset-right)) 9px max(18px,env(safe-area-inset-left));display:flex;align-items:center;justify-content:space-between;gap:20px;background:#131d21;border-bottom:1px solid #c3aa7659}
+.lightbox-header .eyebrow{display:block;margin:0 0 2px;font-size:.54rem;letter-spacing:.2em}
+.lightbox-header strong{font:1.15rem 'Fraunces',serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:75vw}
+.lightbox-close{position:relative;z-index:4;width:44px;height:44px;flex:none;border:1px solid #cfb781;border-radius:50%;background:#233332;color:#f4dcad;font-size:1.8rem;line-height:1}
+.lightbox-close:focus-visible,.lightbox button:focus-visible,.lightbox input:focus-visible{outline:3px solid #ffe5a2;outline-offset:2px}
+.lightbox-stage{position:relative;isolation:isolate;flex:1;min-height:0;display:grid;place-items:center;overflow:hidden;touch-action:none;cursor:crosshair;background:radial-gradient(ellipse 76% 83% at var(--light-x) var(--light-y),var(--backdrop-glow),transparent 70%),var(--backdrop);filter:brightness(var(--light-level));transition:background-color .2s ease}
+.lightbox-stage:before{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(rgba(255,171,77,calc(var(--warm)*.24)),rgba(255,171,77,calc(var(--warm)*.24))),linear-gradient(rgba(116,179,255,calc(var(--cool)*.23)),rgba(116,179,255,calc(var(--cool)*.23)));mix-blend-mode:soft-light}
+.lightbox-stage:after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(circle at var(--light-x) var(--light-y),#fff9 0,#fff3 8%,transparent 36%),linear-gradient(110deg,transparent 32%,#fff2 49%,transparent 62%);opacity:.35}
+.lightbox-stage.gloss:after{opacity:.7;background:radial-gradient(circle at var(--light-x) var(--light-y),#fffc 0,#fff5 9%,transparent 33%),linear-gradient(118deg,transparent 23%,#fff4 38%,transparent 44% 59%,#fff3 66%,transparent 76%)}
+.lightbox-stage-grain{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.15;background-image:repeating-linear-gradient(25deg,#fff1 0 1px,transparent 1px 5px)}
+.lightbox-stage.gloss .lightbox-stage-grain{opacity:.06}
+.lightbox-light-marker{position:absolute;z-index:3;left:var(--light-x);top:var(--light-y);transform:translate(-50%,-50%);width:27px;height:27px;display:grid;place-items:center;border:1px solid #fff9;border-radius:50%;background:#fff4;color:#fff9;font-size:1rem;box-shadow:0 0 18px #fffc,0 0 43px #fff8;pointer-events:none}
+.lightbox-card{position:relative;z-index:2;width:var(--card-width);margin-bottom:calc(42px + var(--zoom-clearance));cursor:auto}
+.lightbox-card-lighting{position:relative;width:100%;filter:drop-shadow(0 25px 29px #000a)}
+.lightbox-card-lighting:before,.lightbox-card-lighting:after{content:'';position:absolute;inset:0;z-index:5;pointer-events:none;border-radius:10px}
+.lightbox-card-lighting:before{background:linear-gradient(rgba(255,177,81,calc(var(--warm)*.2)),rgba(255,177,81,calc(var(--warm)*.2))),linear-gradient(rgba(119,184,255,calc(var(--cool)*.18)),rgba(119,184,255,calc(var(--cool)*.18)));mix-blend-mode:soft-light}
+.lightbox-card-lighting:after{background:radial-gradient(ellipse 65% 52% at var(--light-x) var(--light-y),#ffffffe0,transparent 82%);mix-blend-mode:screen;opacity:.2;transform:scale(1.03)}
+.lightbox-stage.gloss .lightbox-card-lighting:after{opacity:.42}
+.lightbox-card .card-frame{width:100%;filter:none}
+.lightbox-card .card-perspective{touch-action:none}
+.lightbox-card .card-controls{top:calc(100% + var(--zoom-clearance) + 12px);z-index:10;flex-wrap:wrap;min-height:34px}
+.lightbox-card .card-controls button,.lightbox-card .card-controls label{font-size:.68rem;padding:7px 9px;background:#17282beb;border-color:#e1c68c9e;box-shadow:0 3px 9px #0008}
+.lightbox-card .card-controls input{width:70px}
+.lightbox-stage-hint{position:absolute;z-index:2;bottom:10px;left:0;right:0;text-align:center;color:#fffbd8;font-size:.55rem;font-weight:800;letter-spacing:.16em;text-shadow:0 2px 6px #000}
+.lightbox-settings{position:relative;z-index:3;flex:none;min-height:132px;padding:17px max(22px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left));display:grid;grid-template-columns:auto auto minmax(135px,1fr) minmax(155px,1fr);align-items:center;justify-content:center;gap:16px 28px;background:linear-gradient(#182426,#111b1e);border-top:1px solid #d2b4786b;box-shadow:0 -15px 35px #0006}
+.lightbox-settings fieldset{border:0;padding:0;margin:0;min-width:0}
+.lightbox-settings legend,.lightbox-settings label{display:block;color:#d1c2a4;font-size:.64rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.lightbox-settings legend{margin-bottom:9px}
+.lightbox-settings label{align-self:end}
+.lightbox-settings output{float:right;color:#f7dfa9;font-size:.68rem}
+.lightbox-settings input[type=range]{display:block;width:100%;min-height:0;height:26px;margin:8px 0 0;padding:0;accent-color:#dfbc7f}
+.lightbox-segmented{display:flex;border:1px solid #bba26f80;border-radius:5px;overflow:hidden}
+.lightbox-segmented button{border:0;background:#22302e;color:#cfc9b8;padding:9px 12px;font-size:.68rem;font-weight:700}
+.lightbox-segmented button[aria-pressed=true]{background:#e0c285;color:#182426}
+.lightbox-swatches{display:flex;align-items:center;gap:7px}
+.lightbox-swatch{width:28px;height:28px;border:2px solid #d6c7a176;border-radius:50%;box-shadow:inset 0 1px 4px #0005}
+.lightbox-swatch[aria-pressed=true]{outline:2px solid #f5d491;outline-offset:2px}
+@media(max-width:850px){.lightbox-settings{grid-template-columns:1fr 1fr;min-height:185px;gap:11px 18px;padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}.lightbox-settings label{align-self:center}}
+@media(max-width:480px){.lightbox-header{min-height:56px}.lightbox-header strong{font-size:1rem}.lightbox-settings{min-height:194px;gap:9px 12px}.lightbox-swatches{gap:5px}.lightbox-swatch{width:25px;height:25px}.lightbox-segmented button{padding:7px 10px}.lightbox-card .card-controls{gap:4px}.lightbox-card .card-controls button,.lightbox-card .card-controls label{font-size:.56rem;padding:6px}}
+@media(prefers-reduced-motion:reduce){.lightbox-stage{transition:none}.lightbox-card-lighting:after{transition:none}}
