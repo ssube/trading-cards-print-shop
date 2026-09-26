@@ -1,9 +1,10 @@
 import { useRef, useState, type PointerEvent } from 'react'
 import { aimFoil, aimFoilFromTilt, resetFoil } from './foil'
+import { CardEffects, type CardEffectLayer, type CardEffectSet } from './CardEffects'
 import type { CardCopy } from './types'
 import { wearOpacity, wearTexture } from './wear'
 
-export function Card({ card, interactive = false, onClick, large = false, blank = false, showFoil = true, showQuality = true, side = 'front', physical = false, onZoomChange, onOpenLightbox }: { card: CardCopy; interactive?: boolean; onClick?: () => void; large?: boolean; blank?: boolean; showFoil?: boolean; showQuality?: boolean; side?: 'front' | 'back'; physical?: boolean; onZoomChange?: (zoom: number) => void; onOpenLightbox?: () => void }) {
+export function Card({ card, interactive = false, onClick, large = false, blank = false, showFoil = true, showQuality = true, side = 'front', physical = false, effects = {}, onZoomChange, onOpenLightbox }: { card: CardCopy; interactive?: boolean; onClick?: () => void; large?: boolean; blank?: boolean; showFoil?: boolean; showQuality?: boolean; side?: 'front' | 'back'; physical?: boolean; effects?: CardEffectSet; onZoomChange?: (zoom: number) => void; onOpenLightbox?: () => void }) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [flipped, setFlipped] = useState(side === 'back')
@@ -34,6 +35,9 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
     '--ok': String(showQuality ? Math.min(.14, Math.abs(card.shift_k) * .23) : 0),
     '--surface': String(showQuality ? card.surface : 0), '--edge': String(showQuality ? card.edge : 0),
   } as React.CSSProperties
+  const wearLayer: CardEffectLayer = { id: 'wear', className: 'wear-overlay', style: { opacity: wearOpacity(card.condition), backgroundImage: wearTexture(card.id, card.condition) } }
+  const frontEffects: CardEffectLayer[] = [{ id: 'foil', className: 'foil-shine' }, ...(showQuality ? [wearLayer] : []), ...(effects.front || [])]
+  const backEffects: CardEffectLayer[] = [...((card.back_finish_id || card.back_id === 'mischief') ? [{ id: 'back-foil', className: 'foil-shine back-foil-shine' }] : []), ...(showQuality ? [wearLayer] : []), ...(effects.back || [])]
   return <div className={`card-frame ${large ? 'card-large' : ''} ${physical ? 'physical-card' : ''}`}>
     <div className={`card-body ${card.slab_grade !== null ? 'slabbed' : card.sleeved === 1 ? 'sleeved' : ''}`} style={{ transform: `scale(${zoom}) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)` }}>
     {card.slab_grade !== null && <div className="slab-label"><strong>THE ARCHIVIST</strong><span>GRADE {card.slab_grade}</span></div>}
@@ -59,12 +63,13 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
           <p className="card-flavor">“{card.flavor}”</p>
           <div className="card-foot"><span>№ {card.id.slice(0, 8).toUpperCase()}</span><span>{card.creator ? `by ${card.creator}` : 'Archive edition'}</span></div></div>
           </>}
-          <div className="foil-shine" />{showQuality && <div className="wear-overlay" style={{ opacity: wearOpacity(card.condition), backgroundImage: wearTexture(card.id, card.condition) }} />}
+          <CardEffects surface="front" layers={frontEffects} />
       </article>
-      <div className={`card-back back-${card.back_id || 'archive'} finish-${card.back_finish_id || (card.back_id === 'mischief' ? 'shimmer' : 'standard')} ${showFoil ? '' : 'print-no-foil'}`} aria-hidden={!flipped}><div className="back-mark">{card.back_id === 'atlas' ? '✧' : card.back_id === 'mischief' ? '♢' : <>TC<span>:</span>PS</>}</div><p>{card.back_id === 'atlas' ? <>THE STARLIT<br />ATLAS</> : card.back_id === 'mischief' ? <>THE VELVET<br />MISCHIEF</> : <>TRADING CARDS<br />PRINT SHOP</>}</p><small>{card.back_id === 'atlas' ? 'EVERY STAR HAS A PLACE' : card.back_id === 'mischief' ? 'A TRICK IN EVERY PRINT' : 'AN EDITION OF ONE, AGAIN AND AGAIN'}</small>{(card.back_finish_id || card.back_id === 'mischief') && <div className="foil-shine back-foil-shine" />}{showQuality && <div className="wear-overlay" style={{ opacity: wearOpacity(card.condition), backgroundImage: wearTexture(card.id, card.condition) }} />}</div>
+      <div className={`card-back back-${card.back_id || 'archive'} finish-${card.back_finish_id || (card.back_id === 'mischief' ? 'shimmer' : 'standard')} ${showFoil ? '' : 'print-no-foil'}`} aria-hidden={!flipped}><div className="back-mark">{card.back_id === 'atlas' ? '✧' : card.back_id === 'mischief' ? '♢' : <>TC<span>:</span>PS</>}</div><p>{card.back_id === 'atlas' ? <>THE STARLIT<br />ATLAS</> : card.back_id === 'mischief' ? <>THE VELVET<br />MISCHIEF</> : <>TRADING CARDS<br />PRINT SHOP</>}</p><small>{card.back_id === 'atlas' ? 'EVERY STAR HAS A PLACE' : card.back_id === 'mischief' ? 'A TRICK IN EVERY PRINT' : 'AN EDITION OF ONE, AGAIN AND AGAIN'}</small><CardEffects surface="back" layers={backEffects} /></div>
       </div>
     </div>
     {card.slab_grade !== null ? <span className="slab-base-marker">✦ CERTIFIED · № {card.id.slice(0, 6).toUpperCase()}</span> : card.sleeved === 1 ? <span className="sleeve-badge">◇ SLEEVED</span> : null}
+    <CardEffects surface="shell" layers={effects.shell || []} />
     </div>
     {interactive && <div className="card-controls"><button onClick={() => setFlipped(!flipped)}>{flipped ? 'Show front' : 'Flip card'}</button><label>Zoom <input type="range" min="1" max="1.6" step="0.05" value={zoom} onChange={e => { const next = Number(e.target.value); setZoom(next); onZoomChange?.(next) }} /></label><button onClick={() => rotate(-10)} aria-label="Rotate left">↶</button><button onClick={() => rotate(10)} aria-label="Rotate right">↷</button>{onOpenLightbox && <button type="button" onClick={onOpenLightbox} aria-label="Open lightbox">⛶ Lightbox</button>}</div>}
   </div>

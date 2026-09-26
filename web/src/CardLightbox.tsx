@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { Card } from './Card'
+import type { CardEffectSet } from './CardEffects'
 import { aimFoil } from './foil'
 import type { CardCopy } from './types'
 
@@ -12,6 +13,10 @@ const backdrops = [
   { name: 'Burgundy', color: '#4b202d', glow: '#b87577' },
   { name: 'Plum', color: '#3e2851', glow: '#ad88bd' },
 ] as const
+const lightboxEffects: CardEffectSet = { shell: [
+  { id: 'temperature', className: 'lightbox-temperature' },
+  { id: 'spotlight', className: 'lightbox-spotlight' },
+] }
 
 export function CardLightbox({ card, blank = false, onClose }: { card: CardCopy; blank?: boolean; onClose: () => void }) {
   const [surface, setSurface] = useState<'matte' | 'gloss'>('matte')
@@ -80,7 +85,7 @@ export function CardLightbox({ card, blank = false, onClose }: { card: CardCopy;
       <div className={`lightbox-stage ${surface}`} ref={stageRef} onPointerDown={startLight} onPointerMove={event => { if (dragging.current === event.pointerId) moveLight(event) }} onPointerUp={event => { if (dragging.current === event.pointerId) { dragging.current = null; event.currentTarget.releasePointerCapture(event.pointerId) } }} onPointerCancel={() => { dragging.current = null }}>
         <div className="lightbox-stage-grain" aria-hidden="true" />
         <div className="lightbox-light-marker" aria-hidden="true">✦</div>
-        <div className="lightbox-card"><div className="lightbox-card-lighting"><Card card={card} blank={blank} large interactive onZoomChange={setZoom} /></div></div>
+        <div className="lightbox-card"><div className="lightbox-card-lighting"><Card card={card} blank={blank} large interactive effects={lightboxEffects} onZoomChange={setZoom} /></div></div>
         <span className="lightbox-stage-hint">DRAG THE LIGHT · TILT THE CARD</span>
       </div>
       <div className="lightbox-settings" aria-label="Lightbox settings">

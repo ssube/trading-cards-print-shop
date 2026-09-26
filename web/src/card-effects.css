@@ -1,0 +1,2 @@
+.card-effect-layer{position:absolute;inset:0;pointer-events:none;border-radius:inherit}
+.card-effect-shell{z-index:5;transform:translateZ(1px)}
