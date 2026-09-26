@@ -388,7 +388,7 @@ test('deck reward, custom deck, print preset, and progress work', async ({ page 
 test('the offline press shows composition progress and saves a printed card', async ({ page, browser }) => {
   await startDemo(page)
   await expect(page.getByRole('textbox', { name: /Title or theme hint/ })).toBeDisabled()
-  await expect(page.locator('.topbar-right .resource-pill')).toHaveText([/\d+ paper/, /\d+ ink/, /\d+ sleeves/, /\d+ foil/])
+  await expect(page.locator('.topbar-right .resource-pill')).toHaveText([/\d+ paper/, /\d+ ink/, /\d+ foil/, /\d+ sleeves/])
   await page.getByRole('button', { name: /Pull the lever & print/ }).click()
   await expect(page.getByRole('heading', { name: 'Painting the artwork…' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Close inspection' })).toBeVisible({ timeout: 20_000 })
