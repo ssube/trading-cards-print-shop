@@ -12,9 +12,9 @@ test('the published artifact exposes the offline workshop and recent pages', asy
   await expect(page.locator('.sidebar nav').getByRole('button', { name: /Trading Hall/ })).toBeDisabled()
 
   await page.locator('.sidebar nav').getByRole('link', { name: 'Card Library' }).click()
-  await expect(page.locator('.boxed-card')).toHaveCount(3)
+  await expect(page.locator('.boxed-card')).toHaveCount(6)
   await page.getByRole('group', { name: 'Filter cards by type' }).getByRole('button', { name: /SPELL/ }).click()
-  await expect(page.locator('.boxed-card')).toHaveCount(1)
+  await expect(page.locator('.boxed-card')).toHaveCount(2)
   await expect(page).toHaveURL(/#\/library\/type\/spell$/)
   await page.getByRole('group', { name: 'Filter cards by type' }).getByRole('button', { name: /ALL CARDS/ }).click()
   await page.getByRole('button', { name: /Inspect Apprentice Press Cat/ }).first().click()
@@ -53,6 +53,13 @@ test('the published artifact exposes the offline workshop and recent pages', asy
     await page.getByRole('button', { name: 'All games' }).click()
     await page.locator('.game-stub').nth(index).getByRole('button', { name: 'Play ↗' }).click()
     await expect(page.getByRole('heading', { name: heading })).toBeVisible()
+    if (index === 2) {
+      await page.getByRole('button', { name: /Choose 6 from my box/ }).click()
+      await page.getByRole('button', { name: 'Play bot' }).click()
+      await expect(page.locator('.tcg-own-board .tcg-slot')).toHaveCount(5)
+      await page.reload()
+      await expect(page.locator('.tcg-opponent-board .tcg-slot')).toHaveCount(5)
+    }
   }
   await page.locator('.sidebar nav').getByRole('link', { name: 'Print Sheets' }).click()
   await page.locator('.physical-card-choice').first().getByRole('button', { name: /^Add / }).click()

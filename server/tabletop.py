@@ -7,8 +7,8 @@ from . import game
 
 PRACTICE = (
     ("place", "tabletop-opening-hand"),
-    ("flip", "tabletop-counter-keeper"),
-    ("counter", "tabletop-playmaker"),
+    ("attack", "tabletop-counter-keeper"),
+    ("score", "tabletop-playmaker"),
 )
 ALPHABET = string.ascii_uppercase.replace("I", "").replace("O", "") + "23456789"
 

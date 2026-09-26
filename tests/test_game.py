@@ -122,7 +122,7 @@ def test_npc_copy_unlocks_parts_and_commission_consumes(world, monkeypatch):
         npc_reward = game.npc_trade(conn, alice, "fox-copy", card_id)
         fox_copy = npc_reward["copy_id"]
         learned = game.study(conn, alice, fox_copy)
-        assert {"absurd", "sleeved", "echo"} <= set(learned)
+        assert {"absurd", "echo"} <= set(learned)
         claim = game.commission_claim(conn, alice, "first-edition", fox_copy)
         assert claim["paper"] == 3
         assert game.copy_detail(conn, fox_copy)["owner_id"] is None
@@ -217,19 +217,19 @@ def test_collection_progress_counts_designs_once(world):
     alice, bob = world
     with db.connect() as conn:
         initial = game.collection_progress(conn, alice)
-        assert initial["cards"]["collected"] == 3
-        assert initial["cards"]["total"] == 40
+        assert initial["cards"]["collected"] == 5
+        assert initial["cards"]["total"] == 44
         assert initial["foils"]["collected"] == 2
         assert initial["borders"] == {"collected": 1, "total": 3, "percent": 33}
         assert initial["backs"] == {"collected": 1, "total": 3, "percent": 33}
-        assert initial["rules"]["collected"] == 2
+        assert initial["rules"]["collected"] == 5
 
     printed = new_card(alice, "progress-print-123")
     with db.transaction() as conn:
         game.reprint(conn, alice, printed)
         after = game.collection_progress(conn, alice)
-        assert after["cards"] == {"collected": 4, "total": 41, "percent": 10}
-        assert game.collection_progress(conn, bob)["cards"]["collected"] == 3
+        assert after["cards"] == {"collected": 6, "total": 45, "percent": 13}
+        assert game.collection_progress(conn, bob)["cards"]["collected"] == 5
         conn.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (alice, "holo"))
         assert game.collection_progress(conn, alice)["foils"]["collected"] == 3
 
@@ -281,16 +281,16 @@ def test_starter_decks_are_pre_generated_and_unlock_their_parts(world, monkeypat
                                              (starlit, {"npc-starlit-map", "npc-starlit-map-foil"}, ("starlit", "atlas")),
                                              (velvet, {"npc-foil-fox", "npc-foil-fox-standard"}, ("velvet", "mischief"))):
             cards = game.library(conn, user_id)
-            assert len(cards) == 3
-            assert {card["design_id"] for card in cards} == featured_ids | {"starter-paper-sprite"}
+            assert len(cards) == 6
+            assert featured_ids | {"starter-paper-sprite", "starter-recut"} <= {card["design_id"] for card in cards}
             assert sum(card["finish_id"] != "standard" for card in cards) == 1
             assert all((card["border_id"], card["back_id"]) == style for card in cards if card["design_id"] in featured_ids)
             assert any(card["design_id"] == "starter-paper-sprite" for card in cards)
-            assert all(card["art_path"].endswith(".png") for card in cards)
+            assert all(card["art_path"].endswith((".png", ".svg")) for card in cards)
         for deck in game.starter_decks(conn):
             assert sum(card["copies"] for card in deck["cards"] if card["finish_id"] != "standard") == 1
         learned = {row[0] for row in conn.execute("SELECT part_id FROM learned WHERE user_id=?", (velvet,))}
-        assert {"spell", "monster", "absurd", "shimmer", "sleeved", "echo", "velvet", "mischief"} <= learned
+        assert {"spell", "monster", "absurd", "shimmer", "dusk", "echo", "velvet", "mischief"} <= learned
         assert conn.execute("SELECT starter_deck_id FROM users WHERE id=?", (starlit,)).fetchone()[0] == "starlit"
 
 
@@ -450,17 +450,17 @@ def test_custom_decks_match_theme_and_respect_ownership(world):
     with db.transaction() as conn:
         custom_id = decks.create_custom(conn, alice, "  Paper friends  ", "storybook")
         created = next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)
-        assert created["title"] == "Paper friends" and created["filled"] == 2
+        assert created["title"] == "Paper friends" and created["filled"] == 3
         assert created["reward"] is None
         assert [slot["type_id"] for slot in created["slots"]] == ["land", "monster", "spell"]
         assert custom_id not in {deck["id"] for deck in decks.list_decks(conn, bob)}
         land_id = game.mint_copy(conn, "npc-borrowed-dawn", alice, quality_override=88)
-        assert next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)["filled"] == 2
+        assert next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)["filled"] == 3
         design = conn.execute("SELECT * FROM designs WHERE id='npc-borrowed-dawn'").fetchone()
         conn.execute("UPDATE designs SET theme_id='storybook' WHERE id=?", (design["id"],))
         assert next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)["filled"] == 3
         conn.execute("UPDATE copies SET owner_id=? WHERE id=?", (bob, land_id))
-        assert next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)["filled"] == 2
+        assert next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)["filled"] == 3
         decks.update_custom(conn, alice, custom_id, "New title", "celestial")
         assert next(deck for deck in decks.list_decks(conn, alice) if deck["id"] == custom_id)["title"] == "New title"
         with pytest.raises(game.GameError):

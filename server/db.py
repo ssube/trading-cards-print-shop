@@ -33,7 +33,7 @@ def transaction():
 def init():
     with transaction() as db:
         version = db.execute("PRAGMA user_version").fetchone()[0]
-        if version >= 12:
+        if version >= 13:
             return
         if version == 0:
             db.executescript("""
@@ -127,3 +127,7 @@ def init():
             db.execute("ALTER TABLE designs ADD COLUMN back_finish_id TEXT")
             db.execute("UPDATE designs SET back_finish_id='shimmer' WHERE back_id='mischief'")
             db.execute("PRAGMA user_version=12")
+        if version <= 12:
+            from . import tcg
+            tcg.init_tables(db)
+            db.execute("PRAGMA user_version=13")

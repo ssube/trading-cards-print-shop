@@ -20,7 +20,7 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
             decks = (await client.get("/api/starter-decks")).json()
             assert {deck["id"] for deck in decks} == {"pressroom", "starlit", "velvet"}
             assert all(all(card["border_id"] and card["back_id"] for card in deck["cards"]) for deck in decks)
-            assert all(sum(card["copies"] for card in deck["cards"]) == 3 for deck in decks)
+            assert all(sum(card["copies"] for card in deck["cards"]) == 6 for deck in decks)
             assert all(sum(card["copies"] for card in deck["cards"] if card["finish_id"] != "standard") == 1 for deck in decks)
             assert (await client.post("/api/auth/register", json={"username": "invalid", "password": "long-password-123",
                                                                    "starter_deck_id": "unknown"})).status_code == 400
@@ -54,12 +54,12 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
                 assert shared["exact_grade_visible"] is False
                 assert (await guest.get("/api/public/cards/unknown-copy")).status_code == 404
             library = (await client.get("/api/state")).json()["library"]
-            assert len(library) == 4
+            assert len(library) == 7
             assert {card["design_id"] for card in library} >= {"npc-starlit-map", "starter-paper-sprite"}
             assert any(card["border_id"] == "starlit" and card["back_id"] == "atlas" for card in library)
             assert all(card["art_path"].startswith("/assets/") for card in library)
             progress = (await client.get("/api/state")).json()["collection_progress"]
-            assert progress["cards"] == {"collected": 4, "total": 41, "percent": 10}
+            assert progress["cards"] == {"collected": 6, "total": 45, "percent": 13}
             deck_list = (await client.get("/api/decks")).json()
             assert len(deck_list) == 10
             assert next(deck for deck in deck_list if deck["id"] == "starlit")["filled"] == 3
@@ -101,13 +101,47 @@ def test_minigame_routes_and_private_table(tmp_path, monkeypatch):
             practice = await alice.post("/api/tabletop/practice", headers=ah, json={"action": "place", "copy_id": cards_a[0]})
             assert practice.status_code == 200
             assert practice.json()["practice"]["step"] == 1
-            room = await alice.post("/api/tabletop/rooms", headers=ah, json={"copy_ids": cards_a})
+            room = await alice.post("/api/tabletop/rooms", headers=ah, json={"copy_ids": cards_a[:3]})
             assert room.status_code == 200
             code = room.json()["code"]
             assert (await bob.get(f"/api/tabletop/rooms/{code}")).status_code == 403
-            joined = await bob.post(f"/api/tabletop/rooms/{code}/join", headers=bh, json={"copy_ids": cards_b})
+            joined = await bob.post(f"/api/tabletop/rooms/{code}/join", headers=bh, json={"copy_ids": cards_b[:3]})
             assert joined.status_code == 200
             assert all(card["copy_id"] is None for card in joined.json()["cards"] if card["user_id"] == a["id"])
             assert (await alice.post(f"/api/tabletop/rooms/{code}/actions", json={"expected_revision": 1, "action": "pass"})).status_code == 403
             assert (await alice.post(f"/api/tabletop/rooms/{code}/actions", headers=ah, json={"expected_revision": 1, "action": "pass"})).status_code == 200
+    asyncio.run(scenario())
+
+
+def test_tcg_multiplayer_routes_enforce_privacy_and_turns(tmp_path, monkeypatch):
+    monkeypatch.setattr(db, "DB_PATH", tmp_path / "tcg-api.sqlite3")
+    monkeypatch.setattr(providers, "ASSETS", tmp_path / "assets")
+    db.init()
+    game.seed()
+
+    async def scenario():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as alice, \
+                   httpx.AsyncClient(transport=transport, base_url="http://test") as bob:
+            a = (await alice.post("/api/auth/register", json={"username": "tcg_web_alice", "password": "long-password-123", "starter_deck_id": "pressroom"})).json()
+            b = (await bob.post("/api/auth/register", json={"username": "tcg_web_bob", "password": "long-password-123", "starter_deck_id": "starlit"})).json()
+            ac = [card["id"] for card in (await alice.get("/api/state")).json()["library"]]
+            bc = [card["id"] for card in (await bob.get("/api/state")).json()["library"]]
+            created = await alice.post("/api/tcg/matches", json={"copy_ids": ac, "format": "starter"}, headers={"X-CSRF-Token": a["csrf"]})
+            assert created.status_code == 200
+            code = created.json()["code"]
+            assert (await bob.get(f"/api/tcg/matches/{code}")).status_code == 403
+            joined = await bob.post(f"/api/tcg/matches/{code}/join", json={"copy_ids": bc}, headers={"X-CSRF-Token": b["csrf"]})
+            assert joined.status_code == 200
+            view = (await alice.get(f"/api/tcg/matches/{code}")).json()
+            assert view["goal"] == 5 and view["players"][1]["hand_count"] == 3
+            assert view["players"][1]["cards"] == []
+            card = next(item for item in view["players"][0]["cards"] if item["zone"] == "hand")
+            payload = {"expected_revision": view["revision"], "action": "place", "copy_id": card["id"], "slot": 0}
+            assert (await alice.post(f"/api/tcg/matches/{code}/actions", json=payload)).status_code == 403
+            placed = await alice.post(f"/api/tcg/matches/{code}/actions", json=payload, headers={"X-CSRF-Token": a["csrf"]})
+            assert placed.status_code == 200
+            opponent = (await bob.get(f"/api/tcg/matches/{code}")).json()
+            assert opponent["players"][0]["cards"][0]["name"] == card["name"]
+            assert opponent["players"][0]["hand_count"] > 0
     asyncio.run(scenario())

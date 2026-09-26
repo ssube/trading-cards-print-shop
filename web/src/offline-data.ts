@@ -3,9 +3,8 @@ import type { Part, StarterDeck } from './types'
 type Design = Omit<StarterDeck['cards'][number], 'copies'>
 
 const rules = [
-  ['arrival', 'On arrival', 'When this enters play', 1, 'trigger'],
+  ['arrival', 'On arrival', 'When a card enters play or a Spell activates', 1, 'trigger'],
   ['dusk', 'At dusk', 'At the end of a turn', 1, 'trigger'],
-  ['sleeved', 'While protected', 'While this card is protected', 1, 'trigger'],
   ['if_land', 'If you control a land', 'If you control a land', 1, 'condition'],
   ['draw', 'Draw a card', 'Draw one card', 2, 'effect'],
   ['grow', 'Gain a spark', 'Gain one spark', 2, 'effect'],
@@ -14,9 +13,10 @@ const rules = [
   ['on_draw', 'When you draw', 'When you draw a card', 1, 'trigger'],
   ['if_monster', 'If you control a Monster', 'If you control a Monster', 1, 'condition'],
   ['if_spell', 'If you played a Spell', 'If you played a Spell this turn', 1, 'condition'],
-  ['mend', 'Restore a spark', 'Restore one spark to a chosen card', 2, 'effect'],
+  ['mend', 'Mend a card', 'Restore one guard to your most damaged card', 2, 'effect'],
   ['glimpse', 'Glimpse ahead', 'Look at the next card in your deck', 2, 'effect'],
-  ['return', 'Return a card', "Return a card to its owner's hand", 2, 'effect'],
+  ['return', 'Return a card', "Return an opposing card in this lane to its owner's hand", 2, 'effect'],
+  ['shuffle', 'Recut the deck', 'Shuffle your discard pile into your deck', 2, 'effect'],
 ] as const
 
 const others = [
@@ -75,6 +75,7 @@ function art(id: string) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560"><rect width="400" height="560" fill="#213a36"/><circle cx="200" cy="220" r="140" fill="${hue}" opacity=".2"/><path d="M100 420V200l45-70 50 40 60-40 45 70v220Z" fill="${hue}" stroke="#f8eac5" stroke-width="7"/><circle cx="165" cy="245" r="9" fill="#25342f"/><circle cx="235" cy="245" r="9" fill="#25342f"/><path d="M185 286q15 20 30 0M65 440h270v60H65z" fill="none" stroke="#25342f" stroke-width="9"/><path d="M75 445h250v55H75z" fill="#efe5c8"/><path d="M140 470h120" stroke="#a89574" stroke-width="5"/></svg>`
     return `data:image/svg+xml,${encodeURIComponent(svg)}`
   }
+  if (['starter-recut', 'starter-press-land', 'starter-atlas-owl', 'starter-velvet-stage'].includes(id)) return new URL(`demo-art/${id}.svg`, document.baseURI).href
   return new URL(`demo-art/${id}.png`, document.baseURI).href
 }
 
@@ -85,11 +86,15 @@ function design(id: string, name: string, flavor: string, type_id: string, rule_
 export function offlineDesigns(): Design[] {
   const cat = design('starter-press-cat', 'Apprentice Press Cat', 'He insists every proof needs one more paw print.', 'monster', ['arrival', 'draw'], 'storybook')
   const map = design('npc-starlit-map', 'The Map of Unfinished Constellations', "A place for every star, except the one you're looking for.", 'land', ['dusk', 'grow'], 'celestial', 'standard', 'starlit', 'atlas')
-  const fox = design('npc-foil-fox', 'The Foil Fox', 'The trick was never the shine. It was where you looked.', 'monster', ['sleeved', 'echo'], 'absurd', 'shimmer', 'velvet', 'mischief')
+  const fox = design('npc-foil-fox', 'The Foil Fox', 'The trick was never the shine. It was where you looked.', 'monster', ['dusk', 'echo'], 'absurd', 'shimmer', 'velvet', 'mischief')
   return [
     cat,
     { ...cat, id: 'starter-press-cat-foil', finish_id: 'shimmer' },
     design('starter-paper-sprite', "Paper Sprite's First Drop", 'Every great edition begins with a borrowed drop.', 'spell', ['arrival', 'draw'], 'storybook'),
+    design('starter-recut', 'The Recut', 'Even a perfect sequence benefits from one more shuffle.', 'spell', ['arrival', 'shuffle'], 'storybook'),
+    design('starter-press-land', 'The Corner Press', 'The whole workshop starts here.', 'land', ['dusk', 'grow'], 'storybook'),
+    design('starter-atlas-owl', 'The Atlas Owl', 'Its margins are full of directions home.', 'monster', ['arrival', 'glimpse'], 'celestial'),
+    design('starter-velvet-stage', 'The Velvet Stage', 'Every reveal deserves a curtain.', 'land', ['dusk', 'mend'], 'absurd'),
     map,
     { ...map, id: 'npc-starlit-map-foil', finish_id: 'shimmer' },
     fox,
@@ -100,7 +105,7 @@ export function offlineDesigns(): Design[] {
     design('npc-tideglass-portal', 'The Tideglass Portal', 'Every shore has a door that the tide remembers.', 'spell', ['arrival', 'if_spell', 'return'], 'maritime', 'standard', 'starlit', 'atlas'),
     design('mill-apprentice', 'The Pulp Apprentice', 'Her first proof has only three paw prints.', 'monster', ['arrival', 'draw'], 'storybook'),
     design('mill-roller', 'The Moonlit Roller', 'All night it turns; by morning, every page is softer.', 'land', ['dusk', 'grow'], 'clockwork', 'shimmer'),
-    design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['sleeved', 'echo'], 'storybook'),
+    design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['dusk', 'echo'], 'storybook'),
     design('fish-lanternfin', 'Lanternfin', 'Its light arrives a moment before the fish does.', 'monster', ['arrival', 'glimpse'], 'maritime'),
     design('fish-inkscale', 'Inkscale', 'Every ripple writes a new sentence.', 'monster', ['on_draw', 'draw'], 'maritime', 'shimmer'),
     design('fish-moonkoi', 'Moon Koi', 'The pond insists the moon is one of its fish.', 'monster', ['dusk', 'grow'], 'maritime'),
@@ -120,10 +125,10 @@ export function offlineDesigns(): Design[] {
     { ...design('npc-tideglass-portal', 'The Tideglass Portal', 'Every shore has a door that the tide remembers.', 'spell', ['arrival', 'if_spell', 'return'], 'maritime', 'standard', 'starlit', 'atlas'), id: 'npc-tideglass-portal-aurora', finish_id: 'aurora' },
     { ...design('demon-ashwarden', "Ashwarden's Gate", "Its hinges were cast from yesterday's excuses.", 'land', ['dusk', 'mend'], 'infernal', 'shimmer'), id: 'demon-ashwarden-spooky', finish_id: 'spooky' },
     { ...design('npc-borrowed-dawn', 'The Orchard of Borrowed Dawn', 'The fruit ripens only when someone needs another morning.', 'land', ['dawn', 'if_land', 'mend'], 'botanical'), id: 'npc-borrowed-dawn-pumpkin', finish_id: 'pumpkin' },
-    { ...design('npc-foil-fox', 'The Foil Fox', 'The trick was never the shine. It was where you looked.', 'monster', ['sleeved', 'echo'], 'absurd', 'shimmer', 'velvet', 'mischief'), id: 'npc-foil-fox-crashout', finish_id: 'crashout' },
+    { ...design('npc-foil-fox', 'The Foil Fox', 'The trick was never the shine. It was where you looked.', 'monster', ['dusk', 'echo'], 'absurd', 'shimmer', 'velvet', 'mischief'), id: 'npc-foil-fox-crashout', finish_id: 'crashout' },
     { ...design('npc-borrowed-dawn', 'The Orchard of Borrowed Dawn', 'The fruit ripens only when someone needs another morning.', 'land', ['dawn', 'if_land', 'mend'], 'botanical'), id: 'reward-borrowed-dawn-holo', finish_id: 'holo' },
     { ...design('npc-clockwork-heron', 'The Clockwork Heron', "It remembers tomorrow's stars better than yesterday's roads.", 'monster', ['on_draw', 'if_monster', 'glimpse'], 'clockwork', 'shimmer', 'starlit', 'atlas'), id: 'reward-clockwork-heron-holo', finish_id: 'holo' },
-    { ...design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['sleeved', 'echo'], 'storybook'), id: 'reward-mill-master-holo', finish_id: 'holo' },
+    { ...design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['dusk', 'echo'], 'storybook'), id: 'reward-mill-master-holo', finish_id: 'holo' },
     { ...design('fish-moonkoi', 'Moon Koi', 'The pond insists the moon is one of its fish.', 'monster', ['dusk', 'grow'], 'maritime'), id: 'reward-moonkoi-holo', finish_id: 'holo' },
     { ...design('demon-pressfiend', "The Pressfiend's Bargain", 'Read the fine print. Then read it again.', 'spell', ['arrival', 'return'], 'infernal'), id: 'reward-pressfiend-holo', finish_id: 'holo' },
     { ...design('tabletop-playmaker', "The Playmaker's Table", 'Its oldest rule is to make room for another player.', 'land', ['dusk', 'mend'], 'storybook'), id: 'reward-playmaker-holo', finish_id: 'holo' },
@@ -134,9 +139,9 @@ export function offlineStarterDecks(): StarterDeck[] {
   const designs = new Map(offlineDesigns().map(item => [item.id, item]))
   const cards = (...ids: string[]) => ids.map(id => ({ ...designs.get(id)!, copies: 1 }))
   return [
-    { id: 'pressroom', name: 'The Pressroom Parade', theme: 'Storybook workshop', accent: 'amber', description: 'A cheerful crew of paper and ink learns the craft one impression at a time.', featured: 'starter-press-cat', cards: cards('starter-press-cat', 'starter-press-cat-foil', 'starter-paper-sprite') },
-    { id: 'starlit', name: 'The Starlit Atlas', theme: 'Celestial cartography', accent: 'blue', description: 'Follow unfinished constellations and print places that should not fit on a map.', featured: 'npc-starlit-map', cards: cards('npc-starlit-map', 'npc-starlit-map-foil', 'starter-paper-sprite') },
-    { id: 'velvet', name: 'The Velvet Mischief', theme: 'Absurdist foil', accent: 'rose', description: 'A sly fox proves that a little mischief looks even better under foil.', featured: 'npc-foil-fox', cards: cards('npc-foil-fox', 'npc-foil-fox-standard', 'starter-paper-sprite') },
+    { id: 'pressroom', name: 'The Pressroom Parade', theme: 'Storybook workshop', accent: 'amber', description: 'A cheerful crew of paper and ink learns the craft one impression at a time.', featured: 'starter-press-cat', cards: cards('starter-press-cat', 'starter-press-cat', 'starter-press-cat-foil', 'starter-paper-sprite', 'starter-press-land', 'starter-recut') },
+    { id: 'starlit', name: 'The Starlit Atlas', theme: 'Celestial cartography', accent: 'blue', description: 'Follow unfinished constellations and print places that should not fit on a map.', featured: 'npc-starlit-map', cards: cards('npc-starlit-map', 'npc-starlit-map', 'npc-starlit-map-foil', 'starter-paper-sprite', 'starter-atlas-owl', 'starter-recut') },
+    { id: 'velvet', name: 'The Velvet Mischief', theme: 'Absurdist foil', accent: 'rose', description: 'A sly fox proves that a little mischief looks even better under foil.', featured: 'npc-foil-fox', cards: cards('npc-foil-fox', 'npc-foil-fox-standard', 'npc-foil-fox-standard', 'starter-paper-sprite', 'starter-velvet-stage', 'starter-recut') },
   ]
 }
 

@@ -3,6 +3,7 @@ import { printCost } from './print-cost'
 import { discoveryIds, offlineCatalog, offlineDesigns, offlineStarterDecks } from './offline-data'
 import { curatedDecks, offlineDeckList, validateCustomDeck } from './offline-decks'
 import type { SavedCustomDeck } from './offline-decks'
+import { actLocalMatch, createLocalMatch, tickLocalMatch, viewLocalMatch, type LocalMatch } from './tcg-offline'
 import type { CardCopy, CollectionProgress, Part, State, User } from './types'
 
 const STORAGE_KEY = 'cards-the-printing.offline-demo.v1'
@@ -28,6 +29,9 @@ type Save = {
   fishing_casts?: { id: string; day: string; created_at: string; target_ms: number; tolerance_ms: number; prize_kind: 'card' | 'resource'; prize_value: string; resolved_at: string | null; success: boolean | null; reward: { resources?: Record<string, number>; card?: { design_id: string; copy_id: string } } }[]
   shooter_runs?: { id: string; day: string; boss_id: string; started_at: string; kill_mask: number; boss_claimed: boolean; last_kill_at: string | null }[]
   tabletop_practice?: { step: number; copy_id: string | null }
+  starter_tcg_upgrade?: boolean
+  tcg_matches?: LocalMatch[]
+  tcg_rewards?: { code: string; day: string; copy_id: string | null }[]
 }
 
 function today() { return new Date().toISOString().slice(0, 10) }
@@ -46,7 +50,24 @@ function load(): Save | null {
   try {
     const save = JSON.parse(raw) as Save
     if (save.version !== 1 || !Array.isArray(save.library) || !Array.isArray(save.learned) || !save.resources || !save.jobs || !offlineStarterDecks().some(deck => deck.id === save.starter_deck_id)) throw new Error('Invalid save')
-    for (const card of save.library) card.back_finish_id ??= card.back_id === 'mischief' ? 'shimmer' : null
+    for (const card of save.library) {
+      card.back_finish_id ??= card.back_id === 'mischief' ? 'shimmer' : null
+      card.rule_ids = card.rule_ids.map(rule => rule === 'sleeved' ? 'dusk' : card.type_id === 'spell' && ['dusk', 'dawn', 'on_draw'].includes(rule) ? 'arrival' : rule)
+      card.rule_names = card.rule_ids.map(rule => offlineCatalog.find(part => part.id === rule)?.name || rule)
+      card.rule_text = card.rule_ids.map(rule => offlineCatalog.find(part => part.id === rule)?.description || rule)
+    }
+    if (!save.starter_tcg_upgrade) {
+      const extras: Record<string, string[]> = { pressroom: ['starter-press-cat', 'starter-press-land', 'starter-recut'], starlit: ['npc-starlit-map', 'starter-atlas-owl', 'starter-recut'], velvet: ['npc-foil-fox-standard', 'starter-velvet-stage', 'starter-recut'] }
+      const designs = new Map(offlineDesigns().map(design => [design.id, design]))
+      for (const designId of extras[save.starter_deck_id] || []) {
+        const design = designs.get(designId)!
+        const copy = copyOf({ ...design, design_id: design.id }, 88, 'starter_tcg_upgrade')
+        save.library.push(copy)
+        for (const part of [copy.type_id, copy.theme_id, copy.finish_id, copy.border_id, copy.back_id, ...copy.rule_ids]) if (!save.learned.includes(part)) save.learned.push(part)
+      }
+      save.starter_tcg_upgrade = true
+      persist(save)
+    }
     return save
   } catch { return fail('The offline collection could not be loaded. Its saved data may be damaged.') }
 }
@@ -168,6 +189,7 @@ function print(save: Save, body: unknown, requestKey: string) {
   for (const [partId, kind] of choices) if (parts.get(partId)?.kind !== kind || !save.learned.includes(partId)) fail(`You have not learned ${partId}`)
   const slots = recipe.rule_ids.map(rule => parts.get(rule)!.slot)
   if (slots.filter(slot => slot === 'trigger').length !== 1 || slots.filter(slot => slot === 'effect').length !== 1 || slots.filter(slot => slot === 'condition').length > 1) fail('Choose one trigger, one effect, and at most one condition')
+  if (recipe.type_id === 'spell' && !recipe.rule_ids.includes('arrival')) fail('Spells use the On arrival trigger')
   if (recipe.rule_ids.reduce((power, rule) => power + parts.get(rule)!.power, 0) > 5) fail('The card exceeds its power limit')
   if (save.generation_day !== today()) { save.generation_day = today(); save.generation_count = 0 }
   if (save.generation_count >= 5) fail('Daily design limit reached')
@@ -245,8 +267,8 @@ export function resetOfflineDemo() {
 
 const practiceRewards = [
   { action: 'place', design_id: 'tabletop-opening-hand' },
-  { action: 'flip', design_id: 'tabletop-counter-keeper' },
-  { action: 'counter', design_id: 'tabletop-playmaker' },
+  { action: 'attack', design_id: 'tabletop-counter-keeper' },
+  { action: 'score', design_id: 'tabletop-playmaker' },
 ]
 function practiceStatus(save: Save) {
   const practice = save.tabletop_practice || { step: 0, copy_id: null }
@@ -410,6 +432,31 @@ function millAction(save: Save, action: string) {
   return { ...millState(save), card_id: null }
 }
 
+function awardTcg(save: Save, match: LocalMatch) {
+  if (match.status !== 'finished' || Object.keys(match.rewards).length) return
+  const day = today()
+  const claims = save.tcg_rewards || []
+  const used = claims.filter(item => item.day === day).length
+  const reward: { resources: Record<string, number>; copy_id: string | null; design_id?: string } = { resources: {}, copy_id: null }
+  if (used < 3) {
+    const sparks = match.players[0].sparks
+    const paper = Math.max(1, 1 + Math.min(3, Math.floor(sparks / 2)) - 1)
+    const ink = Math.max(0, Math.min(3, Math.floor(sparks / 3)) + Number(match.winner === 0) - 1)
+    reward.resources = { paper, ink }
+    save.resources.paper = (save.resources.paper || 0) + paper
+    save.resources.ink = (save.resources.ink || 0) + ink
+    if (match.winner === 0 && !claims.some(item => item.day === day && item.copy_id) && Math.random() * 100 < Math.min(65, 10 + 5 * sparks)) {
+      const pool = ['tabletop-opening-hand', 'tabletop-counter-keeper', 'tabletop-playmaker', 'fish-lanternfin', 'mill-roller']
+      const designId = pool[Math.floor(Math.random() * pool.length)]
+      const design = offlineDesigns().find(item => item.id === designId)!
+      const copy = copyOf({ ...design, design_id: design.id }, 88, `tcg:${match.code}`)
+      save.library.push(copy); reward.copy_id = copy.id; reward.design_id = designId
+    }
+  }
+  save.tcg_rewards = [...claims, { code: match.code, day, copy_id: reward.copy_id }]
+  match.rewards['0'] = reward
+}
+
 export async function offlineApi<T>(path: string, method = 'GET', body?: unknown, extra?: Record<string, string>): Promise<T> {
   if (path === '/starter-decks' && method === 'GET') return offlineStarterDecks() as T
   if (path === '/auth/register' && method === 'POST') {
@@ -418,7 +465,7 @@ export async function offlineApi<T>(path: string, method = 'GET', body?: unknown
     const deck = offlineStarterDecks().find(item => item.id === deckId) || fail('Choose a starter deck to begin')
     const library = deck.cards.flatMap(item => Array.from({ length: item.copies }, () => copyOf({ ...item, design_id: item.id }, 88)))
     const learned = [...new Set(library.flatMap(item => [item.type_id, item.theme_id, item.finish_id, item.border_id, item.back_id, ...item.rule_ids]))]
-    const save: Save = { version: 1, starter_deck_id: deck.id, resources: { paper: 8, ink: 8, sleeve: 1, foil: 0 }, learned, library, generation_day: today(), generation_count: 0, allowance_day: null, jobs: {} }
+    const save: Save = { version: 1, starter_deck_id: deck.id, resources: { paper: 8, ink: 8, sleeve: 1, foil: 0 }, learned, library, generation_day: today(), generation_count: 0, allowance_day: null, jobs: {}, starter_tcg_upgrade: true }
     persist(save)
     return { ...PROFILE, starter_deck_id: deck.id } as T
   }
@@ -429,6 +476,26 @@ export async function offlineApi<T>(path: string, method = 'GET', body?: unknown
     return state(save) as T
   }
   if (path === '/market' && method === 'GET') return [] as T
+  if (path === '/tcg/matches' && method === 'GET') return mutate(current => (current.tcg_matches || []).slice(-8).reverse().map(match => { tickLocalMatch(match); awardTcg(current, match); return viewLocalMatch(match) })) as T
+  if (path === '/tcg/matches' && method === 'POST') return mutate(current => {
+    const request = body as { copy_ids?: string[]; format?: string; bot?: boolean }
+    if (!request?.bot) fail('Online rooms are unavailable in the offline demo')
+    const match = createLocalMatch(current.library, request.copy_ids || [], request.format || 'starter', id().slice(0, 6).toUpperCase())
+    current.tcg_matches = [...(current.tcg_matches || []), match].slice(-30)
+    return viewLocalMatch(match)
+  }) as T
+  const tcgMatch = path.match(/^\/tcg\/matches\/([A-Z0-9]+)(?:\/(join|actions))?$/)
+  if (tcgMatch && method === 'POST' && tcgMatch[2] === 'join') fail('Online rooms are unavailable in the offline demo')
+  if (tcgMatch && method === 'GET') return mutate(current => {
+    const match = (current.tcg_matches || []).find(item => item.code === tcgMatch[1]) || fail('Match not found')
+    tickLocalMatch(match); awardTcg(current, match); return viewLocalMatch(match)
+  }) as T
+  if (tcgMatch && method === 'POST' && tcgMatch[2] === 'actions') return mutate(current => {
+    const match = (current.tcg_matches || []).find(item => item.code === tcgMatch[1]) || fail('Match not found')
+    const request = body as { expected_revision: number; action: string; copy_id?: string; slot?: number }
+    actLocalMatch(match, request.expected_revision, request.action, request.copy_id, request.slot)
+    awardTcg(current, match); return viewLocalMatch(match)
+  }) as T
   if (path === '/tabletop/practice' && method === 'GET') return practiceStatus(save) as T
   if (path === '/tabletop/practice' && method === 'POST') return mutate(current => practiceAction(current, body)) as T
   if (path === '/games/shooter' && method === 'GET') return shooterStatus(save) as T

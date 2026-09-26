@@ -20,12 +20,12 @@ def test_practice_has_ordered_one_time_card_rewards(players):
     alice, _, cards, _ = players
     with db.transaction() as conn:
         with pytest.raises(game.GameError):
-            tabletop.practice_action(conn, alice, "flip")
+            tabletop.practice_action(conn, alice, "attack")
         assert tabletop.practice_action(conn, alice, "place", cards[0])["practice"]["step"] == 1
-        assert tabletop.practice_action(conn, alice, "flip")["practice"]["step"] == 2
-        assert tabletop.practice_action(conn, alice, "counter")["practice"]["step"] == 3
+        assert tabletop.practice_action(conn, alice, "attack")["practice"]["step"] == 2
+        assert tabletop.practice_action(conn, alice, "score")["practice"]["step"] == 3
         with pytest.raises(game.GameError):
-            tabletop.practice_action(conn, alice, "counter")
+            tabletop.practice_action(conn, alice, "score")
         assert conn.execute("SELECT count(*) FROM copies WHERE owner_id=? AND design_id LIKE 'tabletop-%'", (alice,)).fetchone()[0] == 3
 
 

@@ -45,9 +45,8 @@ PARTS = [
     ("land", "type", "Land", "A place with a stubborn opinion.", 0),
     ("monster", "type", "Monster", "A creature ready for a future battle.", 0),
     ("spell", "type", "Spell", "A moment of concentrated mischief.", 0),
-    ("arrival", "rule", "On arrival", "When this enters play", 1),
+    ("arrival", "rule", "On arrival", "When a card enters play or a Spell activates", 1),
     ("dusk", "rule", "At dusk", "At the end of a turn", 1),
-    ("sleeved", "rule", "While protected", "While this card is protected", 1),
     ("if_land", "rule", "If you control a land", "If you control a land", 1),
     ("draw", "rule", "Draw a card", "Draw one card", 2),
     ("grow", "rule", "Gain a spark", "Gain one spark", 2),
@@ -56,9 +55,10 @@ PARTS = [
     ("on_draw", "rule", "When you draw", "When you draw a card", 1),
     ("if_monster", "rule", "If you control a Monster", "If you control a Monster", 1),
     ("if_spell", "rule", "If you played a Spell", "If you played a Spell this turn", 1),
-    ("mend", "rule", "Restore a spark", "Restore one spark to a chosen card", 2),
+    ("mend", "rule", "Mend a card", "Restore one guard to your most damaged card", 2),
     ("glimpse", "rule", "Glimpse ahead", "Look at the next card in your deck", 2),
-    ("return", "rule", "Return a card", "Return a card to its owner's hand", 2),
+    ("return", "rule", "Return a card", "Return an opposing card in this lane to its owner's hand", 2),
+    ("shuffle", "rule", "Recut the deck", "Shuffle your discard pile into your deck", 2),
     ("storybook", "theme", "Storybook", "Painterly magic and gentle oddities.", 0),
     ("celestial", "theme", "Celestial", "Stars, instruments, and impossible skies.", 0),
     ("absurd", "theme", "Absurdist", "A very serious illustration of a silly idea.", 0),
@@ -88,17 +88,17 @@ STARTER_DECKS = {
     "pressroom": {
         "name": "The Pressroom Parade", "theme": "Storybook workshop", "accent": "amber",
         "description": "A cheerful crew of paper and ink learns the craft one impression at a time.",
-        "featured": "starter-press-cat", "cards": {"starter-press-cat": 1, "starter-press-cat-foil": 1, "starter-paper-sprite": 1},
+        "featured": "starter-press-cat", "cards": {"starter-press-cat": 2, "starter-press-cat-foil": 1, "starter-paper-sprite": 1, "starter-press-land": 1, "starter-recut": 1},
     },
     "starlit": {
         "name": "The Starlit Atlas", "theme": "Celestial cartography", "accent": "blue",
         "description": "Follow unfinished constellations and print places that should not fit on a map.",
-        "featured": "npc-starlit-map", "cards": {"npc-starlit-map": 1, "npc-starlit-map-foil": 1, "starter-paper-sprite": 1},
+        "featured": "npc-starlit-map", "cards": {"npc-starlit-map": 2, "npc-starlit-map-foil": 1, "starter-paper-sprite": 1, "starter-atlas-owl": 1, "starter-recut": 1},
     },
     "velvet": {
         "name": "The Velvet Mischief", "theme": "Absurdist foil", "accent": "rose",
         "description": "A sly fox proves that a little mischief looks even better under foil.",
-        "featured": "npc-foil-fox", "cards": {"npc-foil-fox": 1, "npc-foil-fox-standard": 1, "starter-paper-sprite": 1},
+        "featured": "npc-foil-fox", "cards": {"npc-foil-fox": 1, "npc-foil-fox-standard": 2, "starter-paper-sprite": 1, "starter-velvet-stage": 1, "starter-recut": 1},
     },
 }
 RESOURCE_KINDS = {"paper", "ink", "sleeve", "foil"}
@@ -109,10 +109,10 @@ DESIGN_STYLES = {"npc-starlit-map": ("starlit", "atlas"),
                  "npc-sunlit-note": ("starlit", "atlas"),
                  "npc-clockwork-heron": ("starlit", "atlas"),
                  "npc-tideglass-portal": ("starlit", "atlas")}
-RULE_SLOTS = {"arrival": "trigger", "dusk": "trigger", "sleeved": "trigger", "if_land": "condition",
+RULE_SLOTS = {"arrival": "trigger", "dusk": "trigger", "if_land": "condition",
               "draw": "effect", "grow": "effect", "echo": "effect", "dawn": "trigger",
               "on_draw": "trigger", "if_monster": "condition", "if_spell": "condition",
-              "mend": "effect", "glimpse": "effect", "return": "effect"}
+              "mend": "effect", "glimpse": "effect", "return": "effect", "shuffle": "effect"}
 
 
 def seed():
@@ -129,6 +129,12 @@ def seed():
             else:
                 db.execute("INSERT OR IGNORE INTO learned(user_id,part_id) "
                            "SELECT id,? FROM users WHERE starter_deck_id=?", (part_id, deck_id))
+        db.execute("UPDATE parts SET active=0 WHERE id='sleeved'")
+        for part_id, description in (("arrival", "When a card enters play or a Spell activates"),
+                                     ("mend", "Restore one guard to your most damaged card"),
+                                     ("return", "Return an opposing card in this lane to its owner's hand")):
+            db.execute("UPDATE parts SET description=? WHERE id=?", (description, part_id))
+        db.execute("INSERT OR IGNORE INTO learned(user_id,part_id) SELECT user_id,'dusk' FROM learned WHERE part_id='sleeved'")
         for part_id, slot in RULE_SLOTS.items():
             db.execute("UPDATE parts SET slot=? WHERE id=?", (slot, part_id))
         for part_id, foil in FINISH_COST.items():
@@ -143,10 +149,18 @@ def seed():
              "monster", ["arrival", "draw"], "storybook", "standard"),
             ("starter-paper-sprite", "Paper Sprite's First Drop", "Every great edition begins with a borrowed drop.",
              "spell", ["arrival", "draw"], "storybook", "standard"),
+            ("starter-recut", "The Recut", "Even a perfect sequence benefits from one more shuffle.",
+             "spell", ["arrival", "shuffle"], "storybook", "standard"),
+            ("starter-press-land", "The Corner Press", "The whole workshop starts here.",
+             "land", ["dusk", "grow"], "storybook", "standard"),
+            ("starter-atlas-owl", "The Atlas Owl", "Its margins are full of directions home.",
+             "monster", ["arrival", "glimpse"], "celestial", "standard"),
+            ("starter-velvet-stage", "The Velvet Stage", "Every reveal deserves a curtain.",
+             "land", ["dusk", "mend"], "absurd", "standard"),
             ("npc-starlit-map", "The Map of Unfinished Constellations", "A place for every star, except the one you're looking for.",
              "land", ["dusk", "grow"], "celestial", "standard"),
             ("npc-foil-fox", "The Foil Fox", "The trick was never the shine. It was where you looked.",
-             "monster", ["sleeved", "echo"], "absurd", "shimmer"),
+             "monster", ["dusk", "echo"], "absurd", "shimmer"),
             ("npc-sunlit-note", "A Note from the Sun", "Please return the moon by Thursday.",
              "spell", ["arrival", "draw"], "celestial", "holo"),
             ("npc-borrowed-dawn", "The Orchard of Borrowed Dawn", "The fruit ripens only when someone needs another morning.",
@@ -160,7 +174,7 @@ def seed():
             ("mill-roller", "The Moonlit Roller", "All night it turns; by morning, every page is softer.",
              "land", ["dusk", "grow"], "clockwork", "shimmer"),
             ("mill-master", "Master of the Midnight Mill", "A spotless apron is the surest sign of management.",
-             "monster", ["sleeved", "echo"], "storybook", "standard"),
+             "monster", ["dusk", "echo"], "storybook", "standard"),
             ("fish-lanternfin", "Lanternfin", "Its light arrives a moment before the fish does.",
              "monster", ["arrival", "glimpse"], "maritime", "standard"),
             ("fish-inkscale", "Inkscale", "Every ripple writes a new sentence.",
@@ -220,8 +234,30 @@ def seed():
                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                        (f"{base_id}-{finish}", None, base["type_id"], base["rule_ids"], base["theme_id"],
                         finish, base["name"], base["flavor"], base["art_path"], stamp(), base["border_id"], base["back_id"]))
+        # Retire the physical-protection trigger on every existing design.
+        for row in db.execute("SELECT id,rule_ids FROM designs"):
+            rules = json.loads(row["rule_ids"])
+            design_type = db.execute("SELECT type_id FROM designs WHERE id=?", (row["id"],)).fetchone()[0]
+            updated = ["dusk" if rule == "sleeved" else "arrival" if design_type == "spell" and rule in ("dusk", "dawn", "on_draw") else rule for rule in rules]
+            if updated != rules:
+                db.execute("UPDATE designs SET rule_ids=? WHERE id=?", (json.dumps(updated), row["id"]))
         from .decks import seed_rewards
         seed_rewards(db)
+        # Existing accounts receive the three new starter copies once.
+        extras = {"pressroom": ("starter-press-cat", "starter-press-land", "starter-recut"),
+                  "starlit": ("npc-starlit-map", "starter-atlas-owl", "starter-recut"),
+                  "velvet": ("npc-foil-fox-standard", "starter-velvet-stage", "starter-recut")}
+        for user in db.execute("SELECT id,starter_deck_id FROM users").fetchall():
+            if db.execute("SELECT 1 FROM activity_claims WHERE user_id=? AND activity='starter_tcg_upgrade'",
+                          (user["id"],)).fetchone():
+                continue
+            for design_id in extras.get(user["starter_deck_id"], ()):
+                mint_copy(db, design_id, user["id"], origin_id="starter_tcg_upgrade", quality_override=88)
+                design = db.execute("SELECT type_id,rule_ids,theme_id,finish_id,border_id,back_id FROM designs WHERE id=?", (design_id,)).fetchone()
+                for part in {design["type_id"], design["theme_id"], design["finish_id"], design["border_id"], design["back_id"], *json.loads(design["rule_ids"])}:
+                    db.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (user["id"], part))
+            db.execute("INSERT INTO activity_claims(user_id,activity,claim_key,created_at) VALUES(?,'starter_tcg_upgrade','v1',?)",
+                       (user["id"], stamp()))
         db.execute("UPDATE designs SET back_finish_id='shimmer' WHERE back_id='mischief' AND back_finish_id IS NULL")
         briefs = [
             ("first-edition", "First Edition", "Turn in any freshly printed card.", {"min_grade": 1}, {"paper": 3, "ink": 3}, 1, 1),
@@ -312,6 +348,7 @@ def create_user(db, username, password, admin=False, starter_deck_id="pressroom"
             db.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (user_id, part))
         for _ in range(copies):
             mint_copy(db, design_id, user_id, quality_override=88)
+    db.execute("INSERT INTO activity_claims(user_id,activity,claim_key,created_at) VALUES(? ,'starter_tcg_upgrade','v1',?)", (user_id, stamp()))
     return user_id
 
 
@@ -401,6 +438,7 @@ def validate_recipe(db, user_id, payload):
     slots = [db.execute("SELECT slot FROM parts WHERE id=?", (r,)).fetchone()[0] for r in rules]
     need(slots.count("trigger") == 1 and slots.count("effect") == 1 and slots.count("condition") <= 1,
          "Choose one trigger, one effect, and at most one condition")
+    need(type_id != "spell" or "arrival" in rules, "Spells use the On arrival trigger")
     return {"type_id": type_id, "rule_ids": rules, "theme_id": theme, "finish_id": finish,
             "border_id": border, "back_id": back,
             "back_finish_id": "shimmer" if back == "mischief" else finish if foil_back else None, "hint": hint}

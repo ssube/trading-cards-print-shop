@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import game, decks, papermill, fishing, shooter, tabletop
+from . import game, decks, papermill, fishing, shooter, tabletop, tcg
 from .db import connect, init, transaction
 from .providers import ASSETS, process_job
 
@@ -226,6 +226,49 @@ class TabletopActionPayload(BaseModel):
     x: int | None = None
     y: int | None = None
     value: int | None = None
+
+
+class TcgDeckPayload(BaseModel):
+    copy_ids: list[str]
+    format: str = "starter"
+    bot: bool = False
+
+
+class TcgActionPayload(BaseModel):
+    expected_revision: int
+    action: str
+    copy_id: str | None = None
+    slot: int | None = None
+
+
+@app.get("/api/tcg/matches")
+async def tcg_recent(user=Depends(auth)):
+    with transaction() as db:
+        return tcg.recent(db, user["id"])
+
+
+@app.post("/api/tcg/matches")
+async def tcg_create(payload: TcgDeckPayload, user=Depends(mutation)):
+    with transaction() as db:
+        return tcg.create(db, user["id"], user["username"], payload.copy_ids, payload.format, payload.bot)
+
+
+@app.post("/api/tcg/matches/{code}/join")
+async def tcg_join(code: str, payload: TcgDeckPayload, user=Depends(mutation)):
+    with transaction() as db:
+        return tcg.join(db, user["id"], user["username"], code, payload.copy_ids)
+
+
+@app.get("/api/tcg/matches/{code}")
+async def tcg_state(code: str, user=Depends(auth)):
+    with transaction() as db:
+        return tcg.state(db, user["id"], code)
+
+
+@app.post("/api/tcg/matches/{code}/actions")
+async def tcg_action(code: str, payload: TcgActionPayload, user=Depends(mutation)):
+    with transaction() as db:
+        return tcg.action(db, user["id"], code, payload.expected_revision, payload.action, payload.copy_id, payload.slot)
 
 
 @app.get("/api/tabletop/practice")
