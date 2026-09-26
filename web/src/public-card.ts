@@ -16,7 +16,7 @@ export async function publicCardUrl(card: CardCopy, offline: boolean) {
   let hash: string
   if (offline) {
     const art = new URL(card.art_path, document.baseURI)
-    const asset = art.pathname.match(/\/demo-art\/([a-zA-Z0-9_-]+\.png)$/)
+    const asset = art.pathname.match(/\/demo-art\/([a-zA-Z0-9_-]+\.(?:png|webp))$/)
     const publicCopy = { ...card, art_path: asset ? `demo-art/${asset[1]}` : card.art_path, owner_id: null, listed: 0, exact_grade_visible: card.slab_grade !== null }
     const bytes = new TextEncoder().encode(JSON.stringify(publicCopy))
     const payload = typeof CompressionStream === 'undefined' ? `j.${base64url(bytes)}` : `g.${base64url(new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()))}`
@@ -41,7 +41,7 @@ export async function readPublicSnapshot(payload: string): Promise<CardCopy> {
     const card = JSON.parse(raw) as CardCopy
     if (!card || typeof card.id !== 'string' || typeof card.name !== 'string' || typeof card.art_path !== 'string' || !Array.isArray(card.rule_ids) || !Array.isArray(card.rule_text) || !['data:image/svg+xml,', 'https:', 'http:', 'demo-art/'].some(prefix => card.art_path.startsWith(prefix))) throw new Error('Invalid card')
     if (card.art_path.startsWith('demo-art/')) {
-      if (!/^demo-art\/[a-zA-Z0-9_-]+\.png$/.test(card.art_path)) throw new Error('Invalid art')
+      if (!/^demo-art\/[a-zA-Z0-9_-]+\.(?:png|webp)$/.test(card.art_path)) throw new Error('Invalid art')
       card.art_path = new URL(card.art_path, document.baseURI).href
     }
     return { ...card, owner_id: null, listed: 0 }

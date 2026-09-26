@@ -55,6 +55,7 @@ export const offlineCatalog: Part[] = [
 ]
 
 function art(id: string) {
+  if (id.startsWith('showcase-')) return new URL(`demo-art/${id}.webp`, document.baseURI).href
   if (id.startsWith('tabletop-')) {
     const color = id === 'tabletop-counter-keeper' ? '#c5a1db' : id === 'tabletop-playmaker' ? '#9ac7ba' : '#dfc38d'
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560"><rect width="400" height="560" fill="#24333e"/><path d="M52 360l148-100 148 100-148 100z" fill="#815e4a" stroke="#ecd2a0" stroke-width="9"/><path d="M109 168l88-43 90 43v135l-90 42-88-42z" fill="${color}" stroke="#f5e7ce" stroke-width="7"/><circle cx="197" cy="220" r="31" fill="#324454"/><path d="M130 289l65 32 67-32" fill="none" stroke="#324454" stroke-width="7"/><path d="M83 435v55m234-55v55" stroke="#bc926b" stroke-width="16"/></svg>`
@@ -103,6 +104,13 @@ export function offlineDesigns(): Design[] {
     design('npc-borrowed-dawn', 'The Orchard of Borrowed Dawn', 'The fruit ripens only when someone needs another morning.', 'land', ['dawn', 'if_land', 'mend'], 'botanical'),
     design('npc-clockwork-heron', 'The Clockwork Heron', "It remembers tomorrow's stars better than yesterday's roads.", 'monster', ['on_draw', 'if_monster', 'glimpse'], 'clockwork', 'shimmer', 'starlit', 'atlas'),
     design('npc-tideglass-portal', 'The Tideglass Portal', 'Every shore has a door that the tide remembers.', 'spell', ['arrival', 'if_spell', 'return'], 'maritime', 'standard', 'starlit', 'atlas'),
+    // Editions printed locally, with their original names, rules, and artwork.
+    design('showcase-elephant-ballet', 'Elephant’s Ballooning Ballet', 'When elephants take wing, the skies twirl with whispers and wonder.', 'spell', ['arrival', 'grow'], 'storybook'),
+    design('showcase-twilight-harbor', 'Twilight Harbor of the Glimmering Sea', 'At dusk, the waters whisper secrets, revealing the next wave of adventure beneath shimmering sushi shores.', 'land', ['dusk', 'glimpse'], 'maritime'),
+    design('showcase-prism-toad', 'Luminous Prism Toad', 'From starlit ponds, it leaps with crystal sparks, growing brighter with each new dawn’s light.', 'monster', ['arrival', 'grow'], 'celestial', 'standard', 'starlit', 'atlas'),
+    design('showcase-starwarden', 'Duskmire Starwarden', 'At dusk, her gaze ignites—cosmic love that grows brighter with every heartbeat.', 'monster', ['dusk', 'grow'], 'celestial', 'standard', 'classic', 'atlas'),
+    design('showcase-pillowfiend', 'Emberveil Pillowfiend', 'As dusk falls, this infernal fluff gathers sparks to ignite its mischievous midnight dance.', 'monster', ['dusk', 'grow'], 'infernal', 'standard', 'starlit', 'atlas'),
+    design('showcase-porcupine', "Porcupine's Puzzling Pop-Out", 'From the hat it springs, a prickly trickster ready to poke and prank the unwary reader.', 'spell', ['arrival', 'draw'], 'storybook', 'standard', 'starlit', 'atlas'),
     design('mill-apprentice', 'The Pulp Apprentice', 'Her first proof has only three paw prints.', 'monster', ['arrival', 'draw'], 'storybook'),
     design('mill-roller', 'The Moonlit Roller', 'All night it turns; by morning, every page is softer.', 'land', ['dusk', 'grow'], 'clockwork', 'shimmer'),
     design('mill-master', 'Master of the Midnight Mill', 'A spotless apron is the surest sign of management.', 'monster', ['dusk', 'echo'], 'storybook'),
@@ -145,4 +153,6 @@ export function offlineStarterDecks(): StarterDeck[] {
   ]
 }
 
-export const discoveryIds = ['npc-starlit-map', 'npc-borrowed-dawn-pumpkin', 'npc-foil-fox-crashout', 'npc-foil-fox', 'npc-sunlit-note', 'npc-borrowed-dawn', 'npc-clockwork-heron', 'npc-tideglass-portal', 'starter-press-cat-foil', 'npc-starlit-map-foil', 'npc-foil-fox-standard', 'starter-press-cat-etched', 'npc-starlit-map-starfield', 'npc-foil-fox-glitter', 'npc-sunlit-note-confetti', 'npc-tideglass-portal-aurora', 'demon-ashwarden-spooky']
+export const showcaseStarterIds = ['showcase-elephant-ballet', 'showcase-twilight-harbor', 'showcase-prism-toad']
+
+export const discoveryIds = ['npc-starlit-map', 'showcase-starwarden', 'showcase-pillowfiend', 'showcase-porcupine', 'npc-borrowed-dawn-pumpkin', 'npc-foil-fox-crashout', 'npc-foil-fox', 'npc-sunlit-note', 'npc-borrowed-dawn', 'npc-clockwork-heron', 'npc-tideglass-portal', 'starter-press-cat-foil', 'npc-starlit-map-foil', 'npc-foil-fox-standard', 'starter-press-cat-etched', 'npc-starlit-map-starfield', 'npc-foil-fox-glitter', 'npc-sunlit-note-confetti', 'npc-tideglass-portal-aurora', 'demon-ashwarden-spooky']

@@ -1,6 +1,6 @@
 import { uniqueId } from './id'
 import { printCost } from './print-cost'
-import { discoveryIds, offlineCatalog, offlineDesigns, offlineStarterDecks } from './offline-data'
+import { discoveryIds, offlineCatalog, offlineDesigns, offlineStarterDecks, showcaseStarterIds } from './offline-data'
 import { curatedDecks, offlineDeckList, validateCustomDeck } from './offline-decks'
 import type { SavedCustomDeck } from './offline-decks'
 import { actLocalMatch, createLocalMatch, tickLocalMatch, viewLocalMatch, type LocalMatch } from './tcg-offline'
@@ -30,6 +30,7 @@ type Save = {
   shooter_runs?: { id: string; day: string; boss_id: string; started_at: string; kill_mask: number; boss_claimed: boolean; last_kill_at: string | null }[]
   tabletop_practice?: { step: number; copy_id: string | null }
   starter_tcg_upgrade?: boolean
+  showcase_upgrade?: boolean
   tcg_matches?: LocalMatch[]
   tcg_rewards?: { code: string; day: string; copy_id: string | null }[]
 }
@@ -66,6 +67,16 @@ function load(): Save | null {
         for (const part of [copy.type_id, copy.theme_id, copy.finish_id, copy.border_id, copy.back_id, ...copy.rule_ids]) if (!save.learned.includes(part)) save.learned.push(part)
       }
       save.starter_tcg_upgrade = true
+      persist(save)
+    }
+    if (!save.showcase_upgrade) {
+      const designs = new Map(offlineDesigns().map(design => [design.id, design]))
+      for (const designId of showcaseStarterIds) {
+        if (save.library.some(card => card.design_id === designId)) continue
+        const design = designs.get(designId)!
+        save.library.push(copyOf({ ...design, design_id: design.id }, 88, 'demo_showcase'))
+      }
+      save.showcase_upgrade = true
       persist(save)
     }
     return save
@@ -463,9 +474,17 @@ export async function offlineApi<T>(path: string, method = 'GET', body?: unknown
     if (load()) fail('An offline collection already exists')
     const deckId = (body as { starter_deck_id?: string })?.starter_deck_id
     const deck = offlineStarterDecks().find(item => item.id === deckId) || fail('Choose a starter deck to begin')
-    const library = deck.cards.flatMap(item => Array.from({ length: item.copies }, () => copyOf({ ...item, design_id: item.id }, 88)))
-    const learned = [...new Set(library.flatMap(item => [item.type_id, item.theme_id, item.finish_id, item.border_id, item.back_id, ...item.rule_ids]))]
-    const save: Save = { version: 1, starter_deck_id: deck.id, resources: { paper: 8, ink: 8, sleeve: 1, foil: 0 }, learned, library, generation_day: today(), generation_count: 0, allowance_day: null, jobs: {}, starter_tcg_upgrade: true }
+    const designs = new Map(offlineDesigns().map(design => [design.id, design]))
+    const starterCards = deck.cards.flatMap(item => Array.from({ length: item.copies }, () => copyOf({ ...item, design_id: item.id }, 88)))
+    const library = [
+      ...starterCards,
+      ...showcaseStarterIds.map(designId => {
+        const design = designs.get(designId)!
+        return copyOf({ ...design, design_id: design.id }, 88, 'demo_showcase')
+      }),
+    ]
+    const learned = [...new Set(starterCards.flatMap(item => [item.type_id, item.theme_id, item.finish_id, item.border_id, item.back_id, ...item.rule_ids]))]
+    const save: Save = { version: 1, starter_deck_id: deck.id, resources: { paper: 8, ink: 8, sleeve: 1, foil: 0 }, learned, library, generation_day: today(), generation_count: 0, allowance_day: null, jobs: {}, starter_tcg_upgrade: true, showcase_upgrade: true }
     persist(save)
     return { ...PROFILE, starter_deck_id: deck.id } as T
   }

@@ -37,7 +37,17 @@ await assert.rejects(call('/auth/me'), /Start the offline demo/)
 const user = await call('/auth/register', 'POST', { starter_deck_id: 'pressroom' })
 assert.equal(user.username, 'Demo Collector')
 let state = await call('/state')
-assert.equal(state.library.length, 6)
+assert.equal(state.library.length, 9)
+assert.deepEqual(state.library.filter(card => card.design_id.startsWith('showcase-')).map(card => card.name), [
+  'Elephant’s Ballooning Ballet', 'Twilight Harbor of the Glimmering Sea', 'Luminous Prism Toad',
+])
+assert.ok(state.library.filter(card => card.design_id.startsWith('showcase-')).every(card => card.art_path.endsWith('.webp')))
+const savedWithoutShowcase = JSON.parse(values.get('cards-the-printing.offline-demo.v1'))
+savedWithoutShowcase.library = savedWithoutShowcase.library.filter(card => !card.design_id.startsWith('showcase-'))
+delete savedWithoutShowcase.showcase_upgrade
+values.set('cards-the-printing.offline-demo.v1', JSON.stringify(savedWithoutShowcase))
+assert.equal((await call('/state')).library.length, 9)
+assert.equal((await call('/state')).library.length, 9)
 assert.equal(state.resources.ink, 8)
 assert.deepEqual(new Set(state.catalog.filter(part => part.kind === 'finish').map(part => part.id)), new Set(['standard', 'shimmer', 'holo', 'etched', 'starfield', 'confetti', 'glitter', 'aurora', 'spooky', 'pumpkin', 'crashout']))
 const deckList = await call('/decks')
@@ -59,7 +69,7 @@ assert.equal((await call(`/copies/${deckReward.copy_id}`)).design_id, 'reward-pr
 await assert.rejects(call('/decks/pressroom/claim', 'POST'), /already claimed/)
 state = await call('/state')
 assert.equal(state.resources.sleeve, 2)
-assert.equal(state.library.length, 7)
+assert.equal(state.library.length, 10)
 const source = state.library[0]
 const initialCondition = source.condition
 const initialPaper = state.resources.paper
@@ -88,10 +98,10 @@ assert.match(first.discovery_name, /Map of Unfinished/)
 const firstCopy = await call(`/copies/${first.copy_id}`)
 assert.match(firstCopy.art_path, /^data:image\/svg\+xml,/)
 state = await call('/state')
-assert.equal(state.library.length, 9)
+assert.equal(state.library.length, 12)
 assert.equal(state.resources.foil, 1)
 assert.equal((await call('/prints', 'POST', recipe, { 'Idempotency-Key': 'smoke-print-one' })).copy_id, first.copy_id)
-assert.equal((await call('/state')).library.length, 9)
+assert.equal((await call('/state')).library.length, 12)
 
 const sample = state.library.find(card => card.design_id === 'npc-starlit-map')
 await call(`/copies/${sample.id}/study`, 'POST')
