@@ -218,7 +218,7 @@ def test_collection_progress_counts_designs_once(world):
     with db.connect() as conn:
         initial = game.collection_progress(conn, alice)
         assert initial["cards"]["collected"] == 5
-        assert initial["cards"]["total"] == 44
+        assert initial["cards"]["total"] == 48
         assert initial["foils"]["collected"] == 2
         assert initial["borders"] == {"collected": 1, "total": 3, "percent": 33}
         assert initial["backs"] == {"collected": 1, "total": 3, "percent": 33}
@@ -228,7 +228,7 @@ def test_collection_progress_counts_designs_once(world):
     with db.transaction() as conn:
         game.reprint(conn, alice, printed)
         after = game.collection_progress(conn, alice)
-        assert after["cards"] == {"collected": 6, "total": 45, "percent": 13}
+        assert after["cards"] == {"collected": 6, "total": 49, "percent": 12}
         assert game.collection_progress(conn, bob)["cards"]["collected"] == 5
         conn.execute("INSERT OR IGNORE INTO learned VALUES(?,?)", (alice, "holo"))
         assert game.collection_progress(conn, alice)["foils"]["collected"] == 3
@@ -382,6 +382,33 @@ def test_new_premade_cards_have_bundled_art_and_teach_playable_rules(world):
                 "type_id": card["type_id"], "rule_ids": card["rule_ids"],
                 "theme_id": theme, "finish_id": card["finish_id"],
                 "border_id": card["border_id"], "back_id": card["back_id"]})
+
+
+def test_new_art_styles_can_be_discovered_and_learned(world):
+    alice, _ = world
+    examples = {
+        "cyber-lesson": ("npc-glasswire-courier", "cyber"),
+        "grimdark-lesson": ("npc-ashen-bell", "grimdark"),
+        "literal-lesson": ("npc-red-umbrella", "literal"),
+        "wishmaster-lesson": ("npc-stopped-clock-forest", "wishmaster"),
+    }
+    with db.transaction() as conn:
+        game.adjust_resources(conn, alice, {"paper": 20, "ink": 20})
+        for offer_id, (design_id, theme) in examples.items():
+            reward = game.npc_trade(conn, alice, offer_id)
+            card = game.copy_detail(conn, reward["copy_id"], alice)
+            assert card["design_id"] == design_id
+            assert card["art_path"].endswith(f"{design_id}.svg")
+            assert theme in game.study(conn, alice, card["id"])
+            recipe = {
+                "type_id": card["type_id"], "rule_ids": card["rule_ids"],
+                "theme_id": theme, "finish_id": card["finish_id"],
+                "border_id": card["border_id"], "back_id": card["back_id"]}
+            if theme in {"literal", "wishmaster"}:
+                with pytest.raises(game.GameError, match="needs a title or theme hint"):
+                    game.validate_recipe(conn, alice, recipe)
+                recipe["hint"] = "a red umbrella"
+            game.validate_recipe(conn, alice, recipe)
 
 
 def test_physical_print_charge_is_atomic_and_protection_applies(world):

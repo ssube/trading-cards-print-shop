@@ -16,6 +16,10 @@ const names: Record<string, Record<string, string[]>> = {
   botanical: { land: ['The Lanternroot Grove', 'A Garden of Second Chances'], monster: ['The Thistlekeeper', 'A Fox in the Ferns'], spell: ['Borrowed Spring', 'A Seed of Morning'] },
   clockwork: { land: ['The Brass Observatory', 'The Clockmaker’s Walk'], monster: ['The Winding Heron', 'The Copper Moth'], spell: ['One More Turn of the Key', 'A Minute Borrowed'] },
   maritime: { land: ['The Pearlwater Harbor', 'The Reef Beyond the Map'], monster: ['The Tideglass Keeper', 'A Lanternfish of Legend'], spell: ['A Door Made of Tide', 'The Sea’s Second Name'] },
+  cyber: { land: ['The Neon Junction', 'The Glasswire Terminal'], monster: ['The Signal Courier', 'The Circuit Moth'], spell: ['A Door in the Data', 'The Last Green Signal'] },
+  grimdark: { land: ['The Ashen Bell Citadel', 'The Iron Chapel'], monster: ['The Ember Warden', 'The Last Watcher'], spell: ['A Bell Beneath the Ash', 'The Oath of Cinders'] },
+  literal: { land: ['The Red Umbrella on the Road'], monster: ['The Umbrella Keeper'], spell: ['The Red Umbrella'] },
+  wishmaster: { land: ['The Forest Where Time Stands Still'], monster: ['The Watchful Clock Tree'], spell: ['Stop the Clocks'] },
 }
 
 type OfflineCard = CardCopy & { aged_at: string }
@@ -178,11 +182,22 @@ function generatedArt(designId: string, theme: string, name: string) {
   const palettes: Record<string, [string, string, string]> = {
     storybook: ['#1b3545', '#e7b979', '#8dbfb6'], celestial: ['#162139', '#bca2e8', '#f7d796'], absurd: ['#4d2740', '#f3b668', '#ed7896'],
     botanical: ['#213e31', '#e8c67e', '#91b98b'], clockwork: ['#263449', '#d6a567', '#90b7c0'], maritime: ['#123e52', '#9cdbdb', '#dfad8e'], infernal: ['#3d1d28', '#f2a45e', '#d46652'],
+    cyber: ['#0c1d2b', '#66e8bb', '#35aeca'], grimdark: ['#24242d', '#c18a62', '#8c4b42'], literal: ['#b9d0cf', '#e5e3d2', '#d24a42'], wishmaster: ['#302a50', '#edc27d', '#8fc5ab'],
   }
   const [bg, glow, accent] = palettes[theme] || palettes.storybook
   let seed = [...designId].reduce((value, letter) => (value * 31 + letter.charCodeAt(0)) >>> 0, 1)
   const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296 }
   const stars = Array.from({ length: 45 }, () => `<circle cx="${Math.round(20 + random() * 360)}" cy="${Math.round(20 + random() * 480)}" r="${Math.round(1 + random() * 3)}" fill="${glow}" opacity=".7"/>`).join('')
+  const scenes: Record<string, string> = {
+    cyber: `<path d="M0 430V175h64v95h59V100h73v168h58V128h80v144h66v288H0z" fill="#071c29" stroke="${glow}" stroke-width="4"/><path d="M51 256h31m60-91h33m-33 29h33m120-8h27m-27 30h27M76 447h245m-189 43h138" stroke="${accent}" stroke-width="8"/><circle cx="200" cy="324" r="78" fill="#0d3744" stroke="${glow}" stroke-width="9"/><path d="M160 324h80m-40-40v80" stroke="${glow}" stroke-width="8"/>`,
+    grimdark: `<circle cx="279" cy="168" r="94" fill="${accent}" opacity=".4"/><path d="M0 498l62-68V270l37-31 39 31v116l27-28V180l35-55 36 55v178l27 27V265l34-35 36 35v163l67 70v62H0z" fill="#34343b" stroke="${glow}" stroke-width="5"/><path d="M172 321q0-70 28-70t28 70v54h-56z" fill="#121720"/><path d="M181 324q0-43 19-43t19 43l8 17h-54z" fill="${glow}"/>`,
+    literal: `<path d="M0 466q100-30 200 0t200 0v94H0z" fill="#91aaa5"/><path d="M76 250q34-110 124-116 92 6 124 116-31-21-62 0-32-19-62 0-32-19-62 0-31-21-62 0z" fill="${accent}" stroke="#8d3e3b" stroke-width="8"/><path d="M200 136v270q0 42 29 42 27 0 27-26" fill="none" stroke="#66514b" stroke-width="12"/><circle cx="144" cy="329" r="20" fill="#ecceb1"/><path d="M126 435l7-85h26l9 85" fill="#4e6978" stroke="#355663" stroke-width="5"/>`,
+    wishmaster: `<path d="M0 471q100-46 200 0t200 0v89H0z" fill="#2a4545"/><path d="M78 560V275m245 285V265M200 560V210" stroke="#5b4143" stroke-width="26"/><circle cx="200" cy="219" r="79" fill="${glow}" stroke="#795b55" stroke-width="9"/><circle cx="78" cy="265" r="51" fill="${glow}" stroke="#795b55" stroke-width="7"/><circle cx="323" cy="260" r="59" fill="${glow}" stroke="#795b55" stroke-width="7"/><path d="M200 220l28-25m-28 25v-45M78 265l-20-19m20 19v-27m245 22l24-25m-24 25v-29" stroke="#614c46" stroke-width="7" stroke-linecap="round"/>`,
+  }
+  if (scenes[theme]) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1120" viewBox="0 0 400 560"><defs><radialGradient id="sky"><stop stop-color="${glow}"/><stop offset=".55" stop-color="${bg}"/><stop offset="1" stop-color="#111a25"/></radialGradient></defs><rect width="400" height="560" fill="url(#sky)"/>${stars}${scenes[theme]}<text x="200" y="536" fill="#fff2d6" text-anchor="middle" font-family="serif" font-size="16">${escapeXml(name.slice(0, 28))}</text></svg>`
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`
+  }
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1120" viewBox="0 0 400 560"><defs><radialGradient id="sky"><stop stop-color="${glow}"/><stop offset=".45" stop-color="${bg}"/><stop offset="1" stop-color="#0c1725"/></radialGradient></defs><rect width="400" height="560" fill="url(#sky)"/>${stars}<circle cx="205" cy="221" r="97" fill="${glow}" opacity=".85"/><path d="M125 306 Q200 80 275 306 Q248 280 235 315 Q200 273 165 315 Q145 285 125 306Z" fill="${bg}" stroke="${glow}" stroke-width="3"/><path d="M151 309 Q200 354 249 309 L281 476 Q203 513 119 476Z" fill="${bg}" stroke="${glow}" stroke-width="3"/><path d="M164 370 Q200 322 236 370 M153 416 Q200 375 247 416" fill="none" stroke="${accent}" stroke-width="6"/><path d="M30 35 H370 V525 H30Z" fill="none" stroke="${glow}" stroke-width="2" opacity=".7"/><text x="200" y="537" fill="#fff2d6" text-anchor="middle" font-family="serif" font-size="16">${escapeXml(name.slice(0, 28))}</text></svg>`
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }

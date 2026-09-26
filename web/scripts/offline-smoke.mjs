@@ -110,6 +110,7 @@ state = await call('/state')
 assert.equal(state.catalog.find(part => part.id === 'starlit').learned, 1)
 assert.equal(state.catalog.find(part => part.id === 'atlas').learned, 1)
 const second = await call('/prints', 'POST', { ...recipe, theme_id: 'celestial', border_id: 'starlit', back_id: 'atlas' }, { 'Idempotency-Key': 'smoke-print-two' })
+assert.equal(second.discovery_name, 'The Glasswire Courier')
 const styled = await call(`/copies/${second.copy_id}`)
 assert.ok(styled.name.length > 0)
 assert.equal(styled.border_id, 'starlit')
@@ -123,7 +124,20 @@ const reprint = await call(`/copies/${first.copy_id}/reprint`, 'POST')
 assert.equal((await call(`/copies/${reprint.copy_id}`)).origin_id, first.copy_id)
 await assert.rejects(call('/npcs/fox-copy/trade', 'POST'), /unavailable/)
 
-for (let number = 3; number <= 5; number++) await call('/prints', 'POST', recipe, { 'Idempotency-Key': `smoke-print-${number}` })
+const newStyleSamples = []
+for (let number = 3; number <= 5; number++) {
+  const result = await call('/prints', 'POST', recipe, { 'Idempotency-Key': `smoke-print-${number}` })
+  newStyleSamples.push(result.discovery_name)
+}
+assert.deepEqual(newStyleSamples, ['The Ashen Bell Citadel', 'The Red Umbrella', 'The Forest Where Time Stands Still'])
+state = await call('/state')
+for (const theme of ['cyber', 'grimdark', 'literal', 'wishmaster']) {
+  const sample = state.library.find(card => card.theme_id === theme)
+  assert.ok(sample)
+  await call(`/copies/${sample.id}/study`, 'POST')
+}
+const learnedStyles = (await call('/state')).catalog
+assert.deepEqual(['cyber', 'grimdark', 'literal', 'wishmaster'].map(theme => learnedStyles.find(part => part.id === theme).learned), [1, 1, 1, 1])
 state = await call('/state')
 assert.equal(state.generation_count, 5)
 await assert.rejects(call('/prints', 'POST', recipe, { 'Idempotency-Key': 'smoke-print-six' }), /Daily design limit/)

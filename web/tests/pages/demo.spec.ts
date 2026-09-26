@@ -7,6 +7,10 @@ test('the published artifact exposes the offline workshop and recent pages', asy
   await expect(page.getByRole('button', { name: 'Choose a deck to begin' })).toBeVisible()
   await page.getByRole('button', { name: /The Pressroom Parade/ }).click()
   await page.getByRole('button', { name: 'Begin offline demo' }).click()
+  for (const id of ['npc-glasswire-courier', 'npc-ashen-bell', 'npc-red-umbrella', 'npc-stopped-clock-forest']) {
+    const asset = new URL(`demo-art/${id}.svg`, await page.evaluate(() => document.baseURI))
+    expect((await page.request.get(asset.href)).ok()).toBe(true)
+  }
   await expect(page.locator('.offline-banner')).toContainText('Progress is not shared')
   await expect(page.locator('.sidebar nav').getByRole('button', { name: /Commissions/ })).toBeDisabled()
   await expect(page.locator('.sidebar nav').getByRole('button', { name: /Trading Hall/ })).toBeDisabled()

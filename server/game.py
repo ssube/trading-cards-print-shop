@@ -66,6 +66,10 @@ PARTS = [
     ("clockwork", "theme", "Clockwork", "Brass mechanisms and curious inventions.", 0),
     ("maritime", "theme", "Maritime", "Tidal magic, sea glass, and impossible harbors.", 0),
     ("infernal", "theme", "Infernal", "Furnace light, ember dust, and haunted machinery.", 0),
+    ("cyber", "theme", "Cyber", "Neon circuitry, rain-soaked streets, and hidden systems.", 0),
+    ("grimdark", "theme", "Grimdark", "Gothic ruins, iron silhouettes, and embers beneath a heavy sky.", 0),
+    ("literal", "theme", "Literal", "Illustrate the player's hint plainly and faithfully, without a twist.", 0),
+    ("wishmaster", "theme", "Wishmaster", "Fulfill the player's hint with a playful, unexpected literal twist.", 0),
     ("standard", "finish", "Standard", "Soft matte print.", 0),
     ("shimmer", "finish", "Shimmer", "A narrow, shifting foil gleam.", 0),
     ("holo", "finish", "Full Holo", "An extravagant prismatic surface.", 0),
@@ -193,6 +197,14 @@ def seed():
              "monster", ["on_draw", "grow"], "clockwork", "shimmer"),
             ("tabletop-playmaker", "The Playmaker's Table", "Its oldest rule is to make room for another player.",
              "land", ["dusk", "mend"], "storybook", "standard"),
+            ("npc-glasswire-courier", "The Glasswire Courier", "Every signal reaches its destination; some take the scenic route.",
+             "monster", ["arrival", "draw"], "cyber", "standard"),
+            ("npc-ashen-bell", "The Ashen Bell Citadel", "Its bell still rings for a city that forgot its name.",
+             "land", ["dusk", "grow"], "grimdark", "standard"),
+            ("npc-red-umbrella", "The Red Umbrella", "A red umbrella keeps the rain off. The request was quite clear.",
+             "spell", ["arrival", "mend"], "literal", "standard"),
+            ("npc-stopped-clock-forest", "The Forest Where Time Stands Still", "The clocks obeyed the wish. The trees did not know when to stop growing.",
+             "land", ["dusk", "glimpse"], "wishmaster", "standard"),
         ]
         # Finish variants share their featured card's artwork and text.
         variants = {"starter-press-cat": ("starter-press-cat-foil", "shimmer"),
@@ -289,6 +301,10 @@ def seed():
             ("borrowed-dawn", "Pip the Inker", "A borrowed morning", {"resources": {"paper": 4, "ink": 3}}, {"design_id": "npc-borrowed-dawn"}),
             ("clockwork-heron", "Astrid the Binder", "A mechanical omen", {"resources": {"ink": 5, "sleeve": 1}}, {"design_id": "npc-clockwork-heron"}),
             ("tideglass-portal", "Madam Moth", "A door beneath the waves", {"resources": {"foil": 2, "ink": 3}}, {"design_id": "npc-tideglass-portal"}),
+            ("cyber-lesson", "Pip the Inker", "A message through the glasswire", {"resources": {"paper": 2, "ink": 2}}, {"design_id": "npc-glasswire-courier"}),
+            ("grimdark-lesson", "The Archivist", "The old bell's last impression", {"resources": {"paper": 2, "ink": 2}}, {"design_id": "npc-ashen-bell"}),
+            ("literal-lesson", "Madam Moth", "Exactly one red umbrella", {"resources": {"paper": 2, "ink": 2}}, {"design_id": "npc-red-umbrella"}),
+            ("wishmaster-lesson", "The Foil Fox", "A wish, carefully worded", {"resources": {"paper": 2, "ink": 2}}, {"design_id": "npc-stopped-clock-forest"}),
             ("press-cat-foil", "Pip the Inker", "A shining apprentice", {"resources": {"foil": 1, "ink": 2}}, {"design_id": "starter-press-cat-foil"}),
             ("starlit-map-foil", "Astrid the Binder", "A foil atlas", {"resources": {"foil": 1, "ink": 2}}, {"design_id": "npc-starlit-map-foil"}),
             ("foil-fox-standard", "The Foil Fox", "A quieter fox", {"resources": {"paper": 2, "ink": 2}}, {"design_id": "npc-foil-fox-standard"}),
@@ -425,6 +441,7 @@ def validate_recipe(db, user_id, payload):
     need(type(foil_back) is bool, "Invalid back foil choice")
     need(not foil_back or (back != "mischief" and finish != "standard"), "Back foil requires a nonstandard front finish and a non-Fox back")
     hint = " ".join(hint.split())
+    need(theme not in ("literal", "wishmaster") or hint, "This art direction needs a title or theme hint")
     need(isinstance(rules, list) and 1 <= len(rules) <= 3 and len(set(rules)) == len(rules), "Choose one to three distinct rules")
     selected = [(type_id, "type"), (theme, "theme"), (finish, "finish"),
                 (border, "border"), (back, "back")] + [(r, "rule") for r in rules]

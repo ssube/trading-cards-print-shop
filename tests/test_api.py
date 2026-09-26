@@ -1,9 +1,15 @@
 import asyncio
 
 import httpx
+import pytest
 
 from server import db, game, providers
-from server.app import app
+from server.app import HITS, app
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    HITS.clear()
 
 
 def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
@@ -59,7 +65,7 @@ def test_http_auth_print_and_admin_boundary(tmp_path, monkeypatch):
             assert any(card["border_id"] == "starlit" and card["back_id"] == "atlas" for card in library)
             assert all(card["art_path"].startswith("/assets/") for card in library)
             progress = (await client.get("/api/state")).json()["collection_progress"]
-            assert progress["cards"] == {"collected": 6, "total": 45, "percent": 13}
+            assert progress["cards"] == {"collected": 6, "total": 49, "percent": 12}
             deck_list = (await client.get("/api/decks")).json()
             assert len(deck_list) == 10
             assert next(deck for deck in deck_list if deck["id"] == "starlit")["filled"] == 3
