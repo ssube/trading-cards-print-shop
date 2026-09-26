@@ -184,10 +184,10 @@ function App() {
   const canPrint = Object.entries(cost).every(([kind, amount]) => (state.resources[kind] || 0) >= amount) && state.generation_count < state.generation_limit
   const nav: { key: Tab; label: string; icon: string; disabled?: boolean }[] = [
     { key: 'workshop', label: 'The Press', icon: '✧' }, { key: 'library', label: 'Card Library', icon: '▤' }, { key: 'decks', label: 'Decks', icon: '▥' },
-    { key: 'print', label: 'Print Sheets', icon: '▦' },
     { key: 'games', label: 'Games', icon: '♧' },
     { key: 'progress', label: 'Progress', icon: '◉' },
     { key: 'finishes', label: 'Finish Gallery', icon: '◈' },
+    { key: 'print', label: 'Print Sheets', icon: '▦' },
     { key: 'commissions', label: 'Commissions', icon: '✦', disabled: offline },
     { key: 'trading', label: 'Trading Hall', icon: '⇄', disabled: offline },
     ...(user?.is_admin ? [{ key: 'admin' as Tab, label: 'Admin', icon: '⚙' }] : []),
