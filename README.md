@@ -39,6 +39,25 @@ The demo providers need no keys. Set `TEXT_PROVIDER` to `openai` or `openrouter`
 
 The CLI supports `--help` on every command. Admin mutations share the same service functions as the admin API and write an audit record. The first admin is created locally; no default password is supplied.
 
+Use `add-card` to add one design to the catalog. Pass `--to` to print a copy directly into a player's library without charging their resources. The artwork uses the bundled demo illustrator, so these admin commands do not call a paid image provider.
+
+```sh
+uv run python -m server.cli add-card --actor admin --reason "Harbor event" --to alice --name "Copper Minnow" --theme-id maritime --type-id monster --rule-ids arrival draw
+```
+
+Use `add-set` with a JSON manifest to add 1–24 cards sharing an art theme. Card entries may also set `flavor`, `type_id`, `rule_ids`, `finish_id`, `border_id`, and `back_id`; omitted fields use the same defaults as `add-card`. The whole set is checked and committed together, and its title is recorded in the audit log. Add `--to alice` to give Alice one copy of every card.
+
+```json
+{"title":"Harbor Wonders","theme_id":"maritime","cards":[
+  {"name":"Pearlwater Pier","type_id":"land"},
+  {"name":"Tideglass Charm","type_id":"spell","rule_ids":["arrival","draw"]}
+]}
+```
+
+```sh
+uv run python -m server.cli add-set --actor admin --reason "Harbor event" --file harbor-wonders.json
+```
+
 ## Design notes
 
 The server owns inventory, learning, grading, condition, and trades. A design is immutable once printed; copies have their own print defects and wear. All daily boundaries use UTC. Seed cards include bundled art; demo generated designs use local SVG art, while configured image providers store raster art. The online Press accepts a 254-character title or theme hint that guides text and artwork generation; Literal and Wishmaster require one. The GitHub Pages demo disables hints and chooses from prepared names and artwork. The UI shows composition stages before the CMYK and foil printing sequence. Foil, border, and card back are visual parts and do not influence image or text generation. Printed card rules drive the TCG match engine; finishes, grade, sleeves, and slabs remain visual during matches.

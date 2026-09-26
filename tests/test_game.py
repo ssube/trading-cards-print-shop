@@ -3,7 +3,7 @@ from collections import Counter
 
 import pytest
 
-from server import db, decks, game, providers
+from server import cli, db, decks, game, providers
 
 
 @pytest.fixture
@@ -27,6 +27,35 @@ def new_card(owner, key="unique-print-key"):
     providers.process_job(job["id"])
     with db.connect() as conn:
         return conn.execute("SELECT copy_id FROM jobs WHERE id=?", (key,)).fetchone()[0]
+
+
+def test_admin_cli_add_card_and_themed_set(world, tmp_path, capsys):
+    alice, bob = world
+    with db.transaction() as conn:
+        conn.execute("UPDATE users SET is_admin=1 WHERE id=?", (alice,))
+    cli.main(["add-card", "--actor", "alice", "--to", "bob", "--reason", "playtest",
+              "--name", "Copper Minnow", "--theme-id", "maritime"])
+    single = json.loads(capsys.readouterr().out)["cards"][0]
+    with db.connect() as conn:
+        assert game.copy_detail(conn, single["copy_id"], bob)["name"] == "Copper Minnow"
+    manifest = tmp_path / "set.json"
+    manifest.write_text(json.dumps({"title": "Harbor Wonders", "theme_id": "maritime", "cards": [
+        {"name": "Pearlwater Pier", "type_id": "land"},
+        {"name": "Tideglass Charm", "type_id": "spell", "rule_ids": ["arrival", "draw"]}]}))
+    cli.main(["add-set", "--actor", "alice", "--reason", "catalog expansion", "--file", str(manifest)])
+    results = json.loads(capsys.readouterr().out)
+    assert results["set"] == "Harbor Wonders"
+    assert len(results["cards"]) == 2
+    assert all("copy_id" not in card for card in results["cards"])
+    with db.connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM designs WHERE id IN (?,?)", tuple(card["design_id"] for card in results["cards"])).fetchone()[0] == 2
+        assert conn.execute("SELECT action FROM audit ORDER BY id DESC LIMIT 1").fetchone()[0] == "add-set"
+    manifest.write_text(json.dumps({"title": "Broken Set", "theme_id": "maritime", "cards": [
+        {"name": "Valid Card"}, {"name": "Invalid Card", "rule_ids": ["arrival", "missing"]}]}))
+    with pytest.raises(SystemExit):
+        cli.main(["add-set", "--actor", "alice", "--reason", "test", "--file", str(manifest)])
+    with db.connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM designs WHERE name='Valid Card'").fetchone()[0] == 0
 
 
 def test_print_is_idempotent_and_failed_generation_refunds(world, monkeypatch):
