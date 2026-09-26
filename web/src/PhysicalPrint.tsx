@@ -95,6 +95,7 @@ export function PhysicalPrint({ cards, paper, onCharged, preset }: { cards: Card
     setBusy(true); setMessage('Rendering sheets…')
     try {
       await document.fonts.ready
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
       const { toPng } = await import('html-to-image')
       const nodes = [...(sheetRoot.current?.querySelectorAll<HTMLElement>('.physical-sheet') || [])]
       const images = await Promise.all(nodes.map(node => toPng(node, { pixelRatio: 3, backgroundColor: '#ffffff', cacheBust: true })))

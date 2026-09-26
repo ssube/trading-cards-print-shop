@@ -49,3 +49,16 @@
 .trading-card .channel-m{transform:translateX(var(--sm));opacity:var(--om)}
 .trading-card .channel-y{transform:translateX(var(--sy));opacity:var(--oy)}
 .trading-card .channel-k{transform:translateX(var(--sk));opacity:var(--ok)}
+.trading-card .card-title {
+  flex: 0 0 10%;
+  min-height: 0;
+  width: 100%;
+  margin: 2.5% 0 4%;
+  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  text-wrap: balance;
+  line-height: 1.06;
+  align-content: center;
+}

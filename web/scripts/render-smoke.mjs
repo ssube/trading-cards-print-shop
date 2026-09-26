@@ -117,7 +117,7 @@ if (!gamesMarkup.includes('Feline Papermill') || !gamesMarkup.includes('Every ga
     !galleryMarkup.includes('Blank print stock') || !galleryMarkup.includes('Apprentice Press Cat') || !galleryMarkup.includes('Holo') ||
     !progressMarkup.includes('Unique cards') || !progressMarkup.includes('33%') || !progressMarkup.includes('1 / 4 in your box') ||
     !completedPageMarkup.includes('Your collection, <em>completed.</em>') || !pageMarkup.includes('Learned and still to find') || !pageMarkup.includes('TO FIND') || !pageMarkup.includes('2 copies') ||
-    !welcomeMarkup.includes('Trading Cards:') || !welcomeMarkup.includes('Print Shop') || !welcomeMarkup.includes('The Pressroom Parade') || !welcomeMarkup.includes('Three cards to begin with') || !welcomeMarkup.includes('COPY 3 OF 3')) {
+    !welcomeMarkup.includes('Trading Cards:') || !welcomeMarkup.includes('Print Shop') || !welcomeMarkup.includes('The Pressroom Parade') || !welcomeMarkup.includes('Six cards to begin with') || !welcomeMarkup.includes('COPY 3 OF 3')) {
   throw new Error('Render smoke test failed')
 }
 console.log('App shell, card library filters, finish gallery, progress page, and starter selection render successfully')

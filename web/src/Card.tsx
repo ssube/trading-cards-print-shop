@@ -1,6 +1,7 @@
 import { useRef, useState, type PointerEvent } from 'react'
 import { aimFoil, aimFoilFromTilt, resetFoil } from './foil'
 import { CardEffects, type CardEffectLayer, type CardEffectSet } from './CardEffects'
+import { CardTitle } from './CardTitle'
 import type { CardCopy } from './types'
 import { wearOpacity, wearTexture } from './wear'
 
@@ -49,7 +50,7 @@ export function Card({ card, interactive = false, onClick, large = false, blank 
       <article className={`trading-card finish-${card.finish_id} border-${card.border_id || 'classic'} effect-${showQuality ? card.color_effect : 'none'} ${showFoil ? '' : 'print-no-foil'} ${blank ? 'blank-finish-card' : ''}`} style={artStyle} aria-hidden={flipped}>
           {blank ? <div className="blank-card-stock"><span className="blank-card-corner">TC<span>:</span>PS</span><span className="blank-card-emblem">✧</span><span className="blank-card-rule" /><span className="blank-card-caption">AWAITING IMPRESSION</span></div> : <>
           <div className="card-ink"><div className="card-heading"><span className="card-type">{card.type_id}</span><span className="card-finish">{card.finish_id === 'standard' ? 'FIRST PRINT' : card.finish_id.toUpperCase()}</span></div>
-          <h3>{card.name}</h3>
+          <CardTitle name={card.name} />
           <div className="art-window">
             <div className="art-registration">
               <img className="art-base" src={card.art_path} alt="" draggable="false" />
