@@ -367,6 +367,7 @@ class PrintPayload(BaseModel):
     finish_id: str = "standard"
     border_id: str = "classic"
     back_id: str = "archive"
+    foil_back: bool = False
 
 
 @app.post("/api/prints")

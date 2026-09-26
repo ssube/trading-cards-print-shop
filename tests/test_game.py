@@ -311,6 +311,34 @@ def test_border_and_back_are_learned_printed_and_reprinted(world):
         assert (game.copy_detail(conn, reprint)["border_id"], game.copy_detail(conn, reprint)["back_id"]) == ("starlit", "atlas")
 
 
+def test_back_foil_and_premium_materials_survive_reprint(world):
+    alice, _ = world
+    with db.transaction() as conn:
+        assert game.print_cost(conn, ["arrival", "draw"], "standard", "starlit", "atlas") == {"paper": 1, "ink": 3, "foil": 0}
+        assert game.print_cost(conn, ["arrival", "draw"], "standard", "velvet", "mischief", "shimmer") == {"paper": 1, "ink": 3, "foil": 1}
+        assert game.print_cost(conn, ["arrival", "draw"], "shimmer", "classic", "archive", "shimmer") == {"paper": 1, "ink": 4, "foil": 2}
+        fox = game.mint_copy(conn, "npc-foil-fox-standard", alice)
+        assert game.copy_detail(conn, fox)["back_finish_id"] == "shimmer"
+        game.study(conn, alice, fox)
+        game.adjust_resources(conn, alice, {"foil": 5, "ink": 10})
+        with pytest.raises(game.GameError, match="Back foil requires"):
+            game.validate_recipe(conn, alice, {"type_id": "monster", "rule_ids": ["arrival", "draw"],
+                                               "theme_id": "storybook", "finish_id": "standard",
+                                               "back_id": "mischief", "foil_back": True})
+        recipe = {"type_id": "monster", "rule_ids": ["arrival", "draw"], "theme_id": "storybook",
+                  "finish_id": "shimmer", "border_id": "classic", "back_id": "archive", "foil_back": True}
+        before = game.resource_balance(conn, alice)
+        job = game.create_print_job(conn, alice, recipe, "back-foil-print-123")
+        after = game.resource_balance(conn, alice)
+        assert (before["paper"] - after["paper"], before["ink"] - after["ink"], before["foil"] - after["foil"]) == (1, 4, 2)
+    providers.process_job(job["id"])
+    with db.transaction() as conn:
+        copy_id = conn.execute("SELECT copy_id FROM jobs WHERE id=?", (job["id"],)).fetchone()[0]
+        assert game.copy_detail(conn, copy_id)["back_finish_id"] == "shimmer"
+        reprint = game.reprint(conn, alice, copy_id)
+        assert game.copy_detail(conn, reprint)["back_finish_id"] == "shimmer"
+
+
 def test_seed_restores_starter_styles_for_existing_players(world):
     with db.transaction() as conn:
         starlit = game.create_user(conn, "oldstargazer", "long-password-123", starter_deck_id="starlit")

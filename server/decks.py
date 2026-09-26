@@ -29,8 +29,8 @@ REWARD_VARIANTS = {
 
 def seed_rewards(db):
     for reward_id, source_id in REWARD_VARIANTS.items():
-        db.execute("INSERT OR IGNORE INTO designs(id,creator_id,type_id,rule_ids,theme_id,finish_id,name,flavor,art_path,created_at,border_id,back_id) "
-                   "SELECT ?,NULL,type_id,rule_ids,theme_id,'holo',name,flavor,art_path,?,border_id,back_id FROM designs WHERE id=?",
+        db.execute("INSERT OR IGNORE INTO designs(id,creator_id,type_id,rule_ids,theme_id,finish_id,name,flavor,art_path,created_at,border_id,back_id,back_finish_id) "
+                   "SELECT ?,NULL,type_id,rule_ids,theme_id,'holo',name,flavor,art_path,?,border_id,back_id,back_finish_id FROM designs WHERE id=?",
                    (reward_id, game.stamp(), source_id))
 
 

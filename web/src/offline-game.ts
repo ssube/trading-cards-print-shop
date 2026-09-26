@@ -1,5 +1,5 @@
 import { uniqueId } from './id'
-import { printInkCost } from './print-cost'
+import { printCost } from './print-cost'
 import { discoveryIds, offlineCatalog, offlineDesigns, offlineStarterDecks } from './offline-data'
 import { curatedDecks, offlineDeckList, validateCustomDeck } from './offline-decks'
 import type { SavedCustomDeck } from './offline-decks'
@@ -8,7 +8,6 @@ import type { CardCopy, CollectionProgress, Part, State, User } from './types'
 const STORAGE_KEY = 'cards-the-printing.offline-demo.v1'
 const PROFILE: User = { id: 0, username: 'Demo Collector', is_admin: 0, csrf: '', starter_deck_id: null }
 const gradeNames = ['Poor', 'Fair', 'Very Good', 'Very Good+', 'Excellent', 'Excellent+', 'Near Mint', 'Near Mint-Mint', 'Mint', 'Gem Mint']
-const foilCost: Record<string, number> = { standard: 0, shimmer: 1, etched: 3, starfield: 2, glitter: 2, aurora: 3, spooky: 2, pumpkin: 2, confetti: 3, holo: 3, crashout: 3 }
 const names: Record<string, Record<string, string[]>> = {
   storybook: { land: ['The Library Between Moons', 'The Kittens’ Paper Mill'], monster: ['Sir Pounce of the Press', 'Moth of a Thousand Margins'], spell: ['An Unexpected Footnote', 'The Last Drop of Ink'] },
   celestial: { land: ['The Observatory of Small Stars', 'An Orchard of Forgotten Maps'], monster: ['The Starbound Typesetter', 'A Moth Among Moons'], spell: ['A Note to the Night', 'The Missing Constellation'] },
@@ -46,6 +45,7 @@ function load(): Save | null {
   try {
     const save = JSON.parse(raw) as Save
     if (save.version !== 1 || !Array.isArray(save.library) || !Array.isArray(save.learned) || !save.resources || !save.jobs || !offlineStarterDecks().some(deck => deck.id === save.starter_deck_id)) throw new Error('Invalid save')
+    for (const card of save.library) card.back_finish_id ??= card.back_id === 'mischief' ? 'shimmer' : null
     return save
   } catch { return fail('The offline collection could not be loaded. Its saved data may be damaged.') }
 }
@@ -72,7 +72,7 @@ function printDefects() {
     edge: Math.random() < .08 ? Math.abs(bellOffset(.10, .22)) : 0,
   }
 }
-function copyOf(template: Pick<CardCopy, 'design_id' | 'type_id' | 'rule_ids' | 'theme_id' | 'finish_id' | 'border_id' | 'back_id' | 'name' | 'flavor' | 'art_path'>, score?: number, origin_id: string | null = null): OfflineCard {
+function copyOf(template: Pick<CardCopy, 'design_id' | 'type_id' | 'rule_ids' | 'theme_id' | 'finish_id' | 'border_id' | 'back_id' | 'name' | 'flavor' | 'art_path'> & { back_finish_id?: string | null }, score?: number, origin_id: string | null = null): OfflineCard {
   const defects = score === undefined ? printDefects() : { centering_x: 0, centering_y: 0, shift_c: 0, shift_m: 0, shift_y: 0, shift_k: 0, color_effect: 'none', surface: 0, edge: 0 }
   const complexity = Math.max(0, template.rule_ids.length - 2) * 3
   const quality = score ?? Math.max(1, Math.min(100, Math.round(100 - complexity - 5 * Math.abs(defects.centering_x) - 5 * Math.abs(defects.centering_y)
@@ -83,7 +83,7 @@ function copyOf(template: Pick<CardCopy, 'design_id' | 'type_id' | 'rule_ids' | 
   return {
     id: id(), design_id: template.design_id, owner_id: 0, creator: template.design_id.startsWith('offline-') ? PROFILE.username : null, origin_id,
     type_id: template.type_id, rule_ids: [...template.rule_ids], theme_id: template.theme_id, finish_id: template.finish_id,
-    border_id: template.border_id, back_id: template.back_id, name: template.name, flavor: template.flavor, art_path: template.art_path,
+    border_id: template.border_id, back_id: template.back_id, back_finish_id: template.back_finish_id ?? (template.back_id === 'mischief' ? 'shimmer' : null), name: template.name, flavor: template.flavor, art_path: template.art_path,
     rule_names: template.rule_ids.map(rule => parts.get(rule)?.name || rule), rule_text: template.rule_ids.map(rule => parts.get(rule)?.description || rule),
     print_score: quality, condition: 100, ...defects,
     sleeved: 0, slab_grade: null, listed: 0, grade: n, grade_name: gradeNames[n - 1],
@@ -156,9 +156,11 @@ function generatedArt(designId: string, theme: string, name: string) {
 function print(save: Save, body: unknown, requestKey: string) {
   if (!requestKey) fail('An idempotency key is required')
   if (save.jobs[requestKey]) return { id: requestKey, status: 'complete', copy_id: save.jobs[requestKey] }
-  const recipe = body as { type_id: string; rule_ids: string[]; theme_id: string; finish_id: string; border_id: string; back_id: string; hint?: string }
+  const recipe = body as { type_id: string; rule_ids: string[]; theme_id: string; finish_id: string; border_id: string; back_id: string; foil_back?: boolean; hint?: string }
   if (!recipe || !Array.isArray(recipe.rule_ids) || recipe.rule_ids.length < 2 || recipe.rule_ids.length > 3 || new Set(recipe.rule_ids).size !== recipe.rule_ids.length) fail('Choose two or three distinct rules')
   if (typeof recipe.hint !== 'undefined' && (typeof recipe.hint !== 'string' || recipe.hint.length > 254)) fail('Hint must be 254 characters or fewer')
+  if (recipe.foil_back !== undefined && typeof recipe.foil_back !== 'boolean') fail('Invalid back foil choice')
+  if (recipe.foil_back && (recipe.back_id === 'mischief' || recipe.finish_id === 'standard')) fail('Back foil requires a nonstandard front finish and a non-Fox back')
   const hint = (recipe.hint || '').trim().replace(/\s+/g, ' ')
   const parts = new Map(offlineCatalog.map(part => [part.id, part]))
   const choices: [string, string][] = [[recipe.type_id, 'type'], [recipe.theme_id, 'theme'], [recipe.finish_id, 'finish'], [recipe.border_id, 'border'], [recipe.back_id, 'back'], ...recipe.rule_ids.map(rule => [rule, 'rule'] as [string, string])]
@@ -168,11 +170,12 @@ function print(save: Save, body: unknown, requestKey: string) {
   if (recipe.rule_ids.reduce((power, rule) => power + parts.get(rule)!.power, 0) > 5) fail('The card exceeds its power limit')
   if (save.generation_day !== today()) { save.generation_day = today(); save.generation_count = 0 }
   if (save.generation_count >= 5) fail('Daily design limit reached')
-  balance(save, { paper: -1, ink: -printInkCost(recipe.rule_ids.length, recipe.finish_id), foil: -(foilCost[recipe.finish_id] || 0) })
+  const cost = printCost(offlineCatalog, recipe.rule_ids.length, recipe.finish_id, recipe.border_id, recipe.back_id, !!recipe.foil_back)
+  balance(save, Object.fromEntries(Object.entries(cost).map(([kind, amount]) => [kind, -amount])))
   const designId = `offline-${id()}`
   const pool = names[recipe.theme_id]?.[recipe.type_id] || names.storybook.monster
   const name = hint ? hint.slice(0, 48) : pool[Math.floor(Math.random() * pool.length)]
-  const printed = copyOf({ design_id: designId, ...recipe, name, flavor: 'Printed under a moon that insists it is the sun.', art_path: generatedArt(designId, recipe.theme_id, name) })
+  const printed = copyOf({ design_id: designId, ...recipe, back_finish_id: recipe.back_id === 'mischief' ? 'shimmer' : recipe.foil_back ? recipe.finish_id : null, name, flavor: 'Printed under a moon that insists it is the sun.', art_path: generatedArt(designId, recipe.theme_id, name) })
   save.library.unshift(printed)
   save.generation_count++
   save.jobs[requestKey] = printed.id
@@ -202,7 +205,8 @@ function action(save: Save, copyId: string, operation: string) {
     if (item.condition <= 0) fail('This copy is too worn to reprint')
     if (item.slab_grade !== null) fail('Break the slab before reprinting')
     if (![item.type_id, item.theme_id, item.finish_id, item.border_id, item.back_id, ...item.rule_ids].every(part => save.learned.includes(part))) fail('Study this design before reprinting')
-    balance(save, { paper: -1, ink: -printInkCost(item.rule_ids.length, item.finish_id), foil: -(foilCost[item.finish_id] || 0) })
+    const cost = printCost(offlineCatalog, item.rule_ids.length, item.finish_id, item.border_id, item.back_id, !!item.back_finish_id && item.back_id !== 'mischief')
+    balance(save, Object.fromEntries(Object.entries(cost).map(([kind, amount]) => [kind, -amount])))
     const reprint = copyOf(item, undefined, item.id)
     save.library.unshift(reprint)
     if (!item.sleeved) item.condition = Math.max(0, item.condition - 1)

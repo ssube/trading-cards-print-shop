@@ -33,7 +33,7 @@ def transaction():
 def init():
     with transaction() as db:
         version = db.execute("PRAGMA user_version").fetchone()[0]
-        if version >= 11:
+        if version >= 12:
             return
         if version == 0:
             db.executescript("""
@@ -123,3 +123,7 @@ def init():
         if version <= 10:
             db.execute("CREATE TABLE generation_resets(user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, day TEXT NOT NULL, reset_at TEXT NOT NULL, PRIMARY KEY(user_id,day))")
             db.execute("PRAGMA user_version=11")
+        if version <= 11:
+            db.execute("ALTER TABLE designs ADD COLUMN back_finish_id TEXT")
+            db.execute("UPDATE designs SET back_finish_id='shimmer' WHERE back_id='mischief'")
+            db.execute("PRAGMA user_version=12")

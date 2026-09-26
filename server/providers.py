@@ -265,15 +265,15 @@ def process_job(job_id):
     design_id = uid()
     try:
         creative_context = {key: value for key, value in context.items()
-                            if key not in {"finish_id", "border_id", "back_id"} and not key.startswith("finish_")}
+                            if key not in {"finish_id", "border_id", "back_id", "back_finish_id"} and not key.startswith("finish_")}
         name, flavor = generate_text(creative_context)
         art = generate_art(design_id, creative_context, name)
         with transaction() as db:
-            db.execute("INSERT INTO designs(id,creator_id,type_id,rule_ids,theme_id,finish_id,name,flavor,art_path,created_at,border_id,back_id) "
-                       "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+            db.execute("INSERT INTO designs(id,creator_id,type_id,rule_ids,theme_id,finish_id,name,flavor,art_path,created_at,border_id,back_id,back_finish_id) "
+                       "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                        (design_id, user_id, recipe["type_id"], json.dumps(recipe["rule_ids"]), recipe["theme_id"],
                         recipe["finish_id"], name, flavor, art, stamp(),
-                        recipe.get("border_id", "classic"), recipe.get("back_id", "archive")))
+                        recipe.get("border_id", "classic"), recipe.get("back_id", "archive"), recipe.get("back_finish_id")))
             copy_id = mint_copy(db, design_id, user_id)
             db.execute("UPDATE jobs SET status='complete',design_id=?,copy_id=? WHERE id=?",
                        (design_id, copy_id, job_id))

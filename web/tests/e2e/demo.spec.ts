@@ -59,6 +59,31 @@ async function navigate(page: Page, name: string) {
   await page.locator('.sidebar nav').getByRole('link', { name }).click()
 }
 
+test('back foil changes the press cost while Fox keeps its own foil', async ({ page }) => {
+  await startDemo(page)
+  await page.getByRole('combobox', { name: 'Finish', exact: true }).selectOption('shimmer')
+  await expect(page.locator('.cost-strip')).toContainText('3 ink')
+  await expect(page.locator('.cost-strip')).toContainText('1 foil')
+  await page.locator('.back-foil-option input').check()
+  await expect(page.locator('.cost-strip')).toContainText('4 ink')
+  await expect(page.locator('.cost-strip')).toContainText('2 foil')
+  const velvet = await page.context().browser()!.newContext()
+  const velvetPage = await velvet.newPage()
+  await velvetPage.goto(new URL('/?demo=1', page.url()).href)
+  await velvetPage.getByRole('button', { name: /The Velvet Mischief/ }).click()
+  await velvetPage.getByRole('button', { name: 'Begin offline demo' }).click()
+  await navigate(velvetPage, 'Card Library')
+  await expect(velvetPage.locator('.card-back.back-mischief.finish-shimmer .back-foil-shine').first()).toHaveCount(1)
+  await expect(velvetPage.locator('.boxed-card').filter({ has: velvetPage.locator('.trading-card.finish-standard') }).locator('.card-back.back-mischief.finish-shimmer')).toHaveCount(1)
+  await navigate(velvetPage, 'Print Sheets')
+  await velvetPage.locator('.physical-card-choice').filter({ hasText: 'The Foil Fox' }).first().getByRole('button', { name: /Add/ }).click()
+  await velvetPage.getByRole('checkbox', { name: 'Include aligned card backs' }).check()
+  await expect(velvetPage.locator('.physical-sheet-back .back-foil-shine')).toHaveCount(1)
+  await velvetPage.getByRole('checkbox', { name: 'Show simulated foil finish' }).uncheck()
+  await expect(velvetPage.locator('.physical-sheet-back .back-foil-shine')).toBeHidden()
+  await velvet.close()
+})
+
 test('pages and nested views survive reload, history, and direct links', async ({ page }) => {
   await startDemo(page)
   await navigate(page, 'Card Library')

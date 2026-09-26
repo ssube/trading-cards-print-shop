@@ -4,7 +4,7 @@ import type { CardCopy, Part } from './types'
 
 const blankStock: CardCopy = {
   id: 'blank-preview', design_id: 'blank-preview', owner_id: null, creator: null, origin_id: null,
-  type_id: 'blank', rule_ids: [], rule_names: [], rule_text: [], theme_id: 'storybook', finish_id: 'standard', border_id: 'classic', back_id: 'archive',
+  type_id: 'blank', rule_ids: [], rule_names: [], rule_text: [], theme_id: 'storybook', finish_id: 'standard', border_id: 'classic', back_id: 'archive', back_finish_id: null,
   name: 'Blank stock', flavor: '', art_path: '', print_score: 100, condition: 100,
   centering_x: 0, centering_y: 0, shift_c: 0, shift_m: 0, shift_y: 0, shift_k: 0,
   color_effect: 'none', surface: 0, edge: 0, sleeved: 0, slab_grade: null, listed: 0,

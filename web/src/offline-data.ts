@@ -50,7 +50,7 @@ const others = [
 ] as const
 
 export const offlineCatalog: Part[] = [
-  ...others.map(([id, kind, name, description]) => ({ id, kind, name, description, power: 0, slot: '', cost_json: kind === 'finish' ? JSON.stringify({ foil: ({ standard: 0, shimmer: 1, etched: 3, starfield: 2, glitter: 2, aurora: 3, spooky: 2, pumpkin: 2, confetti: 3, holo: 3, crashout: 3 } as Record<string, number>)[id] }) : '{}', learned: 0 })),
+  ...others.map(([id, kind, name, description]) => ({ id, kind, name, description, power: 0, slot: '', cost_json: kind === 'finish' ? JSON.stringify({ foil: ({ standard: 0, shimmer: 1, etched: 3, starfield: 2, glitter: 2, aurora: 3, spooky: 2, pumpkin: 2, confetti: 3, holo: 3, crashout: 3 } as Record<string, number>)[id] }) : JSON.stringify(({ starlit: { ink: 1 }, velvet: { ink: 1 }, atlas: { ink: 1 }, mischief: { ink: 1, foil: 1 } } as Record<string, Record<string, number>>)[id] || {}), learned: 0 })),
   ...rules.map(([id, name, description, power, slot]) => ({ id, kind: 'rule', name, description, power, slot, cost_json: '{}', learned: 0 })),
 ]
 
@@ -79,7 +79,7 @@ function art(id: string) {
 }
 
 function design(id: string, name: string, flavor: string, type_id: string, rule_ids: string[], theme_id: string, finish_id = 'standard', border_id = 'classic', back_id = 'archive', artId = id): Design {
-  return { id, name, flavor, type_id, rule_ids, theme_id, finish_id, border_id, back_id, art_path: art(artId) }
+  return { id, name, flavor, type_id, rule_ids, theme_id, finish_id, border_id, back_id, back_finish_id: back_id === 'mischief' ? 'shimmer' : null, art_path: art(artId) }
 }
 
 export function offlineDesigns(): Design[] {

@@ -133,6 +133,10 @@ def seed():
             db.execute("UPDATE parts SET slot=? WHERE id=?", (slot, part_id))
         for part_id, foil in FINISH_COST.items():
             db.execute("UPDATE parts SET cost_json=? WHERE id=? AND kind='finish'", (json.dumps({"foil": foil}), part_id))
+        for part_id, cost in {"starlit": {"ink": 1}, "velvet": {"ink": 1},
+                              "atlas": {"ink": 1}, "mischief": {"ink": 1, "foil": 1}}.items():
+            db.execute("UPDATE parts SET cost_json=? WHERE id=? AND kind IN ('border','back')",
+                       (json.dumps(cost), part_id))
         from .providers import bundled_art, demo_art
         npc_designs = [
             ("starter-press-cat", "Apprentice Press Cat", "He insists every proof needs one more paw print.",
@@ -218,6 +222,7 @@ def seed():
                         finish, base["name"], base["flavor"], base["art_path"], stamp(), base["border_id"], base["back_id"]))
         from .decks import seed_rewards
         seed_rewards(db)
+        db.execute("UPDATE designs SET back_finish_id='shimmer' WHERE back_id='mischief' AND back_finish_id IS NULL")
         briefs = [
             ("first-edition", "First Edition", "Turn in any freshly printed card.", {"min_grade": 1}, {"paper": 3, "ink": 3}, 1, 1),
             ("land-survey", "The Cartographer", "A Land for the library's wandering map.", {"type": "land", "min_grade": 5}, {"paper": 4, "ink": 3}, 0, 1),
@@ -278,7 +283,7 @@ def starter_decks(db):
     for deck_id, deck in STARTER_DECKS.items():
         cards = []
         for design_id, copies in deck["cards"].items():
-            row = db.execute("SELECT id,name,flavor,type_id,rule_ids,theme_id,finish_id,border_id,back_id,art_path FROM designs WHERE id=?",
+            row = db.execute("SELECT id,name,flavor,type_id,rule_ids,theme_id,finish_id,border_id,back_id,back_finish_id,art_path FROM designs WHERE id=?",
                              (design_id,)).fetchone()
             need(row is not None, "Starter deck content is unavailable", 500)
             cards.append({**dict(row), "rule_ids": json.loads(row["rule_ids"]), "copies": copies})
@@ -352,13 +357,21 @@ def collection_progress(db, user_id):
     return result
 
 
-def print_cost(db, rule_ids, finish_id):
-    row = db.execute("SELECT cost_json FROM parts WHERE id=? AND kind='finish'", (finish_id,)).fetchone()
-    need(row is not None, "Unknown finish")
+def print_cost(db, rule_ids, finish_id, border_id="classic", back_id="archive", back_finish_id=None):
     cost = {"paper": 1, "ink": max(1, len(rule_ids) - 1) + (0 if finish_id == "standard" else 2), "foil": 0}
-    for kind, amount in json.loads(row[0]).items():
-        need(kind in RESOURCE_KINDS and isinstance(amount, int) and amount >= 0, "Invalid finish recipe")
-        cost[kind] = cost.get(kind, 0) + amount
+    front_foil = 0
+    for part_id, part_kind in ((finish_id, "finish"), (border_id, "border"), (back_id, "back")):
+        row = db.execute("SELECT cost_json FROM parts WHERE id=? AND kind=?", (part_id, part_kind)).fetchone()
+        need(row is not None, f"Unknown {part_kind}")
+        for kind, amount in json.loads(row[0]).items():
+            need(kind in RESOURCE_KINDS and type(amount) is int and amount >= 0, "Invalid print recipe")
+            cost[kind] = cost.get(kind, 0) + amount
+            if part_kind == "finish" and kind == "foil":
+                front_foil = amount
+    if back_finish_id and back_id != "mischief":
+        need(back_finish_id == finish_id and finish_id != "standard", "Invalid back finish")
+        cost["ink"] += 1
+        cost["foil"] += front_foil
     return cost
 
 
@@ -369,8 +382,11 @@ def validate_recipe(db, user_id, payload):
     finish = payload.get("finish_id", "standard")
     border = payload.get("border_id", "classic")
     back = payload.get("back_id", "archive")
+    foil_back = payload.get("foil_back", False)
     hint = payload.get("hint", "")
     need(isinstance(hint, str) and len(hint) <= 254, "Hint must be 254 characters or fewer")
+    need(type(foil_back) is bool, "Invalid back foil choice")
+    need(not foil_back or (back != "mischief" and finish != "standard"), "Back foil requires a nonstandard front finish and a non-Fox back")
     hint = " ".join(hint.split())
     need(isinstance(rules, list) and 1 <= len(rules) <= 3 and len(set(rules)) == len(rules), "Choose one to three distinct rules")
     selected = [(type_id, "type"), (theme, "theme"), (finish, "finish"),
@@ -386,7 +402,8 @@ def validate_recipe(db, user_id, payload):
     need(slots.count("trigger") == 1 and slots.count("effect") == 1 and slots.count("condition") <= 1,
          "Choose one trigger, one effect, and at most one condition")
     return {"type_id": type_id, "rule_ids": rules, "theme_id": theme, "finish_id": finish,
-            "border_id": border, "back_id": back, "hint": hint}
+            "border_id": border, "back_id": back,
+            "back_finish_id": "shimmer" if back == "mischief" else finish if foil_back else None, "hint": hint}
 
 
 def generation_count(db, user_id):
@@ -405,7 +422,7 @@ def create_print_job(db, user_id, payload, request_key):
     recipe = validate_recipe(db, user_id, payload)
     limit = int(os.getenv("NEW_DESIGNS_PER_DAY", "5"))
     need(generation_count(db, user_id) < limit, "Daily design limit reached")
-    cost = print_cost(db, recipe["rule_ids"], recipe["finish_id"])
+    cost = print_cost(db, recipe["rule_ids"], recipe["finish_id"], recipe["border_id"], recipe["back_id"], recipe["back_finish_id"])
     adjust_resources(db, user_id, {k: -v for k, v in cost.items()})
     db.execute("INSERT INTO jobs(id,user_id,kind,payload,status,created_at) VALUES(?,?,?,?,?,?)",
                (request_key, user_id, "design", json.dumps({"recipe": recipe, "cost": cost}), "pending", stamp()))
@@ -454,7 +471,7 @@ def mint_copy(db, design_id, owner_id, origin_id=None, quality_override=None):
 
 
 def reprint(db, user_id, copy_id):
-    source = db.execute("SELECT c.*, d.finish_id, d.type_id, d.rule_ids, d.theme_id, d.border_id, d.back_id FROM copies c "
+    source = db.execute("SELECT c.*, d.finish_id, d.type_id, d.rule_ids, d.theme_id, d.border_id, d.back_id, d.back_finish_id FROM copies c "
                         "JOIN designs d ON d.id=c.design_id WHERE c.id=? AND c.owner_id=?", (copy_id, user_id)).fetchone()
     need(source is not None, "Copy not found", 404)
     source = age_copy(db, source)
@@ -465,7 +482,7 @@ def reprint(db, user_id, copy_id):
     for part in parts:
         need(db.execute("SELECT 1 FROM learned WHERE user_id=? AND part_id=?", (user_id, part)).fetchone(),
              "Study this design before reprinting")
-    cost = print_cost(db, json.loads(source["rule_ids"]), source["finish_id"])
+    cost = print_cost(db, json.loads(source["rule_ids"]), source["finish_id"], source["border_id"], source["back_id"], source["back_finish_id"])
     adjust_resources(db, user_id, {k: -v for k, v in cost.items()})
     new_copy = mint_copy(db, source["design_id"], user_id, copy_id)
     wear(db, copy_id, 1)
@@ -528,7 +545,7 @@ def grade_name(n):
 
 
 def copy_detail(db, copy_id, user_id=None, age=True):
-    row = db.execute("SELECT c.*,d.creator_id,d.type_id,d.rule_ids,d.theme_id,d.finish_id,d.border_id,d.back_id,d.name,d.flavor,d.art_path,"
+    row = db.execute("SELECT c.*,d.creator_id,d.type_id,d.rule_ids,d.theme_id,d.finish_id,d.border_id,d.back_id,d.back_finish_id,d.name,d.flavor,d.art_path,"
                      "u.username creator FROM copies c JOIN designs d ON d.id=c.design_id "
                      "LEFT JOIN users u ON u.id=d.creator_id WHERE c.id=?", (copy_id,)).fetchone()
     need(row is not None, "Copy not found", 404)
@@ -746,11 +763,12 @@ def admin_action(db, actor_id, action, payload, reason):
         design_id = uid()
         rules = payload.get("rule_ids", ["arrival", "draw"])
         art = demo_art(design_id, payload.get("theme_id", "storybook"), payload["name"])
-        db.execute("INSERT INTO designs(id,creator_id,type_id,rule_ids,theme_id,finish_id,name,flavor,art_path,created_at,border_id,back_id) "
-                   "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", (design_id, actor_id, payload.get("type_id", "monster"),
+        db.execute("INSERT INTO designs(id,creator_id,type_id,rule_ids,theme_id,finish_id,name,flavor,art_path,created_at,border_id,back_id,back_finish_id) "
+                   "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", (design_id, actor_id, payload.get("type_id", "monster"),
                    json.dumps(rules), payload.get("theme_id", "storybook"), payload.get("finish_id", "standard"),
                    payload["name"], payload.get("flavor", "A curious edition from the archives."), art, stamp(),
-                   payload.get("border_id", "classic"), payload.get("back_id", "archive")))
+                   payload.get("border_id", "classic"), payload.get("back_id", "archive"),
+                   "shimmer" if payload.get("back_id") == "mischief" else None))
         result = {"design_id": design_id}
     elif action == "print-copy":
         copy_id = mint_copy(db, payload["design_id"], int(payload["user_id"]), quality_override=payload.get("quality"))
@@ -784,10 +802,11 @@ def admin_action(db, actor_id, action, payload, reason):
         flavor = str(payload.get("flavor", "")).strip()[:140]
         need(name and flavor, "Name and flavor are required")
         art = demo_art(design_id, payload.get("theme_id", "storybook"), name)
-        db.execute("UPDATE designs SET name=?,flavor=?,type_id=?,rule_ids=?,theme_id=?,finish_id=?,border_id=?,back_id=?,art_path=? WHERE id=?",
+        db.execute("UPDATE designs SET name=?,flavor=?,type_id=?,rule_ids=?,theme_id=?,finish_id=?,border_id=?,back_id=?,back_finish_id=?,art_path=? WHERE id=?",
                    (name, flavor, payload.get("type_id", "monster"), json.dumps(payload.get("rule_ids", ["arrival", "draw"])),
                     payload.get("theme_id", "storybook"), payload.get("finish_id", "standard"),
-                    payload.get("border_id", "classic"), payload.get("back_id", "archive"), art, design_id))
+                    payload.get("border_id", "classic"), payload.get("back_id", "archive"),
+                    "shimmer" if payload.get("back_id") == "mischief" else None, art, design_id))
         result = {"design_id": design_id}
     elif action == "set-part":
         part_id = payload["id"]
@@ -795,9 +814,9 @@ def admin_action(db, actor_id, action, payload, reason):
         need(kind in {"type", "rule", "theme", "finish", "border", "back"}, "Invalid part kind")
         slot = payload.get("slot", "")
         need(kind != "rule" or slot in {"trigger", "condition", "effect"}, "Rule slot must be trigger, condition, or effect")
-        finish_cost = payload.get("cost", {}) if kind == "finish" else {}
+        finish_cost = payload.get("cost", {}) if kind in {"finish", "border", "back"} else {}
         need(isinstance(finish_cost, dict) and all(k in RESOURCE_KINDS and isinstance(v, int) and v >= 0 for k, v in finish_cost.items()),
-             "Invalid finish cost")
+             "Invalid part cost")
         db.execute("INSERT INTO parts(id,kind,name,description,power,active,slot,cost_json) VALUES(?,?,?,?,?,?,?,?) "
                    "ON CONFLICT(id) DO UPDATE SET kind=excluded.kind,name=excluded.name,description=excluded.description,"
                    "power=excluded.power,active=excluded.active,slot=excluded.slot,cost_json=excluded.cost_json",

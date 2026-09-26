@@ -1,0 +1,13 @@
+.back-foil-option{display:flex;align-items:center;gap:9px;flex-wrap:wrap;color:#e6d5b2}
+.back-foil-option input{width:17px;height:17px;min-height:0;margin:0;accent-color:#d9bc80}
+.back-foil-option span{flex-basis:100%;padding-left:26px;color:#9faf9f;font-size:.65rem;font-weight:400}
+.card-back{position:relative;overflow:hidden}
+.card-back .back-foil-shine{position:absolute;inset:0;z-index:1;pointer-events:none;border-radius:inherit}
+.card-back .back-mark,.card-back p,.card-back small{position:relative;z-index:2}
+.card-back .wear-overlay{z-index:3}
+.card-back.finish-shimmer .back-foil-shine{opacity:.48;mix-blend-mode:screen}
+.card-perspective:hover .card-back.finish-shimmer .back-foil-shine{opacity:.7}
+.card-back.finish-holo .back-foil-shine{opacity:.52}
+.card-back.finish-etched .back-foil-shine,.card-back.finish-aurora .back-foil-shine{opacity:.5}
+.card-back.finish-starfield .back-foil-shine,.card-back.finish-glitter .back-foil-shine,.card-back.finish-confetti .back-foil-shine{opacity:.62}
+.card-back.finish-spooky .back-foil-shine,.card-back.finish-pumpkin .back-foil-shine,.card-back.finish-crashout .back-foil-shine{opacity:.5}
