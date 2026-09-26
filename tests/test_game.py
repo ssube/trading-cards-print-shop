@@ -58,6 +58,80 @@ def test_admin_cli_add_card_and_themed_set(world, tmp_path, capsys):
         assert conn.execute("SELECT COUNT(*) FROM designs WHERE name='Valid Card'").fetchone()[0] == 0
 
 
+def test_admin_cli_generates_cohesive_set_with_requested_mix(world, monkeypatch, capsys):
+    alice, bob = world
+    with db.transaction() as conn:
+        conn.execute("UPDATE users SET is_admin=1 WHERE id=?", (alice,))
+    prompt = "A swamp set with 4 cards: 2 swamp monsters like snakes and bugs, 1 land, and 1 spell"
+    calls = []
+    def fake_plan(brief, style, rules, count):
+        assert brief == prompt and style["id"] == "botanical" and count == 4
+        assert any(rule["id"] == "draw" for rule in rules)
+        return {"title": "Mirebound", "cards": [
+            {"name": "Mire Snake", "flavor": "It waits beneath the reeds.", "type_id": "monster",
+             "rule_ids": ["arrival", "draw"], "art_prompt": "A green snake in black water"},
+            {"name": "Bog Beetle", "flavor": "A small keeper of old paths.", "type_id": "monster",
+             "rule_ids": ["arrival", "draw"], "art_prompt": "A copper beetle on moss"},
+            {"name": "Sunken Causeway", "flavor": "The stones remember.", "type_id": "land",
+             "rule_ids": ["arrival", "draw"], "art_prompt": "A ruined road through a swamp"},
+            {"name": "Reed Whisper", "flavor": "The marsh answers.", "type_id": "spell",
+             "rule_ids": ["arrival", "draw"], "art_prompt": "A spiral of glowing reeds"}]}
+    real_art = providers.generate_art
+    def fake_art(design_id, recipe, name):
+        calls.append((name, recipe["hint"], recipe["theme_id"]))
+        return real_art(design_id, recipe, name)
+    monkeypatch.setattr(providers, "generate_set", fake_plan)
+    monkeypatch.setattr(providers, "generate_art", fake_art)
+    cli.main(["generate-set", "--actor", "alice", "--to", "bob", "--reason", "new event",
+              "--style", "botanical", "--prompt", prompt])
+    output = capsys.readouterr().out
+    result = json.loads(output[output.index('{'):])
+    assert result["set"] == "Mirebound" and len(result["cards"]) == 4
+    assert len(calls) == 4 and all(style == "botanical" for _, _, style in calls)
+    with db.connect() as conn:
+        for card in result["cards"]:
+            assert game.copy_detail(conn, card["copy_id"], bob)["owner_id"] == bob
+        assert conn.execute("SELECT action FROM audit ORDER BY id DESC LIMIT 1").fetchone()[0] == "add-set"
+
+
+def test_admin_cli_rejects_wrong_generated_mix_before_art(world, monkeypatch):
+    alice, _ = world
+    with db.transaction() as conn:
+        conn.execute("UPDATE users SET is_admin=1 WHERE id=?", (alice,))
+    monkeypatch.setattr(providers, "generate_set", lambda *_: {"title": "Wrong Mix", "cards": [
+        {"name": "Only Monster", "flavor": "Oops", "type_id": "monster",
+         "rule_ids": ["arrival", "draw"], "art_prompt": "A monster"}]})
+    monkeypatch.setattr(providers, "generate_art", lambda *_: pytest.fail("Artwork should not start"))
+    with pytest.raises(SystemExit):
+        cli.main(["generate-set", "--actor", "alice", "--reason", "test", "--style", "botanical",
+                  "--prompt", "A 2 card set with 1 monster and 1 land"])
+    with db.connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM designs WHERE name='Only Monster'").fetchone()[0] == 0
+
+
+def test_admin_cli_cleans_generated_art_when_a_later_image_fails(world, monkeypatch, tmp_path):
+    alice, _ = world
+    with db.transaction() as conn:
+        conn.execute("UPDATE users SET is_admin=1 WHERE id=?", (alice,))
+    monkeypatch.setattr(providers, "generate_set", lambda *_: {"title": "Lost Set", "cards": [
+        {"name": name, "flavor": "A swamp tale.", "type_id": "monster",
+         "rule_ids": ["arrival", "draw"], "art_prompt": name}
+        for name in ("First Image", "Second Image")]})
+    real_art = providers.generate_art
+    def failing_art(design_id, recipe, name):
+        if name == "Second Image":
+            raise game.GameError("Image provider failed")
+        return real_art(design_id, recipe, name)
+    monkeypatch.setattr(providers, "generate_art", failing_art)
+    with pytest.raises(SystemExit):
+        cli.main(["generate-set", "--actor", "alice", "--reason", "test", "--style", "botanical",
+                  "--prompt", "A set with 2 cards and 2 monsters"])
+    with db.connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM designs WHERE name IN ('First Image','Second Image')").fetchone()[0] == 0
+    assert not list((tmp_path / "assets").glob("*.svg")) or not any(
+        "First Image" in path.read_text() for path in (tmp_path / "assets").glob("*.svg"))
+
+
 def test_print_is_idempotent_and_failed_generation_refunds(world, monkeypatch):
     alice, _ = world
     first = new_card(alice)

@@ -58,6 +58,14 @@ Use `add-set` with a JSON manifest to add 1–24 cards sharing an art theme. Car
 uv run python -m server.cli add-set --actor admin --reason "Harbor event" --file harbor-wonders.json
 ```
 
+To create a set from a plain-language brief, use `generate-set`. It asks the configured text provider to plan the set in one pass, checks any card count and monster/land/spell split stated in the brief, then calls the configured image provider for each card. `--style` chooses a built-in art direction such as `botanical`, `maritime`, `cyber`, or `grimdark`. Set `TEXT_PROVIDER` to `openai` or `openrouter`; `IMAGE_PROVIDER=demo` gives local placeholder artwork, while `openai` or `openrouter` generates artwork and may incur provider charges. The command prints progress while generating. If a provider returns an invalid mix or rules, no designs or copies are added. Add `--to alice` to give Alice one copy of each card; otherwise the designs enter the catalog only.
+
+```sh
+uv run python -m server.cli generate-set --actor admin --reason "Swamp expansion" --style botanical --prompt "I want a swamp set with 10 cards, 4 swamp monsters like snakes and bugs, 4 lands, and 2 spells"
+```
+
+Use `--count` when a brief does not state the total. A generated set can contain up to 24 cards.
+
 ## Design notes
 
 The server owns inventory, learning, grading, condition, and trades. A design is immutable once printed; copies have their own print defects and wear. All daily boundaries use UTC. Seed cards include bundled art; demo generated designs use local SVG art, while configured image providers store raster art. The online Press accepts a 254-character title or theme hint that guides text and artwork generation; Literal and Wishmaster require one. The GitHub Pages demo disables hints and chooses from prepared names and artwork. The UI shows composition stages before the CMYK and foil printing sequence. Foil, border, and card back are visual parts and do not influence image or text generation. Printed card rules drive the TCG match engine; finishes, grade, sleeves, and slabs remain visual during matches.
