@@ -115,7 +115,7 @@ def test_admin_cli_rejects_wrong_generated_mix_before_art(world, monkeypatch):
         assert conn.execute("SELECT COUNT(*) FROM designs WHERE name='Only Monster'").fetchone()[0] == 0
 
 
-def test_admin_cli_cleans_generated_art_when_a_later_image_fails(world, monkeypatch, tmp_path):
+def test_admin_cli_resumes_after_a_later_image_fails(world, monkeypatch, tmp_path, capsys):
     alice, _ = world
     with db.transaction() as conn:
         conn.execute("UPDATE users SET is_admin=1 WHERE id=?", (alice,))
@@ -132,10 +132,55 @@ def test_admin_cli_cleans_generated_art_when_a_later_image_fails(world, monkeypa
     with pytest.raises(SystemExit):
         cli.main(["generate-set", "--actor", "alice", "--reason", "test", "--style", "botanical",
                   "--prompt", "A set with 2 cards and 2 monsters"])
+    output = capsys.readouterr().out
+    checkpoint = next((tmp_path / "admin_generations").glob("*.json"))
+    assert str(checkpoint) in output
+    state = json.loads(checkpoint.read_text())
+    assert state["generated"][0]["art_path"] and state["generated"][1]["art_path"] is None
+    first_art = providers.ASSETS / state["generated"][0]["art_path"].split("/")[-1]
+    assert first_art.is_file()
+    # Simulate a process exit after the image file was written but before its checkpoint update.
+    state["generated"][0]["art_path"] = None
+    checkpoint.write_text(json.dumps(state))
     with db.connect() as conn:
         assert conn.execute("SELECT COUNT(*) FROM designs WHERE name IN ('First Image','Second Image')").fetchone()[0] == 0
-    assert not list((tmp_path / "assets").glob("*.svg")) or not any(
-        "First Image" in path.read_text() for path in (tmp_path / "assets").glob("*.svg"))
+    calls = []
+    def resumed_art(design_id, recipe, name):
+        calls.append(name)
+        return real_art(design_id, recipe, name)
+    monkeypatch.setattr(providers, "generate_art", resumed_art)
+    cli.main(["resume-set", "--file", str(checkpoint)])
+    assert calls == ["Second Image"]
+    assert json.loads(checkpoint.read_text())["complete"] is True
+    with db.connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM designs WHERE name IN ('First Image','Second Image')").fetchone()[0] == 2
+
+
+def test_admin_cli_resume_after_commit_does_not_duplicate_cards(world, monkeypatch, tmp_path):
+    alice, _ = world
+    with db.transaction() as conn:
+        conn.execute("UPDATE users SET is_admin=1 WHERE id=?", (alice,))
+    monkeypatch.setattr(providers, "generate_set", lambda *_: {"title": "One Card", "cards": [
+        {"name": "Mire Lantern", "flavor": "A light in the reeds.", "type_id": "monster",
+         "rule_ids": ["arrival", "draw"], "art_prompt": "Lantern in a swamp"}]})
+    real_save = cli.save_checkpoint
+    def fail_final_save(path, state):
+        if state.get("complete"):
+            raise OSError("Interrupted after database commit")
+        real_save(path, state)
+    monkeypatch.setattr(cli, "save_checkpoint", fail_final_save)
+    with pytest.raises(SystemExit):
+        cli.main(["generate-set", "--actor", "alice", "--reason", "test", "--style", "botanical",
+                  "--prompt", "A 1 card set with 1 monster"])
+    checkpoint = next((tmp_path / "admin_generations").glob("*.json"))
+    with db.connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM designs WHERE name='Mire Lantern'").fetchone()[0] == 1
+    monkeypatch.setattr(cli, "save_checkpoint", real_save)
+    monkeypatch.setattr(providers, "generate_art", lambda *_: pytest.fail("Artwork should not repeat"))
+    cli.main(["resume-set", "--file", str(checkpoint)])
+    cli.main(["resume-set", "--file", str(checkpoint)])
+    with db.connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM designs WHERE name='Mire Lantern'").fetchone()[0] == 1
 
 
 def test_print_is_idempotent_and_failed_generation_refunds(world, monkeypatch):

@@ -5,7 +5,9 @@ import json
 import re
 from pathlib import Path
 
-from . import game, providers
+import httpx
+
+from . import db as database, game, providers
 from .db import connect, init, transaction
 
 
@@ -169,6 +171,98 @@ def normalize_generated_rules(cards, rules):
     return cards
 
 
+def save_checkpoint(path, state):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(state, indent=2))
+    temporary.replace(path)
+
+
+def checkpoint_art_exists(item):
+    if not isinstance(item, dict):
+        return False
+    design_id, art_path = item.get("design_id"), item.get("art_path")
+    if not isinstance(design_id, str) or not isinstance(art_path, str):
+        return False
+    path = Path(art_path)
+    return (art_path == f"/assets/{path.name}" and path.stem == design_id and
+            (providers.ASSETS / path.name).is_file())
+
+
+def finish_generated_set(path, state):
+    game.need(state.get("version") == 1 and isinstance(state.get("cards"), list) and
+              isinstance(state.get("art_prompts"), list) and
+              len(state["cards"]) == len(state["art_prompts"]) == len(state.get("generated", [])),
+              "Invalid generation checkpoint")
+    with connect() as db:
+        actor = db.execute("SELECT id FROM users WHERE id=? AND is_admin=1", (state["actor_id"],)).fetchone()
+        game.need(actor is not None, "Checkpoint admin no longer exists")
+        recipient_id = state.get("recipient_id")
+        game.need(recipient_id is None or db.execute("SELECT 1 FROM users WHERE id=?", (recipient_id,)).fetchone(),
+                  "Checkpoint recipient no longer exists")
+        theme = db.execute("SELECT name,description FROM parts WHERE id=? AND kind='theme' AND active=1",
+                           (state["style"],)).fetchone()
+        game.need(theme is not None, "Checkpoint art style is unavailable")
+        cards = prepare_cards(db, state["cards"])
+        rules = {row["id"]: dict(row) for row in db.execute(
+            "SELECT id,name,description,slot,power FROM parts WHERE kind='rule' AND active=1")}
+    if state.get("complete"):
+        return {"set": state["title"], "cards": state["results"]}
+    for index, card in enumerate(cards):
+        if checkpoint_art_exists(state["generated"][index]):
+            continue
+        pending = state["generated"][index]
+        if isinstance(pending, dict) and isinstance(pending.get("design_id"), str):
+            for extension in ("png", "jpg", "webp", "svg"):
+                recovered = {"design_id": pending["design_id"],
+                             "art_path": f"/assets/{pending['design_id']}.{extension}"}
+                if checkpoint_art_exists(recovered):
+                    state["generated"][index] = recovered
+                    save_checkpoint(path, state)
+                    print(f"Recovered artwork {index + 1}/{len(cards)}: {card['name']}", flush=True)
+                    break
+            if checkpoint_art_exists(state["generated"][index]):
+                continue
+        print(f"Illustrating {index + 1}/{len(cards)}: {card['name']}...", flush=True)
+        design_id = pending["design_id"] if isinstance(pending, dict) and isinstance(pending.get("design_id"), str) else game.uid()
+        state["generated"][index] = {"design_id": design_id, "art_path": None}
+        save_checkpoint(path, state)
+        art_recipe = {**card, "hint": state["art_prompts"][index],
+                      "theme_name": theme["name"], "theme_description": theme["description"],
+                      "rules": [rules[rid] for rid in card["rule_ids"]]}
+        try:
+            art_path = providers.generate_art(design_id, art_recipe, card["name"])
+        except Exception:
+            print(f"Saved progress: {path}\nResume with: uv run python -m server.cli resume-set --file {path}",
+                  flush=True)
+            raise
+        state["generated"][index] = {"design_id": design_id, "art_path": art_path}
+        save_checkpoint(path, state)
+    design_ids = [item["design_id"] for item in state["generated"]]
+    with transaction() as db:
+        existing = [db.execute("SELECT 1 FROM designs WHERE id=?", (design_id,)).fetchone() is not None
+                    for design_id in design_ids]
+        game.need(not any(existing) or all(existing), "Checkpoint has a partially committed set")
+        if all(existing):
+            results = []
+            for card, design_id in zip(cards, design_ids):
+                result = {"name": card["name"], "design_id": design_id}
+                if state.get("recipient_id") is not None:
+                    copy = db.execute("SELECT id FROM copies WHERE design_id=? AND owner_id=?",
+                                      (design_id, state["recipient_id"])).fetchone()
+                    game.need(copy is not None, "Checkpoint copy is missing")
+                    result["copy_id"] = copy[0]
+                results.append(result)
+        else:
+            results = add_cards(db, state["actor_id"], state.get("recipient_id"), cards, state["reason"],
+                                state["title"], [(item["design_id"], item["art_path"])
+                                                  for item in state["generated"]], state["prompt"])
+    state["complete"] = True
+    state["results"] = results
+    save_checkpoint(path, state)
+    return {"set": state["title"], "cards": results}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Trading Cards: Print Shop administration")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -205,6 +299,8 @@ def main(argv=None):
     generated_set.add_argument("--prompt", required=True, help="Set brief, including card count and mix")
     generated_set.add_argument("--style", required=True, help="Built-in art style ID, such as botanical")
     generated_set.add_argument("--count", type=int, help="Expected total if the brief does not state one")
+    resume_set = sub.add_parser("resume-set", help="Continue a saved set without regenerating completed images")
+    resume_set.add_argument("--file", required=True, type=Path, help="Checkpoint path printed by generate-set")
     sub.add_parser("users", help="List players")
     sub.add_parser("audit", help="Show recent admin changes")
     args = parser.parse_args(argv)
@@ -276,35 +372,25 @@ def main(argv=None):
             with connect() as db:
                 # Validate all rules before spending on illustration requests.
                 cards = prepare_cards(db, cards)
-            generated = []
-            try:
-                for index, (card, source) in enumerate(zip(cards, plan["cards"]), 1):
-                    print(f"Illustrating {index}/{len(cards)}: {card['name']}...", flush=True)
-                    design_id = game.uid()
-                    art_recipe = {**card, "hint": source["art_prompt"].strip(),
-                                  "theme_name": theme["name"], "theme_description": theme["description"],
-                                  "rules": [next(rule for rule in rules if rule["id"] == rid)
-                                            for rid in card["rule_ids"]]}
-                    art_path = providers.generate_art(design_id, art_recipe, card["name"])
-                    generated.append((design_id, art_path))
-                with transaction() as db:
-                    actor = db.execute("SELECT id FROM users WHERE id=? AND is_admin=1", (actor_id,)).fetchone()
-                    game.need(actor is not None, "Admin actor not found")
-                    results = add_cards(db, actor_id, recipient_id, cards, args.reason, title, generated, args.prompt)
-            except Exception:
-                for design_id, art_path in generated:
-                    path = providers.ASSETS / Path(art_path).name
-                    if path.stem == design_id:
-                        path.unlink(missing_ok=True)
-                raise
-            print(json.dumps({"set": title, "cards": results}, indent=2))
+            path = database.DB_PATH.parent / "admin_generations" / f"{game.uid()}.json"
+            state = {"version": 1, "actor_id": actor_id, "recipient_id": recipient_id,
+                     "reason": args.reason, "prompt": args.prompt, "style": args.style,
+                     "title": title, "cards": cards,
+                     "art_prompts": [card["art_prompt"].strip() for card in plan["cards"]],
+                     "generated": [None] * len(cards), "complete": False}
+            save_checkpoint(path, state)
+            print(f"Saved set plan: {path}", flush=True)
+            print(json.dumps(finish_generated_set(path, state), indent=2))
+        elif args.command == "resume-set":
+            state = json.loads(args.file.read_text())
+            print(json.dumps(finish_generated_set(args.file, state), indent=2))
         elif args.command == "users":
             with connect() as db:
                 print(json.dumps([dict(r) for r in db.execute("SELECT id,username,is_admin,created_at FROM users ORDER BY id")], indent=2))
         elif args.command == "audit":
             with connect() as db:
                 print(json.dumps([dict(r) for r in db.execute("SELECT * FROM audit ORDER BY id DESC LIMIT 50")], indent=2))
-    except (game.GameError, ValueError, KeyError, OSError, TypeError) as exc:
+    except (game.GameError, ValueError, KeyError, OSError, TypeError, httpx.HTTPError) as exc:
         parser.exit(1, f"Error: {exc}\n")
 
 
