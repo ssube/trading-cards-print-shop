@@ -192,9 +192,9 @@ function print(save: Save, body: unknown, requestKey: string) {
   const recipe = body as { type_id: string; rule_ids: string[]; theme_id: string; finish_id: string; border_id: string; back_id: string; foil_back?: boolean; hint?: string }
   if (!recipe || !Array.isArray(recipe.rule_ids) || recipe.rule_ids.length < 2 || recipe.rule_ids.length > 3 || new Set(recipe.rule_ids).size !== recipe.rule_ids.length) fail('Choose two or three distinct rules')
   if (typeof recipe.hint !== 'undefined' && (typeof recipe.hint !== 'string' || recipe.hint.length > 254)) fail('Hint must be 254 characters or fewer')
+  if (recipe.hint?.trim()) fail('Title hints are available in the online workshop')
   if (recipe.foil_back !== undefined && typeof recipe.foil_back !== 'boolean') fail('Invalid back foil choice')
   if (recipe.foil_back && (recipe.back_id === 'mischief' || recipe.finish_id === 'standard')) fail('Back foil requires a nonstandard front finish and a non-Fox back')
-  const hint = (recipe.hint || '').trim().replace(/\s+/g, ' ')
   const parts = new Map(offlineCatalog.map(part => [part.id, part]))
   const choices: [string, string][] = [[recipe.type_id, 'type'], [recipe.theme_id, 'theme'], [recipe.finish_id, 'finish'], [recipe.border_id, 'border'], [recipe.back_id, 'back'], ...recipe.rule_ids.map(rule => [rule, 'rule'] as [string, string])]
   for (const [partId, kind] of choices) if (parts.get(partId)?.kind !== kind || !save.learned.includes(partId)) fail(`You have not learned ${partId}`)
@@ -208,7 +208,7 @@ function print(save: Save, body: unknown, requestKey: string) {
   balance(save, Object.fromEntries(Object.entries(cost).map(([kind, amount]) => [kind, -amount])))
   const designId = `offline-${id()}`
   const pool = names[recipe.theme_id]?.[recipe.type_id] || names.storybook.monster
-  const name = hint ? hint.slice(0, 48) : pool[Math.floor(Math.random() * pool.length)]
+  const name = pool[Math.floor(Math.random() * pool.length)]
   const printed = copyOf({ design_id: designId, ...recipe, back_finish_id: recipe.back_id === 'mischief' ? 'shimmer' : recipe.foil_back ? recipe.finish_id : null, name, flavor: 'Printed under a moon that insists it is the sun.', art_path: generatedArt(designId, recipe.theme_id, name) })
   save.library.unshift(printed)
   save.generation_count++

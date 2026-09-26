@@ -1,0 +1,35 @@
+.topbar-right .resource-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px 5px 5px;
+  text-decoration: none;
+  transition: border-color .18s, background .18s, transform .18s;
+}
+.topbar-right .resource-pill:hover { border-color: currentColor; transform: translateY(-1px) }
+.topbar-right .resource-pill:focus-visible { outline: 2px solid #f2dfa8; outline-offset: 2px }
+.resource-pill .resource-mark {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  font-size: .9rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: inset 0 1px #fff5, 0 1px 4px #0006;
+}
+.resource-paper { color: #e4d2aa; border-color: #c0a47870; background: #66584055 }
+.resource-paper .resource-mark { color: #755e35; background: repeating-linear-gradient(0deg,#f2dfb7 0 3px,#d1b787 4px 5px) }
+.resource-ink { color: #aad7d6; border-color: #69aaa673; background: #24555255 }
+.resource-ink .resource-mark { color: #c9f3ec; background: radial-gradient(circle at 35% 25%,#70c8c4,#1d686d 55%,#153d48); font-size: .72rem }
+.resource-sleeve { color: #c2d8ec; border-color: #839fbd73; background: #45668155 }
+.resource-sleeve .resource-mark { color: #e5f7fb; background: linear-gradient(145deg,#bddde8aa,#3a708b55); border: 1px solid #a5d0e0; border-radius: 5px; transform: rotate(-5deg); font-size: .72rem }
+.resource-foil { color: #f0cdea; border-color: #ba8eb77a; background: #66426955 }
+.resource-foil .resource-mark { color: #fff5ca; background: conic-gradient(from 25deg,#8cc9d2,#b795d1,#efb9d0,#f1db9b,#8cc9d2) }
+.resource-pill strong { min-width: 1ch; text-align: right }
+@media(max-width:750px) {
+  .topbar-right .resource-pill { padding: 3px 7px 3px 3px; gap: 3px }
+  .resource-pill .resource-mark { width: 21px; height: 21px; font-size: .75rem }
+}

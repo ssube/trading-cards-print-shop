@@ -385,14 +385,17 @@ test('deck reward, custom deck, print preset, and progress work', async ({ page 
   await expect(page.getByRole('region', { name: 'Card backs' })).toBeVisible()
 })
 
-test('the press accepts a hint and saves the printed card', async ({ page, browser }) => {
+test('the offline press shows composition progress and saves a printed card', async ({ page, browser }) => {
   await startDemo(page)
-  await page.getByRole('textbox', { name: /Title or theme hint/ }).fill('A fox in a moonlit bookshop')
+  await expect(page.getByRole('textbox', { name: /Title or theme hint/ })).toBeDisabled()
+  await expect(page.locator('.topbar-right .resource-pill')).toHaveText([/\d+ paper/, /\d+ ink/, /\d+ sleeves/, /\d+ foil/])
   await page.getByRole('button', { name: /Pull the lever & print/ }).click()
+  await expect(page.getByRole('heading', { name: 'Painting the artwork…' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Close inspection' })).toBeVisible({ timeout: 20_000 })
-  await expect(page.locator('.inspect-info h2')).toHaveText('A fox in a moonlit bookshop')
+  const printedName = (await page.locator('.inspect-info h2').textContent())!
+  expect(printedName.length).toBeGreaterThan(0)
   await page.getByRole('button', { name: 'Open lightbox' }).click()
-  await expect(page.getByRole('dialog', { name: 'Lightbox: A fox in a moonlit bookshop' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: `Lightbox: ${printedName}` })).toBeVisible()
   await page.getByRole('button', { name: 'Close lightbox' }).click()
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   await page.getByRole('link', { name: 'Copy public link' }).click()
@@ -400,7 +403,7 @@ test('the press accepts a hint and saves the printed card', async ({ page, brows
   const guest = await browser.newContext()
   const publicPage = await guest.newPage()
   await publicPage.goto(await page.evaluate(() => navigator.clipboard.readText()))
-  await expect(publicPage.getByRole('heading', { name: 'A fox in a moonlit bookshop', level: 1 })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: printedName, level: 1 })).toBeVisible()
   await expect.poll(() => publicPage.locator('.public-card-art img.art-base').evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0)
   await guest.close()
   await page.getByRole('button', { name: 'Close inspection' }).click()
