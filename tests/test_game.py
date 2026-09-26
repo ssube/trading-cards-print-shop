@@ -71,11 +71,11 @@ def test_admin_cli_generates_cohesive_set_with_requested_mix(world, monkeypatch,
             {"name": "Mire Snake", "flavor": "It waits beneath the reeds.", "type_id": "monster",
              "rule_ids": ["arrival", "draw"], "art_prompt": "A green snake in black water"},
             {"name": "Bog Beetle", "flavor": "A small keeper of old paths.", "type_id": "monster",
-             "rule_ids": ["arrival", "draw"], "art_prompt": "A copper beetle on moss"},
+             "rule_ids": ["Draw a card"], "art_prompt": "A copper beetle on moss"},
             {"name": "Sunken Causeway", "flavor": "The stones remember.", "type_id": "land",
-             "rule_ids": ["arrival", "draw"], "art_prompt": "A ruined road through a swamp"},
+             "rule_ids": [], "art_prompt": "A ruined road through a swamp"},
             {"name": "Reed Whisper", "flavor": "The marsh answers.", "type_id": "spell",
-             "rule_ids": ["arrival", "draw"], "art_prompt": "A spiral of glowing reeds"}]}
+             "rule_ids": ["dusk", "draw"], "art_prompt": "A spiral of glowing reeds"}]}
     real_art = providers.generate_art
     def fake_art(design_id, recipe, name):
         calls.append((name, recipe["hint"], recipe["theme_id"]))
@@ -91,6 +91,12 @@ def test_admin_cli_generates_cohesive_set_with_requested_mix(world, monkeypatch,
     with db.connect() as conn:
         for card in result["cards"]:
             assert game.copy_detail(conn, card["copy_id"], bob)["owner_id"] == bob
+        beetle = conn.execute("SELECT rule_ids FROM designs WHERE name='Bog Beetle'").fetchone()[0]
+        land = conn.execute("SELECT rule_ids FROM designs WHERE name='Sunken Causeway'").fetchone()[0]
+        spell = conn.execute("SELECT rule_ids FROM designs WHERE name='Reed Whisper'").fetchone()[0]
+        assert json.loads(beetle) == ["arrival", "draw"]
+        assert json.loads(land)[0] == "dusk" and len(json.loads(land)) == 2
+        assert json.loads(spell) == ["arrival", "draw"]
         assert conn.execute("SELECT action FROM audit ORDER BY id DESC LIMIT 1").fetchone()[0] == "add-set"
 
 

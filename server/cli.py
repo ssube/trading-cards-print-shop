@@ -120,10 +120,53 @@ def validate_generated_set(plan, style, total, counts):
                   for card in cards), "Each generated card needs an art prompt")
     clean = []
     for card in cards:
-        game.need(set(card) == {"name", "flavor", "type_id", "rule_ids", "art_prompt"},
-                  "Generated cards need name, flavor, type_id, rule_ids, and art_prompt")
-        clean.append({key: value for key, value in card.items() if key != "art_prompt"} | {"theme_id": style})
+        game.need({"name", "flavor", "type_id", "art_prompt"} <= set(card),
+                  "Generated cards need name, flavor, type_id, and art_prompt")
+        clean.append({key: value for key, value in card.items()
+                      if key in {"name", "flavor", "type_id", "rule_ids"}} |
+                     {"rule_ids": card.get("rule_ids"), "theme_id": style})
     return plan["title"].strip(), clean
+
+
+def normalize_generated_rules(cards, rules):
+    """Turn imperfect model rule suggestions into playable trigger/effect recipes."""
+    by_id = {rule["id"]: rule for rule in rules}
+    aliases = {rule["name"].casefold().strip(): rule["id"] for rule in rules}
+    effects = [rule for rule in rules if rule["slot"] == "effect"]
+    game.need(effects and "arrival" in by_id, "The rule catalog needs arrival and an effect")
+    for index, card in enumerate(cards):
+        proposed = card.get("rule_ids")
+        if isinstance(proposed, str):
+            proposed = re.split(r"[,;]", proposed)
+        if not isinstance(proposed, list):
+            proposed = []
+        ids = []
+        for value in proposed:
+            if isinstance(value, dict):
+                value = value.get("id") or value.get("name")
+            if not isinstance(value, str):
+                continue
+            key = value.casefold().strip()
+            rule_id = key if key in by_id else aliases.get(key)
+            if rule_id and rule_id not in ids:
+                ids.append(rule_id)
+        trigger = next((rid for rid in ids if by_id[rid]["slot"] == "trigger"), None)
+        if card["type_id"] == "spell":
+            trigger = "arrival"
+        elif trigger is None:
+            trigger = "dusk" if card["type_id"] == "land" and "dusk" in by_id else "arrival"
+        condition = next((rid for rid in ids if by_id[rid]["slot"] == "condition"), None)
+        effect = next((rid for rid in ids if by_id[rid]["slot"] == "effect" and
+                       by_id[trigger]["power"] + by_id[rid]["power"] <= 5), None)
+        if effect is None:
+            options = [rule["id"] for rule in effects
+                       if by_id[trigger]["power"] + rule["power"] <= 5]
+            game.need(options, "No playable effect is available")
+            effect = options[index % len(options)]
+        if condition and by_id[trigger]["power"] + by_id[condition]["power"] + by_id[effect]["power"] > 5:
+            condition = None
+        card["rule_ids"] = [trigger] + ([condition] if condition else []) + [effect]
+    return cards
 
 
 def main(argv=None):
@@ -229,6 +272,7 @@ def main(argv=None):
             plan = providers.generate_set(args.prompt, {"id": args.style, "name": theme["name"],
                                                           "description": theme["description"]}, rules, total)
             title, cards = validate_generated_set(plan, args.style, total, counts)
+            cards = normalize_generated_rules(cards, rules)
             with connect() as db:
                 # Validate all rules before spending on illustration requests.
                 cards = prepare_cards(db, cards)
