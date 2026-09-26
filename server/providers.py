@@ -111,8 +111,40 @@ def demo_art(design_id, theme, name):
 def _post(url, headers, payload, timeout=120):
     with httpx.Client(timeout=timeout) as client:
         response = client.post(url, headers=headers, json=payload)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            try:
+                error = response.json().get("error", {})
+                message = error.get("message") if isinstance(error, dict) else str(error)
+            except (ValueError, TypeError):
+                message = None
+            detail = f": {str(message)[:300]}" if message else ""
+            raise GameError(f"Provider returned HTTP {response.status_code}{detail}") from exc
         return response.json()
+
+
+def check_openrouter_image_budget():
+    """Catch an exhausted API-key spending cap before another paid image request."""
+    if os.getenv("IMAGE_PROVIDER", "demo").lower() != "openrouter":
+        return
+    key = os.getenv("OPENROUTER_API_KEY")
+    if not key:
+        raise GameError("OpenRouter key is missing")
+    try:
+        response = httpx.get("https://openrouter.ai/api/v1/key",
+                             headers={"Authorization": f"Bearer {key}"}, timeout=15)
+        if response.status_code != 200:
+            return  # The image endpoint will report any authentication or routing error.
+        data = response.json().get("data", {})
+        remaining = data.get("limit_remaining")
+        if remaining is not None and float(remaining) <= 0:
+            limit = data.get("limit")
+            detail = f" (${limit:g})" if isinstance(limit, (int, float)) else ""
+            raise GameError(f"OpenRouter API key spending limit{detail} is exhausted. "
+                            "Raise the key's limit or use another key, then resume this set.")
+    except (httpx.HTTPError, ValueError, TypeError):
+        return  # Preserve normal image-provider behavior if the read-only check is unavailable.
 
 
 def generate_text(recipe):

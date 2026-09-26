@@ -1,6 +1,7 @@
 import json
 from collections import Counter
 
+import httpx
 import pytest
 
 from server import cli, db, decks, game, providers
@@ -181,6 +182,24 @@ def test_admin_cli_resume_after_commit_does_not_duplicate_cards(world, monkeypat
     cli.main(["resume-set", "--file", str(checkpoint)])
     with db.connect() as conn:
         assert conn.execute("SELECT COUNT(*) FROM designs WHERE name='Mire Lantern'").fetchone()[0] == 1
+
+
+def test_openrouter_image_budget_check_reports_exhausted_key(monkeypatch):
+    monkeypatch.setenv("IMAGE_PROVIDER", "openrouter")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setattr(providers.httpx, "get", lambda *_args, **_kwargs:
+                        httpx.Response(200, json={"data": {"limit": 5, "limit_remaining": 0}}))
+    with pytest.raises(game.GameError, match="spending limit.*exhausted"):
+        providers.check_openrouter_image_budget()
+
+
+def test_provider_http_error_includes_response_message(monkeypatch):
+    client = httpx.Client
+    transport = httpx.MockTransport(lambda request: httpx.Response(
+        403, json={"error": {"message": "API key budget exceeded"}}, request=request))
+    monkeypatch.setattr(providers.httpx, "Client", lambda **kwargs: client(transport=transport, **kwargs))
+    with pytest.raises(game.GameError, match="HTTP 403: API key budget exceeded"):
+        providers._post("https://openrouter.ai/api/v1/images", {}, {})
 
 
 def test_print_is_idempotent_and_failed_generation_refunds(world, monkeypatch):

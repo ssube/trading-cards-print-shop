@@ -66,6 +66,7 @@ uv run python -m server.cli generate-set --actor admin --reason "Swamp expansion
 
 Use `--count` when a brief does not state the total. A generated set can contain up to 24 cards.
 Before illustrating, `generate-set` saves the complete card plan in `data/admin_generations/` (or beside the configured database). It updates that checkpoint after each image. If an image request fails, the completed images stay on disk and the CLI prints the checkpoint path. After resolving the provider error, run `uv run python -m server.cli resume-set --file PATH` to generate only missing images and add the full set. Keep the checkpoint and asset directory together; a lost image file cannot be recovered from its checkpoint. Once the set is complete, the checkpoint records its design and copy IDs.
+For OpenRouter images, the CLI checks the API key's remaining spending limit before requesting the next image. An account top-up does not change a separate limit on the key; raise that limit or use a different key before resuming.
 
 ## Design notes
 

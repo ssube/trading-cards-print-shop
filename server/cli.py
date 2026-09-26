@@ -208,6 +208,7 @@ def finish_generated_set(path, state):
             "SELECT id,name,description,slot,power FROM parts WHERE kind='rule' AND active=1")}
     if state.get("complete"):
         return {"set": state["title"], "cards": state["results"]}
+    budget_checked = False
     for index, card in enumerate(cards):
         if checkpoint_art_exists(state["generated"][index]):
             continue
@@ -223,6 +224,9 @@ def finish_generated_set(path, state):
                     break
             if checkpoint_art_exists(state["generated"][index]):
                 continue
+        if not budget_checked:
+            providers.check_openrouter_image_budget()
+            budget_checked = True
         print(f"Illustrating {index + 1}/{len(cards)}: {card['name']}...", flush=True)
         design_id = pending["design_id"] if isinstance(pending, dict) and isinstance(pending.get("design_id"), str) else game.uid()
         state["generated"][index] = {"design_id": design_id, "art_path": None}
